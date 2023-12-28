@@ -1,0 +1,29 @@
+User adds info on contacts
+Contact's info saved into user's contacts DB
+Contact's text info embedded into vector and saved in user's faiss index
+ --> pickle index and save as blob?
+ --> use native SQL to save vectors: (from blackbox)
+     --> CREATE TABLE index (id INTEGER PRIMARY KEY, vector BLOB)
+     --> INSERT INTO index VALUES (?, ?)', index.to_array()
+ --> save index to file and insert filename into db
+User's faiss index saved to user DB
+
+Database tables:
+users: 
+-----------------------------------------------------------------
+| username | password | profile stuff etc... | faiss_index_blob |
+-----------------------------------------------------------------
+| joshsilv | ayylmao  | .................... | 0x123456789ab... |
+-----------------------------------------------------------------
+==> primary key is username
+
+contacts:
+------------------------------------------------------------------------------
+| creator_name | id | name | description, profile stuff etc... | vector_blob |
+------------------------------------------------------------------------------
+| joshsilv     | 0  | Bob  | ................................. | 0x123456... |
+------------------------------------------------------------------------------
+==> foreign key linking back to users table for owner of contact
+==> primary key is creator_name + id (id incremented per creator_name)
+
+

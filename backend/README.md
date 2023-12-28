@@ -24,11 +24,14 @@ Implementation:
   - Probably a google maps API that does this
 - Vector search for unstructured text data
   - Use LM head to encode descriptions and linkedin bios as vectors and store in vector DB
+    - sentence-transformers from huggingface for embeddings and https://github.com/facebookresearch/faiss to search
   - Use a vector search algorithm or search engine to find closest semantic match to query
   - Concatenate desc and bio to reduce number of searches
 - Alternative:
   - keyword extraction to find things like field, location, job title, etc. in data and query
+    - NOT KEYWORD EXTRACTION - it's called something else
   - compare vector of keywords from data to that from query
+- Not using crossencoders because biencoders are faster (dont need to run model on each pair for every query)
 
 
 Monetization:
