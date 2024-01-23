@@ -1,0 +1,2 @@
+Run psql database queries on netwrk database:
+sudo -u postgres psql netwrk

@@ -25,6 +25,5 @@ import netwrkapp.model  # noqa: E402  pylint: disable=wrong-import-position
 import netwrkapp.helpers  # noqa: E402  pylint: disable=wrong-import-position
 import netwrkapp.api
 
-# import netwrkapp.populate_db
-
-# netwrkapp.populate_db.add_users(5)
+from sentence_transformers import SentenceTransformer
+embedder = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
