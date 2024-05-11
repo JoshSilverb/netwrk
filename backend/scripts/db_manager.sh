@@ -32,6 +32,7 @@ case $1 in
 "create")
     $0 empty
     psql --echo-errors -d netwrk -f sql/data.sql
+    # psql -d netwrk -a -f sql/
     # python3 netwrkapp/populate_db.py
     # cp sql/uploads/* ${UPLOAD_FOLDER}/
     ;;

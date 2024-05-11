@@ -1,8 +1,10 @@
 """Insta485 package initializer."""
 import flask
+from flask_cors import CORS
 
 # app is a single object used by all the code modules in this package
 app = flask.Flask(__name__)  # pylint: disable=invalid-name
+CORS(app)  # Enable CORS for all routes
 
 # Read settings from config module (netwrkapp/config.py)
 app.config.from_object('netwrkapp.config')
@@ -23,7 +25,9 @@ app.config.from_envvar('NETWRKAPP_SETTINGS', silent=True)
 # import netwrkapp.views  # noqa: E402  pylint: disable=wrong-import-position
 import netwrkapp.model  # noqa: E402  pylint: disable=wrong-import-position
 import netwrkapp.helpers  # noqa: E402  pylint: disable=wrong-import-position
-import netwrkapp.api
+import netwrkapp.api # noqa: E402  pylint: disable=wrong-import-position
+import netwrkapp.database_accessor
 
-from sentence_transformers import SentenceTransformer
-embedder = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+# from sentence_transformers import SentenceTransformer
+# d_embedder = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+# d_database_accessor = netwrkapp.database_accessor.Database_Accessor(d_embedder)

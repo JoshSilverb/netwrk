@@ -1,14 +1,35 @@
-import netwrkapp
-from sentence_transformers import SentenceTransformer
- 
+# import netwrkapp
+from netwrkapp import model
 
-def get_contacts(userId, query):
-    [query_embedding] = netwrkapp.embedder.encode([query])
+class Database_Accessor:
+    def __init__(self, _embedder):
+        self.embedder = _embedder
 
-    cur = netwrkapp.model.get_db()
-    cur.execute(
-        "SELECT * FROM contacts WHERE owner_id=%s ORDER BY embedding <-> %s", (userId, query_embedding)
-    )
-    users = cur.fetchall()
+    def get_contacts(self, userId, query, limit):
+        [query_embedding] = self.embedder.encode([query])
+        print(query_embedding.shape)
 
-    return users
+        cur = model.get_db()
+        cur.execute("""
+            SELECT * FROM contacts 
+            WHERE creator_id=%s 
+            ORDER BY embedding <-> %s
+            LIMIT %s
+        """, (userId, query_embedding, limit))
+        contacts = cur.fetchall()
+
+        return contacts
+
+    def add_contact(self, userId, fullname, location, emailaddress, phonenumber, userbio):
+        contact_info = fullname + "; " + location + "; " + userbio
+        [contact_embedding] = self.embedder.encode(contact_info)
+
+        cur = model.get_db()
+        cur.execute(
+            """
+            INSERT INTO contacts
+            VALUES ()
+            """
+        )
+
+
