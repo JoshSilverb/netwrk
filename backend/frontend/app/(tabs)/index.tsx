@@ -1,31 +1,42 @@
-import { StyleSheet } from 'react-native';
+import { Text, View } from 'react-native';
 
 import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+import FeaturedProfiles from '@/components/FeaturedProfiles';
+// import { Text, View } from '@/components/Themed';
+import { Contacts } from '@/constants/PlaceholderData'
 
 export default function DashboardScreen() {
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Dashboard</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/dashboard.tsx" />
+    <View className="flex-1 items-center justify-center">
+      <Text className="text-base font-bold">Dashboard</Text>
+      <View className="my-5 h-1" />
+      {/* <EditScreenInfo path="app/(tabs)/dashboard.tsx" /> */}
+      <div className="grid grid-cols-1 gap-8">
+        <div className="col-span-full mb-4">
+          <h2 className="block mb-2 text-base font-medium text-gray-900 dark:text-white">
+              FEATURED CONTACTS
+          </h2>
+          <FeaturedProfiles profiles={Contacts.slice(0,3)} />
+        </div>
+      </div>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-});
+// const styles = StyleSheet.create({
+  // container: {
+    // flex: 1,
+    // alignItems: 'center',
+    // justifyContent: 'center',
+  // },
+//   title: {
+//     fontSize: 20,
+//     fontWeight: 'bold',
+//   },
+//   separator: {
+//     marginVertical: 30,
+//     height: 1,
+//     width: '80%',
+//   },
+// });
