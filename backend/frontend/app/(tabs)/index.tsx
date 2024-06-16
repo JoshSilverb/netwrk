@@ -6,25 +6,24 @@ import FeaturedProfiles from '@/components/FeaturedProfiles';
 import { Contacts } from '@/constants/PlaceholderData'
 
 export default function DashboardScreen() {
-
+  console.log("Contacts: ", Contacts)
   return (
-    <View className="flex-1 items-center justify-center">
-      <Text className="font-bold">Index screen</Text>
-    </View>
-
     // <View className="flex-1 items-center justify-center">
-    //   <Text className="text-base font-bold">Dashboard</Text>
-    //   <View className="my-5 h-1" />
-    //   {/* <EditScreenInfo path="app/(tabs)/dashboard.tsx" /> */}
-    //   <View className="grid grid-cols-1 gap-8">
-    //     <View className="col-span-full mb-4">
-    //       <Text h2 className="block mb-2 text-base font-medium text-gray-900 dark:text-white">
-    //           FEATURED CONTACTS
-    //       </Text>
-    //       <FeaturedProfiles profiles={Contacts.slice(0,3)} />
-    //     </View>
-    //   </View>
+    //   <Text className="font-bold">Index screen</Text>
     // </View>
+
+    <View className="flex-1 flex-col  justify-start bg-slate-50	">
+      {/* <View className="my-5 h-1" /> */}
+      {/* <EditScreenInfo path="app/(tabs)/dashboard.tsx" /> */}
+      <View className="flex-1 flex-column ">
+        <View className="col-span-full mb-4 ">
+          <Text h2 className="block m-2 text-base font-medium text-gray-900 dark:text-white 	">
+              FEATURED CONTACTS
+          </Text>
+          <FeaturedProfiles profiles={Contacts.slice(0,3)} />
+        </View>
+      </View>
+    </View>
   );
 }
 
