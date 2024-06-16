@@ -14,9 +14,9 @@ export default function DashboardScreen() {
       {/* <EditScreenInfo path="app/(tabs)/dashboard.tsx" /> */}
       <div className="grid grid-cols-1 gap-8">
         <div className="col-span-full mb-4">
-          <h2 className="block mb-2 text-base font-medium text-gray-900 dark:text-white">
+          <Text h2 className="block mb-2 text-base font-medium text-gray-900 dark:text-white">
               FEATURED CONTACTS
-          </h2>
+          </Text>
           <FeaturedProfiles profiles={Contacts.slice(0,3)} />
         </div>
       </div>

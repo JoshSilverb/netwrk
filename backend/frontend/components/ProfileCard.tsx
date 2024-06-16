@@ -1,6 +1,7 @@
 import React from "react";
 import clsx from 'clsx';
 import { Contact } from '@/constants/Definitions';
+import { Text, View } from 'react-native';
 
 const ProfileCard = ({ contact, keyNum } : { contact : Contact, keyNum : number}) => {
     return (
@@ -15,19 +16,19 @@ const ProfileCard = ({ contact, keyNum } : { contact : Contact, keyNum : number}
         >
             <div className="flex grid grid-cols-2 gap-4 flex-1">
                 <div className="flex items-left flex-1">
-                    <p className="truncate text-sm font-semibold md:text-base">
+                    <Text className="truncate text-sm font-semibold md:text-base">
                         {contact.fullname}
-                    </p>
+                    </Text>
                 </div>
                 <div className="flex items-right flex-1">
-                    <p className="hidden text-sm text-gray-500 sm:block">
+                    <Text className="hidden text-sm text-gray-500 sm:block">
                         {contact.location}
-                    </p>
+                    </Text>
                 </div>
                 <div className="flex items-left flex-1 col-span-2">
-                    <p className="truncate hidden text-sm text-gray-500 sm:block">
+                    <Text className="truncate hidden text-sm text-gray-500 sm:block">
                         {contact.userbio}
-                    </p>
+                    </Text>
                 </div>
 
             </div>

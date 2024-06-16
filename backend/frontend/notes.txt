@@ -1,6 +1,0 @@
-Figure out how to get tailwind to compile for web:
-https://www.nativewind.dev/quick-starts/expo
-
-Next step is:
-Look through the repo here to figure out how to get tailwind to compile for web:
-https://github.com/nativewind/nativewind/blob/next/examples/expo/package.json

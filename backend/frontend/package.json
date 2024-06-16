@@ -7,7 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "jest --watchAll"
+    "test": "jest --watchAll",
+    "start:wsl": "REACT_NATIVE_PACKAGER_HOSTNAME=$(netsh.exe interface ipv4 show addresses 'Wi-Fi' | awk -F'IP Address:' '{print $2}') expo start"
   },
   "jest": {
     "preset": "jest-expo"
