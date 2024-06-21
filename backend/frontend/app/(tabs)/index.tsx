@@ -10,7 +10,7 @@ export default function DashboardScreen() {
     <View className="flex-1 flex-col  justify-start bg-slate-50	">
       <View className="flex-1 flex-column ">
         <View className="col-span-full mb-4 ">
-          <Text h2 className="block m-2 text-base font-medium text-gray-900 dark:text-white 	">
+          <Text className="block m-2 text-base font-medium text-gray-900 dark:text-white 	">
               FEATURED CONTACTS
           </Text>
           {/* <FeaturedProfiles profiles={Contacts.slice(0,3)} /> */}

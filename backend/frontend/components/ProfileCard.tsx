@@ -5,8 +5,10 @@ import { Pressable, Text, View } from 'react-native';
 import { Link } from 'expo-router';
 
 const ProfileCard = ({ contact, keyNum } : { contact : Contact, keyNum : number}) => {
+    const contactLinkUrl = "/contact/" + contact.id;
+
     return (
-        <Link href="/contactpage" asChild>
+        <Link href={contactLinkUrl} asChild>
             <Pressable>
                 <View key={contact.id} className={"flex-col mx-2 p-4 bg-slate-200 mb-1 rounded"}>
                     
