@@ -1,7 +1,7 @@
 import React from 'react';
 import ProfileCard from '@/components/ProfileCard';
-import { Text, View, Linking } from 'react-native';
-
+import { Text, View } from 'react-native';
+import { Link } from 'expo-router';
 
 const FeaturedProfiles = ({ profiles }) => {
   return (
@@ -10,9 +10,11 @@ const FeaturedProfiles = ({ profiles }) => {
           <ProfileCard contact={profile} key={key} />
         ))}
         <View className="flex flex-row items-center justify-between py-4 focus:ring-blue-500 focus:border-blue-500 block text-base font-medium text-gray-900 dark:text-white border-t-2">
-          <Text onPress={() => Linking.openURL('/contacts')}>
+          <Link replace href="/(tabs)/contacts">See all</Link>
+          
+          {/* <Text onPress={() => Linking.openURL('/contacts')}>
             See all
-          </Text>
+          </Text> */}
         </View>
     </View>
   );

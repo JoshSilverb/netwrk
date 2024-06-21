@@ -14,3 +14,4 @@ https://github.com/expo/fyi/blob/main/wsl.md
 ^it might make the emulator work too
 
 
+Use something like https://nativebase.io/ for the buttons and stuff because it's hard to make from scratch with css

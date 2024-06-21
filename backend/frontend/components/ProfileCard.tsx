@@ -1,46 +1,31 @@
 import React from "react";
-import clsx from 'clsx';
+
 import { Contact } from '@/constants/Definitions';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { Link } from 'expo-router';
 
 const ProfileCard = ({ contact, keyNum } : { contact : Contact, keyNum : number}) => {
     return (
-        
-        <View
-            key={contact.id}
-            className={clsx(
-                'flex-col  py-4',
-                {
-                'border-t': keyNum !== 0,
-                },
-            )}
-        >
-            {/* <View className="flex grid grid-cols-2 gap-4 flex-1"> */}
-                <View className="flex-row pb-2">
-                {/* <Text>HI</Text> */}
-
-                    {/* <View className="flex items-left flex-1"> */}
-                        <Text className="flex-1 truncate text-sm font-semibold md:text-base">
+        <Link href="/contactpage" asChild>
+            <Pressable>
+                <View key={contact.id} className={"flex-col mx-2 p-4 bg-slate-200 mb-1 rounded"}>
+                    
+                    <View className="flex-row pb-2">
+                        <Text numberOfLines={1} className="flex-1 truncate text-sm font-semibold md:text-base">
                             {contact.fullname}
                         </Text>
-                        <Text className="flex-1  text-sm text-gray-500 sm:block">
+                        <Text numberOfLines={1} className="flex-1 text-sm text-gray-500 sm:block">
                             {contact.location}
                         </Text>
-                </View>
-                <View className="flex-row">
-
-                    {/* </View> */}
-                    {/* <View className="flex items-right flex-1"> */}
-                        
-                    {/* </View> */}
-                    {/* <View className="flex items-left flex-1 col-span-2"> */}
-                        <Text className="flex-1 truncate  text-sm text-gray-500 sm:block">
+                    </View>
+                    <View className="flex-row">
+                        <Text numberOfLines={1} className="flex-1 truncate text-sm text-gray-500 sm:block">
                             {contact.userbio}
                         </Text>
-                    {/* </View> */}
-
+                    </View>
                 </View>
-        </View>
+            </Pressable>
+        </Link>
     )
 };
 
