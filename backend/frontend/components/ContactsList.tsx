@@ -13,14 +13,14 @@ const ContactsList = ({ contacts, address } : { contacts: Contact[], link:String
 
   return (
     
-    <SafeAreaView >
+    <View >
       <FlatList
         data={contacts}
         renderItem={({item} : {item:Contact}) => <ProfileCard contact={item} key={item.id} />}
         keyExtractor={item => item.id}
       />
       <LinkButton text={"See all"} address={address}  />
-    </SafeAreaView>
+    </View>
 
   );
 };
