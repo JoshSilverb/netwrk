@@ -3,31 +3,29 @@ import { StyleSheet } from 'react-native';
 import EditScreenInfo from '@/components/EditScreenInfo';
 import { Text, View } from '@/components/Themed';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import MapView, { Marker } from 'react-native-maps';
+import { Contacts } from '@/constants/PlaceholderData'
 
 
 export default function mapScreen() {
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/map.tsx" />
+    <SafeAreaView >
+      <Text className=" mb-2 mx-2 text-base font-medium text-gray-900">
+          Contacts map
+      </Text>
+      <MapView style={{width: '100%', height: '100%'}}>
+        {Contacts.map((contact, index) => (
+          <Marker
+            coordinate={{latitude: Math.random() * 180 - 90,
+            longitude: Math.random() * 360 - 180}}
+            title={contact.fullname}
+            description={contact.location}
+            key={index}
+        />
+        ))}
+      
+      </MapView>
+      
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-});

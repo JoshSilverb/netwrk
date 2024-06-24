@@ -58,8 +58,11 @@ export default function ContactPage() {
         </View>
 
         <View className="flex flex-row pt-8 justify-center">
-        <Link push href="#" className="flex flex-1 items-start mx-1 p-4 rounded-xl bg-slate-300" >
+          <Link push href="#" className="flex flex-1 items-start mx-1 p-4 rounded-xl bg-slate-300" >
             <Text>Edit</Text>
+          </Link>
+          <Link push href="#" className="flex flex-1 items-start mx-1 p-4 rounded-xl bg-slate-300" >
+            <Text>Generate Intro Message</Text>
           </Link>
           <Link push href="#" className="flex flex-1 items-start mx-1 p-4 rounded-xl bg-slate-300" >
             <Text>Share</Text>

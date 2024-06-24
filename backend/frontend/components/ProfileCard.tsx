@@ -8,10 +8,9 @@ const ProfileCard = ({ contact, keyNum } : { contact : Contact, keyNum : number}
     const contactLinkUrl = "/contact/" + contact.id;
 
     return (
-        <Link href={contactLinkUrl} asChild>
+        <Link href={contactLinkUrl} key={keyNum} asChild>
             <Pressable>
                 <View key={contact.id} className={"flex-col mx-2 p-4 bg-slate-200 mb-1 rounded"}>
-                    
                     <View className="flex-row pb-2">
                         <Text numberOfLines={1} className="flex-1 truncate text-sm font-semibold md:text-base">
                             {contact.fullname}
