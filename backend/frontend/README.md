@@ -15,3 +15,7 @@ https://github.com/expo/fyi/blob/main/wsl.md
 
 
 Use something like https://nativebase.io/ for the buttons and stuff because it's hard to make from scratch with css
+
+Use yarn not npm for package management
+Use https://github.com/mrzachnugent/react-native-reusables for UI components
+    -> it's like this https://ui.shadcn.com/ but for react native
