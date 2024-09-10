@@ -31,7 +31,7 @@ const ProfileCard = ({ contact, keyNum } : { contact : Contact, keyNum : number}
                                     <SizableText fontWeight="bold">{contact.fullname}</SizableText>
                                 </YStack>
                                 <YStack alignItems="center" gap="$2">
-                                    <SizableText fontWeight="normal">{contact.location} {keyNum}</SizableText> 
+                                    <SizableText fontWeight="normal">{contact.location}</SizableText> 
                                 </YStack>
                             </YStack>
                         </XStack>
