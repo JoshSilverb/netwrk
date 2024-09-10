@@ -19,3 +19,25 @@ Use something like https://nativebase.io/ for the buttons and stuff because it's
 Use yarn not npm for package management
 Use https://github.com/mrzachnugent/react-native-reusables for UI components
     -> it's like this https://ui.shadcn.com/ but for react native
+
+^Actually using tamagui instead
+
+Cards must become:
+|------------------------------|
+| Avatar  NAME                 |
+| Avatar  location   DROPDOWN  |  --> dropdown exposes user bio and "more" button
+|                              |
+|------------------------------|
+
+Have "bio" and "Notes" section, but only bio is indexed by the model
+Don't have IG and Twitter as defaults for social medias - linkedin is most important
+Add "job" field to contact profile
+Figure out deduplication of locations on the map
+Add ability to delete contacts
+
+
+AWS stuff:
+API Gateway --> Lambda --> RDS proxy service --> RDS Postgres
+Second half outlined here: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-lambda-tutorial.html
+
+Roadmap: https://docs.google.com/document/d/129XY5eGY0OtNrhff0Q25pRoaJYyOTsoRrSlGZluzJbk/edit

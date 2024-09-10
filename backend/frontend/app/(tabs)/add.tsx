@@ -1,10 +1,11 @@
 import React from 'react';
 
 import { Text, View } from '@/components/Themed';
-import { TextInput, Button, Pressable, ScrollView } from 'react-native';
+import { TextInput, ScrollView, Pressable } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Months } from '@/constants/Definitions';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { XStack, YStack, Button } from 'tamagui';
 
 export default function AddContactPage() {
     const [fullname,   onChangeFullname]   = React.useState('');
@@ -12,7 +13,9 @@ export default function AddContactPage() {
     const [email,      onChangeEmail]      = React.useState('');
     const [phone,      onChangePhone]      = React.useState('');
     const [bio,        onChangeBio]        = React.useState('');
-    const [instagram,  onChangeInstagram]  = React.useState('');
+    const [notes,      onChangenotes]      = React.useState('');
+    const [metThrough, onChangeMetThrough] = React.useState('');
+    const [linkedin,   onChangeLinkedin]   = React.useState('');
     const [twitter,    onChangeTwitter]    = React.useState('');
 
     // Last Contact date picker
@@ -29,13 +32,14 @@ export default function AddContactPage() {
         setShow(true);
     };
 
-    const [importance, onChangeImportance] = React.useState('');
+    const [relevance,  onChangeRelevance] = React.useState('');
     const [tags,       onChangeTags]       = React.useState('');
 
     return (
 
-        <SafeAreaView className="flex-1 flex-col justify-start bg-slate-50">
+        <View className="flex-1 flex-col justify-start bg-white">
             <ScrollView automaticallyAdjustKeyboardInsets={true}>
+            <YStack>
                 <View className="flex mx-10 mt-4 border rounded-md border-slate-200">
                     <TextInput 
                         className="flex-2 font-bold text-lg" 
@@ -46,6 +50,7 @@ export default function AddContactPage() {
                         textAlign='center'
                     />
                 </View>
+
                 <View className="flex mt-4 mx-12 border rounded-md border-slate-200">
                     <TextInput 
                         className="" 
@@ -56,7 +61,7 @@ export default function AddContactPage() {
                         textAlign='center'
                     />
                 </View>
-                <View className="flex flex-row mt-4 bg-slate-50">
+                <View className="flex flex-row mt-4">
                     <View className="flex-1 flex mt-4 ml-10 mr-1 border rounded-md border-slate-200">
                         <TextInput 
                             className="pl-1" 
@@ -78,13 +83,13 @@ export default function AddContactPage() {
                         />
                     </View>
                 </View>
-                <View className="flex flex-row bg-slate-50">
+                <View className="flex flex-row">
                     <View className="flex-1 mt-4 ml-10 mr-1 border rounded-md border-slate-200">
                         <TextInput 
                             className="pl-1" 
-                            onChangeText={onChangeInstagram} 
-                            value={instagram} 
-                            placeholder="Instagram" 
+                            onChangeText={onChangeLinkedin} 
+                            value={linkedin} 
+                            placeholder="LinkedIn" 
                             textAlign='start'
                         />
                     </View>
@@ -110,10 +115,9 @@ export default function AddContactPage() {
                         
                     />
                 </View>
-
-                <View className="flex-2 flex-row bg-slate-50">
-                    <View className="flex-1 flex-col mt-4 ml-10 mr-1 bg-slate-50">
-                        <View className="flex bg-slate-50">
+                <View className="flex-2 flex-row">
+                    <View className="flex-1 flex-col mt-4 ml-10 mr-1">
+                        <View className="flex">
                             <Text>Last Contact</Text>
                         </View>
                         <View className="flex border mt-1 rounded-md border-slate-200 ">
@@ -131,15 +135,15 @@ export default function AddContactPage() {
                             </Pressable>
                         </View>
                     </View>
-                    <View className="flex-1 flex-col mt-4 ml-1 mr-10 bg-slate-50">
-                        <View className="flex bg-slate-50">
-                            <Text>Importance Score</Text>
+                    <View className="flex-1 flex-col mt-4 ml-1 mr-10 ">
+                        <View className="flex ">
+                            <Text>Relevance</Text>
                         </View>
                         <View className="flex border mt-1 rounded-md border-slate-200">
                             <TextInput 
                                 className="pl-1" 
-                                onChangeText={onChangeImportance} 
-                                value={importance} 
+                                onChangeText={onChangeRelevance} 
+                                value={relevance} 
                                 placeholder="5" 
                                 textAlign='start'
                                 inputMode='numeric'
@@ -148,8 +152,8 @@ export default function AddContactPage() {
                     </View>
                 </View>
 
-                <View className="flex-1 flex-col mt-4 mx-10 bg-slate-50">
-                    <View className="flex bg-slate-50">
+                <View className="flex-1 flex-col mt-4 mx-10">
+                    <View className="flex">
                         <Text>Tags (separated by commas)</Text>
                     </View>
                     <View className="flex border mt-1 rounded-md border-slate-200">
@@ -162,13 +166,11 @@ export default function AddContactPage() {
                         />
                     </View>
                 </View>
-
-                <View className="flex flex-row p-2 my-4 mx-20 justify-center border border-slate-200 rounded-xl bg-slate-300">
-                    <Pressable>
-                        <Text className='content-center'>Add</Text>
-                    </Pressable>
-                </View>
+                <Button marginTop="$5" marginHorizontal="$10">
+                    Add
+                </Button>
+            </YStack>
             </ScrollView>
-        </SafeAreaView>
+        </View>
   );
 }

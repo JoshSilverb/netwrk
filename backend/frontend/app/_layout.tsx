@@ -5,6 +5,8 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import config from '@/tamagui.config' // your configuration
+import { TamaguiProvider } from '@tamagui/core'
 
 import { useColorScheme } from '@/components/useColorScheme';
 
@@ -24,6 +26,8 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
+    InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
     ...FontAwesome.font,
   });
 
@@ -42,7 +46,11 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <TamaguiProvider config={config}>
+      <RootLayoutNav />
+    </TamaguiProvider>
+  );
 }
 
 function RootLayoutNav() {

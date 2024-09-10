@@ -9,7 +9,7 @@ import { Contacts } from '@/constants/PlaceholderData'
 
 export default function mapScreen() {
   return (
-    <SafeAreaView >
+    <View className='bg-white'>
       <Text className=" mb-2 mx-2 text-base font-medium text-gray-900">
           Contacts map
       </Text>
@@ -26,6 +26,6 @@ export default function mapScreen() {
       
       </MapView>
       
-    </SafeAreaView>
+    </View>
   );
 }

@@ -1,34 +1,27 @@
 import ProfileCard from '@/components/ProfileCard';
-import { Text, View, FlatList, Linking } from 'react-native';
+// import { FlatList } from 'react-native';
 import { Contact } from '@/constants/Definitions';
-import { Link } from 'expo-router';
+import { Href } from 'expo-router';
+import { View } from 'tamagui';
 
 
-const ContactsList = ({ contacts, address, header } : { contacts: Contact[], address:String }) => {
+const ContactsList = ({ contacts, address, header} 
+    :{ contacts: Contact[], address:Href<string>}) => {
 
-  return (
-    <View className='flex-1 flex-col'>
-      <FlatList
-        ListHeaderComponent={header}
-        className='flex-none'
-        data={contacts}
-        renderItem={({item} : {item:Contact}) => <ProfileCard contact={item} keyNum={item.id} />}
-        keyExtractor={item => item.id}
-      />
-      <LinkButton text={"See all"} address={address}  />
-    </View>
-  );
-};
-
-const LinkButton = ({ text, address } : { text: String, address: String }) => {
-
-  if (address) {
+    const profileCards = contacts.map(
+        (contact: Contact) => <ProfileCard contact={contact} keyNum={contact.id} />);
+  
     return (
-      <Link push href={address} className="mx-2 p-4 rounded-xl bg-slate-300" >
-        <Text>More...</Text>
-      </Link>
+        <View>{profileCards}</View>
     );
-  }
-}
+    {/* <FlatList
+            ListHeaderComponent={header}
+            className='flex-none'
+            data={contacts}
+            renderItem={({item} : {item:Contact}) => <ProfileCard contact={item} keyNum={item.id} />}
+            keyExtractor={item => item.id}
+        /> */}
+        {/* </View> */}
+};
 
 export default ContactsList;

@@ -2,7 +2,7 @@ import { Text, View } from '@/components/Themed';
 import { Contacts } from '@/constants/PlaceholderData'
 import  ContactsList from '@/components/ContactsList'
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ScrollView } from 'react-native';
+import { ScrollView, YStack, Paragraph } from 'tamagui';
 
 
 export default function contactsScreen() {
@@ -10,11 +10,16 @@ export default function contactsScreen() {
                          Sort by...
                        </Text>
     return (
-      <SafeAreaView className="flex-1 flex-col justify-start bg-slate-50	">
-        <View className="flex-1 col-span-full mb-4 bg-slate-50">
-          <ContactsList contacts={Contacts} header={filterHeader}/>
+        <View className="flex-1 justify-start bg-white	">
+            <ScrollView>
+                <Paragraph className="block mb-2 mx-2 text-base font-medium">
+                    Sort by...
+                </Paragraph>
+                <YStack >
+                    <ContactsList contacts={Contacts} header={filterHeader}/>
+                </YStack>
+            </ScrollView>
         </View>
-      </SafeAreaView>
     );
 
 }

@@ -1,8 +1,8 @@
-import { Text, View } from '@/components/Themed';
+import { View } from '@/components/Themed';
 import { Stack, useLocalSearchParams, Link } from 'expo-router';
 import { Contact } from '@/constants/Definitions';
 import { Contacts } from '@/constants/PlaceholderData'
-import { Pressable } from 'react-native';
+import { Button, Paragraph, XStack, YStack, Avatar, ScrollView } from 'tamagui';
 
 function getContactById(id: number, contacts: Contact[]): Contact | null {
   const contact = contacts.find(contact => contact.id === id);
@@ -11,68 +11,112 @@ function getContactById(id: number, contacts: Contact[]): Contact | null {
 
 export default function ContactPage() {
   const { id } = useLocalSearchParams();
+  const editLink = "/contact/edit/" + id;
 
   const contact = getContactById(parseInt(id), Contacts);
 
   if (contact === null) {
     return (
-      <View>
+      <View className="flex-1 bg-white">
         <Stack.Screen options={{ title: "Error" }} />
-        <Text>Could not find contact</Text>
+        <Paragraph>Could not find contact</Paragraph>
       </View>)
   }
 
   return (
 
-    <View>
+    <View className="flex-1 bg-white">
       <Stack.Screen options={{ title: "" }} />
 
-      <View className="flex flex-col">
-        <View className="flex flex-row pt-4 justify-center">
-          <Text className="font-bold text-lg">
+      <ScrollView>
+      <YStack alignItems="flex-start" gap="$2" padding="$5">
+        
+        {/* Header Stack */}
+        <YStack alignSelf="center" alignItems='center' gap="$2">
+          <Avatar circular size="$10">
+              <Avatar.Image
+              accessibilityLabel={contact.fullname}
+              src="https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"
+              />
+          </Avatar>
+
+          <Paragraph className="font-bold" size="$8">
             {contact.fullname}
-          </Text>
-        </View>
-        <View className="flex flex-row pt-4 justify-center">
-          <Text className="">{contact.location}</Text>
-        </View>
-        <View className="flex flex-row pt-4 justify-center">
-          <View className="flex flex-1 items-center">
-            <Text>{contact.emailaddress}</Text>
-          </View>
-          <View className="flex flex-1 items-center">
-            <Text>{contact.phonenumber}</Text>
-          </View>
-        </View>
-        <View className="flex flex-row pt-4 justify-center">
-          <Text>{contact.userbio}</Text>
-        </View>
-        <View className="flex flex-row pt-4 justify-center">
-          <Text>[how did we meet]</Text>
-        </View>
-        <View className="flex flex-row pt-4 justify-center">
-          <Text>[last time contacted]</Text>
-        </View>
-        <View className="flex flex-row pt-4 justify-center">
-          <Text>[importance score]</Text>
-        </View>
+          </Paragraph>
 
-        <View className="flex flex-row pt-8 justify-center">
-          <Link push href="#" className="flex flex-1 items-start mx-1 p-4 rounded-xl bg-slate-300" >
-            <Text>Edit</Text>
-          </Link>
-          <Link push href="#" className="flex flex-1 items-start mx-1 p-4 rounded-xl bg-slate-300" >
-            <Text>Generate Intro Message</Text>
-          </Link>
-          <Link push href="#" className="flex flex-1 items-start mx-1 p-4 rounded-xl bg-slate-300" >
-            <Text>Share</Text>
-          </Link>
-        </View>
-      </View>
+          <Paragraph color="gray">{contact.location}</Paragraph>
+        </YStack>
 
+        {/* Contact Info Stack */}
+        <Paragraph className="font-bold" size="$6" color="gray">
+          Contact info
+        </Paragraph>
+        <YStack alignSelf='flex-start' space="$2" paddingLeft="$2">
+          <Button size="$2">{contact.emailaddress}</Button>
+          <Button size="$2">{contact.phonenumber}</Button>
+        </YStack>
 
+        {/* Bio and Notes Stack */}
+        <Paragraph className="font-bold" size="$6" color="gray">
+          About
+        </Paragraph>
+        <YStack alignSelf='flex-start' space="$2" paddingLeft="$2">
+          <YStack space="$1">
+            <Paragraph className="font-bold" size="$4" color="gray">User Bio</Paragraph>
+            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} padding={10}>{contact.userbio}</Paragraph>
+          </YStack>
+          <YStack space="$1">
+            <Paragraph className="font-bold" size="$4" color="gray">User Notes</Paragraph>
+            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} padding={10}>Notes notes ntoes notes</Paragraph>
+          </YStack>
+          <YStack space="$1">
+            <Paragraph className="font-bold" size="$4" color="gray">Met through</Paragraph>
+            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} padding={10}>Met in college</Paragraph>
+          </YStack>
+        </YStack>
 
+        {/* Stats Stack */}
+        <Paragraph className="font-bold" size="$6" color="gray">
+          Stats
+        </Paragraph>
+        <YStack alignSelf='flex-start' space="$2" paddingLeft="$2">
+          <XStack space="$5">
+            <Paragraph className="font-bold" size="$4" color="gray">Last contacted:</Paragraph>
+            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} paddingLeft={10} paddingRight={10}>8 Sep 2024</Paragraph>
+          </XStack>
+          <XStack space="$5">
+            <Paragraph className="font-bold" size="$4" color="gray">Relevance score:</Paragraph>
+            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} paddingLeft={10} paddingRight={10}>5</Paragraph>
+          </XStack>
+        </YStack>
 
+        {/* Tags Stack */}
+        <Paragraph className="font-bold" size="$6" color="gray">
+          Tags
+        </Paragraph>
+        <XStack flexWrap="wrap" alignItems="flex-start" justifyContent="flex-start" space="$2" paddingLeft="$2" rowGap="$2">  
+          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">College Friend</Button>
+          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">In AI</Button>
+          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">Party Friend</Button>
+          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">Product Manager</Button>
+          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">New York</Button>
+          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">Microsoft</Button>
+          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">CEO</Button>
+        </XStack>
+      </YStack>
+      </ScrollView>        
+      
+      <XStack paddingLeft="$5" paddingRight="$5" paddingBottom="$3" alignSelf="center" gap="$2">
+        <Link push href={editLink} asChild >
+          <Button>Edit</Button>
+        </Link>
+        <Link push href="#" asChild >
+          <Button>Generate Message</Button>
+        </Link>
+        <Link push href="#" asChild >
+          <Button>Share</Button>
+        </Link>
+      </XStack>
     </View>
   );
 }

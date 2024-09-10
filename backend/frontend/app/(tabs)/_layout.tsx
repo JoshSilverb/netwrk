@@ -27,27 +27,6 @@ export default function TabLayout() {
         headerShown: useClientOnlyValue(false, true),
       }}>
       <Tabs.Screen
-        name="map"
-        options={{
-          title: 'Map',
-          tabBarIcon: ({ color }) => <TabBarIcon name="map" color={color} />,
-          headerRight: () => (
-            <Link href="/account" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="user"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="index"
         options={{
           title: 'Dashboard',
@@ -108,6 +87,27 @@ export default function TabLayout() {
                   />
                 )}
 
+              </Pressable>
+            </Link>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="map"
+        options={{
+          title: 'Map',
+          tabBarIcon: ({ color }) => <TabBarIcon name="map" color={color} />,
+          headerRight: () => (
+            <Link href="/account" asChild>
+              <Pressable>
+                {({ pressed }) => (
+                  <FontAwesome
+                    name="user"
+                    size={25}
+                    color={Colors[colorScheme ?? 'light'].text}
+                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
+                  />
+                )}
               </Pressable>
             </Link>
           ),
