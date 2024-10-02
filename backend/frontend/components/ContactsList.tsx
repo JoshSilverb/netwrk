@@ -1,5 +1,4 @@
 import ProfileCard from '@/components/ProfileCard';
-// import { FlatList } from 'react-native';
 import { Contact } from '@/constants/Definitions';
 import { Href } from 'expo-router';
 import { View } from 'tamagui';

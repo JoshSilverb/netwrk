@@ -2,7 +2,6 @@ import React from "react";
 
 import { Contact } from '@/constants/Definitions';
 import { Link } from 'expo-router';
-
 import { ChevronDown } from '@tamagui/lucide-icons'
 import { Accordion, Paragraph, Square, Avatar, XStack, YStack, SizableText, View, Button } from 'tamagui'
 

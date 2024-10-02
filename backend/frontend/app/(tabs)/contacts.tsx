@@ -1,7 +1,6 @@
 import { Text, View } from '@/components/Themed';
 import { Contacts } from '@/constants/PlaceholderData'
 import  ContactsList from '@/components/ContactsList'
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { ScrollView, YStack, Paragraph } from 'tamagui';
 
 
