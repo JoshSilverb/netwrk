@@ -1,8 +1,11 @@
 import { View } from '@/components/Themed';
 import { Stack, useLocalSearchParams, Link } from 'expo-router';
 import { Contact } from '@/constants/Definitions';
-import { Contacts } from '@/constants/PlaceholderData'
 import { Button, Paragraph, XStack, YStack, Avatar, ScrollView } from 'tamagui';
+import { useState, useEffect } from 'react';
+import { Loader } from '@/components/Loader';
+import { getContactsForUserURL } from '@/constants/Apis';
+import axios from 'axios';
 
 function getContactById(id: number, contacts: Contact[]): Contact | null {
   const contact = contacts.find(contact => contact.id === id);
@@ -13,7 +16,25 @@ export default function ContactPage() {
   const { id } = useLocalSearchParams();
   const editLink = "/contact/edit/" + id;
 
-  const contact = getContactById(parseInt(id), Contacts);
+  
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+      fetchContacts();
+  }, []);
+
+  const fetchContacts = async () => {
+      try {
+          const response = await axios.get(getContactsForUserURL);
+          setContacts(response.data);
+          setLoading(false);
+      } catch (error) {
+          console.error('Error fetching data:', error);
+      }
+  };
+
+  const contact = getContactById(parseInt(id), contacts);
 
   if (contact === null) {
     return (
@@ -30,7 +51,7 @@ export default function ContactPage() {
 
       <ScrollView>
       <YStack alignItems="flex-start" gap="$2" padding="$5">
-        
+        <Loader loading={loading}>
         {/* Header Stack */}
         <YStack alignSelf="center" alignItems='center' gap="$2">
           <Avatar circular size="$10">
@@ -103,6 +124,7 @@ export default function ContactPage() {
           <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">Microsoft</Button>
           <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">CEO</Button>
         </XStack>
+        </Loader>
       </YStack>
       </ScrollView>        
       

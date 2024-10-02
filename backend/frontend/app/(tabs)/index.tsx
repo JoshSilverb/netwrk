@@ -1,7 +1,6 @@
 import { Text, View } from 'react-native';
 import { useState, useEffect } from 'react';
 
-// import { Contacts } from '@/constants/PlaceholderData'
 import ContactsList from '@/components/ContactsList'
 import { Link } from 'expo-router';
 import { Button, YStack, ScrollView } from 'tamagui';
