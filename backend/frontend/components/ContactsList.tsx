@@ -5,7 +5,7 @@ import { Href } from 'expo-router';
 import { View } from 'tamagui';
 
 
-const ContactsList = ({ contacts, address, header} 
+const ContactsList = ({ contacts} 
     :{ contacts: Contact[], address:Href<string>}) => {
 
     const profileCards = contacts.map(
@@ -14,14 +14,6 @@ const ContactsList = ({ contacts, address, header}
     return (
         <View>{profileCards}</View>
     );
-    {/* <FlatList
-            ListHeaderComponent={header}
-            className='flex-none'
-            data={contacts}
-            renderItem={({item} : {item:Contact}) => <ProfileCard contact={item} keyNum={item.id} />}
-            keyExtractor={item => item.id}
-        /> */}
-        {/* </View> */}
 };
 
 export default ContactsList;

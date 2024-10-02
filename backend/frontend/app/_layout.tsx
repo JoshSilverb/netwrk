@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import config from '@/tamagui.config' // your configuration
 import { TamaguiProvider } from '@tamagui/core'
+import { PortalProvider } from '@tamagui/portal'
 
 import { useColorScheme } from '@/components/useColorScheme';
 
@@ -48,7 +49,9 @@ export default function RootLayout() {
 
   return (
     <TamaguiProvider config={config}>
-      <RootLayoutNav />
+      <PortalProvider shouldAddRootHost>
+        <RootLayoutNav />
+      </PortalProvider>
     </TamaguiProvider>
   );
 }
