@@ -8,7 +8,7 @@ import json
 from botocore.exceptions import ClientError
 
 
-def get_db_password():
+def get_db_secret():
 
     secret_name = "netwrkdb-pwd-1"
     region_name = "us-east-2"
