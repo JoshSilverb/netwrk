@@ -36,7 +36,7 @@ def test_get_contact_by_id():
     assert contacts[0]["fullname"] == "Alice Allison"
 
 
-def test_add_delte_contact():
+def test_add_delete_contact():
     config = Db_config(db_host="localhost", 
                         db_name="netwrk",
                         db_user="testuser",
@@ -81,4 +81,4 @@ def test_add_delte_contact():
 if __name__ == "__main__":
     # test_get_contacts()
     # test_get_contact_by_id()
-    test_add_delte_contact()
+    test_add_delete_contact()

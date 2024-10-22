@@ -1,6 +1,5 @@
 """db_accessor.py"""
 
-import json
 import psycopg2
 import psycopg2.extras
 
@@ -77,7 +76,7 @@ def add_contact_for_user(username, contact, db_config: Db_config):
             "INSERT INTO contacts \
              (user_id, fullname, location, emailaddress, phonenumber, userbio) VALUES \
              (%s, %s, %s, %s, %s, %s) RETURNING contact_id",
-            (contact["user_id"], contact["fullname"], contact["location"], contact["emailaddress"], 
+            (user_id, contact["fullname"], contact["location"], contact["emailaddress"], 
              contact["phonenumber"], contact["userbio"]))
         id_of_new_row = cursor.fetchone()[0]
         conn.commit()

@@ -33,10 +33,25 @@ def get_contacts_for_user(event, context):
 def add_contact_for_user(event, context):
     print("Got 'addContactsForUser POST Request - event:\n", event)
 
-    username = "josh"
+    data = json.loads(event['body'])
+    username = data['creatorUsername']
+    new_contact = data['newContact']
 
     DB_SECRETS = get_db_secret()
 
     config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
 
+    status, result = db_accessor.add_contact_for_user(username, new_contact, config)
     
+    if status:
+        return {
+            'statusCode': 200,
+            'body': json.dumps(result)
+        }
+    
+    print("Failed with message", result)
+
+    return {
+        'statusCode': 500,
+        'body': result
+    }
