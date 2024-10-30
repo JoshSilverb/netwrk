@@ -20,6 +20,8 @@ export default function contactsScreen() {
             const response = await axios.get(getContactsForUserURL);
             setContacts(response.data);
             setLoading(false);
+            console.log("Successfully got contacts");
+            console.log(response.data);
         } catch (error) {
             console.error('Error fetching data:', error);
         }

@@ -6,17 +6,25 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Months } from '@/constants/Definitions';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { XStack, YStack, Button } from 'tamagui';
+import { addContactForUserURL } from '@/constants/Apis';
+import axios from 'axios';
+import { useRouter } from 'expo-router';
 
 export default function AddContactPage() {
+    // Basic data 
     const [fullname,   onChangeFullname]   = React.useState('');
     const [location,   onChangeLocation]   = React.useState('');
     const [email,      onChangeEmail]      = React.useState('');
     const [phone,      onChangePhone]      = React.useState('');
+    const [meeting,    onChangeMeeting]    = React.useState('');
     const [bio,        onChangeBio]        = React.useState('');
     const [notes,      onChangenotes]      = React.useState('');
     const [metThrough, onChangeMetThrough] = React.useState('');
     const [linkedin,   onChangeLinkedin]   = React.useState('');
-    const [twitter,    onChangeTwitter]    = React.useState('');
+    const [instagram,  onChangeInstagram]  = React.useState('');
+    const [relevance,  onChangeRelevance]  = React.useState('');
+    const [tags,       onChangeTags]       = React.useState('');
+
 
     // Last Contact date picker
     const [date, setDate] = React.useState(new Date(Date.now()));
@@ -32,8 +40,71 @@ export default function AddContactPage() {
         setShow(true);
     };
 
-    const [relevance,  onChangeRelevance] = React.useState('');
-    const [tags,       onChangeTags]       = React.useState('');
+    const resetData = () => {
+        onChangeFullname("");
+        onChangeLocation("");
+        onChangeEmail("");
+        onChangePhone("");
+        onChangeMeeting("");
+        onChangeBio("");
+        onChangenotes("");
+        onChangeMetThrough("");
+        onChangeLinkedin("");
+        onChangeInstagram("");
+        onChangeRelevance("");
+        onChangeTags("");
+        setDate(new Date(Date.now()));
+    }
+
+    //================================
+    // Sending this contact to backend
+    //================================
+
+    // Contact data to be sent
+    const requestBody = 
+        {
+            creatorUsername: 'josh',
+            newContact: {
+                "fullname": fullname,
+                "location": location,
+                "emailaddress": email,
+                "phonenumber": phone,
+                "meeting": meeting,
+                "userbio": bio,
+                "notes": notes,
+                "metThrough": metThrough,
+                "linkedin": linkedin,
+                "instagram": instagram,
+                "relevance": relevance,
+                "tags": tags
+            }
+        }
+
+    // Send data to backend and redirect to contact page
+    const [contactId, setContactId] = React.useState('');
+    const router = useRouter();
+
+    const postNewContact = async () => {
+        try {
+            const response = await axios.post(addContactForUserURL, requestBody)
+            console.log(response.data)
+            // setContactId(response.data)
+            if (response.status == 200) {
+                resetData();
+                const redirectLink = "/contact/" + response.data;
+                router.push(redirectLink);
+            }
+
+        }
+        catch (error) {
+            console.error("Error during add contact POST request:", error);
+        }
+    }
+    // ALTERNATIVE REDIRECT APPROACH:
+    // if (contactId != '') {
+    //     const redirectLink = "/contact/" + contactId;
+    //     return <Redirect href={redirectLink} />
+    // }
 
     return (
 
@@ -96,12 +167,24 @@ export default function AddContactPage() {
                     <View className="flex-1 mt-4 ml-1 mr-10 border rounded-md border-slate-200">
                         <TextInput 
                             className="pl-1" 
-                            onChangeText={onChangeTwitter} 
-                            value={twitter} 
-                            placeholder="Twitter" 
+                            onChangeText={onChangeInstagram} 
+                            value={instagram} 
+                            placeholder="Instagram" 
                             textAlign='start'
                         />
                     </View>
+                </View>
+                <View className="flex mt-4 mx-10 border rounded-md border-slate-200">
+                    <TextInput 
+                        // note that 4px padding is equiv to p-1 in tailwind
+                        style={{textAlignVertical: "top", paddingLeft: 4}}
+                        onChangeText={onChangeMeeting} 
+                        value={meeting}
+                        placeholder="Met through"
+                        multiline={true}
+                        numberOfLines={2} 
+                        
+                    />
                 </View>
                 <View className="flex mt-4 mx-10 border rounded-md border-slate-200">
                     <TextInput 
@@ -166,7 +249,7 @@ export default function AddContactPage() {
                         />
                     </View>
                 </View>
-                <Button marginTop="$5" marginHorizontal="$10">
+                <Button marginTop="$5" marginHorizontal="$10" onPress={postNewContact} >
                     Add
                 </Button>
             </YStack>
