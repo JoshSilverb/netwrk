@@ -10,7 +10,7 @@ import { useState, useEffect } from 'react';
 
 
 function getContactById(id: number, contacts: Contact[]): Contact | null {
-  const contact = contacts.find(contact => contact.id === id);
+  const contact = contacts.find(contact => contact.contact_id === id);
   return contact || null;
 }
 

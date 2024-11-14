@@ -6,7 +6,7 @@ import { ChevronDown } from '@tamagui/lucide-icons'
 import { Accordion, Paragraph, Square, Avatar, XStack, YStack, SizableText, View, Button } from 'tamagui'
 
 const ProfileCard = ({ contact, keyNum } : { contact : Contact, keyNum : number}) => {
-    const contactLinkUrl = "/contact/" + contact.id;
+    const contactLinkUrl = "/contact/" + contact.contact_id;
 
     return (
         <Accordion overflow="hidden" type="multiple" marginBottom={10}>

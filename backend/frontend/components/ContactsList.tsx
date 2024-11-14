@@ -7,7 +7,7 @@ const ContactsList = ({ contacts}
     :{ contacts: Contact[]}) => {
 
     const profileCards = contacts.map(
-        (contact: Contact) => <ProfileCard contact={contact} keyNum={contact.id} />);
+        (contact: Contact) => <ProfileCard contact={contact} keyNum={contact.contact_id} />);
   
     return (
         <View>{profileCards}</View>

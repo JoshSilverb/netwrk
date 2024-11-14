@@ -1,42 +1,74 @@
 import { View } from '@/components/Themed';
 import { Stack, useLocalSearchParams, Link } from 'expo-router';
 import { Contact } from '@/constants/Definitions';
-import { Button, Paragraph, XStack, YStack, Avatar, ScrollView } from 'tamagui';
+import { Button, Paragraph, XStack, YStack, Avatar, ScrollView, Accordion, Square } from 'tamagui';
+import { ChevronUp, ChevronDown } from '@tamagui/lucide-icons'
+import { removeContactForUserURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
 import { Loader } from '@/components/Loader';
-import { getContactsForUserURL } from '@/constants/Apis';
+import { getContactByIdURL } from '@/constants/Apis';
 import axios from 'axios';
+import { useRouter } from 'expo-router';
 
-function getContactById(id: number, contacts: Contact[]): Contact | null {
-  const contact = contacts.find(contact => contact.id === id);
-  return contact || null;
-}
 
 export default function ContactPage() {
   const { id } = useLocalSearchParams();
   const editLink = "/contact/edit/" + id;
 
+  const requestURL = getContactByIdURL + "/" + id;
   
-  const [contacts, setContacts] = useState([]);
+  const [contact, setContact] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-      fetchContacts();
-  }, []);
+  const [errorReceived, setErrorReceived] = useState(false);
 
-  const fetchContacts = async () => {
+  useEffect(() => {
+      fetchContactById();
+  }, []);
+  const fetchContactById = async () => {
       try {
-          const response = await axios.get(getContactsForUserURL);
-          setContacts(response.data);
+        console.log("Request url: ", requestURL);
+          const response = await axios.get(requestURL);
+          setContact(response.data);
           setLoading(false);
+          setErrorReceived(false);
       } catch (error) {
           console.error('Error fetching data:', error);
+          setLoading(false);
+          setErrorReceived(true);
       }
   };
 
-  const contact = getContactById(parseInt(id), contacts);
+    //================================
+    // Sending this contact to backend
+    //================================
 
-  if (contact === null) {
+    // Contact data to be sent
+    const requestBody = {
+        creatorUsername: 'josh',
+        contactId: id
+    }
+
+  // Send data to backend and redirect to contact page
+  const router = useRouter();
+
+  const removeContact = async () => {
+      try {
+          const response = await axios.post(removeContactForUserURL, requestBody)
+          console.log(response.data)
+          // setContactId(response.data)
+          if (response.status == 200) {
+              const redirectLink = "/(tabs)/contacts/";
+              router.replace(redirectLink);
+          }
+
+      }
+      catch (error) {
+          console.error("Error during remove contact POST request:", error);
+      }
+  }
+
+  if (errorReceived) {
     return (
       <View className="flex-1 bg-white">
         <Stack.Screen options={{ title: "Error" }} />
@@ -128,15 +160,43 @@ export default function ContactPage() {
       </YStack>
       </ScrollView>        
       
+      {/* Bottom buttons Stack */}
       <XStack paddingLeft="$5" paddingRight="$5" paddingBottom="$3" alignSelf="center" gap="$2">
-        <Link push href={editLink} asChild >
-          <Button>Edit</Button>
-        </Link>
-        <Link push href="#" asChild >
-          <Button>Generate Message</Button>
-        </Link>
+      {/* <Accordion overflow="hidden" type="multiple" marginBottom={10}>
+        <Accordion.Item value={"editbutton"}>
+            <Accordion.Trigger flexDirection="row" justifyContent="space-between">
+                {({
+                open,
+                }: {
+                open: boolean
+                }) => (
+                <>
+                    <Paragraph fontWeight="bold">Edit</Paragraph>
+
+                    <Square  rotate={open ? '0deg' : '180deg'}>
+                    <ChevronDown size="$1" />
+                    </Square>
+                </>
+                )}
+            </Accordion.Trigger>
+            <View flexDirection="row">
+                <View>
+                <Accordion.Content  flex={1} exitStyle={{ opacity: 0 }}>
+                    <YStack alignSelf="center">
+                        <Paragraph className="pb-2">{"opened"}</Paragraph>
+                    </YStack>
+                </Accordion.Content>
+                </View>
+            </View>
+          </Accordion.Item>
+        </Accordion> */}
+        
+        <Button onPress={removeContact}>Delete</Button>
         <Link push href="#" asChild >
           <Button>Share</Button>
+        </Link>
+        <Link push href="#" asChild >
+          <Button>Edit</Button>
         </Link>
       </XStack>
     </View>

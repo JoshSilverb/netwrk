@@ -61,27 +61,25 @@ export default function AddContactPage() {
     //================================
 
     // Contact data to be sent
-    const requestBody = 
-        {
-            creatorUsername: 'josh',
-            newContact: {
-                "fullname": fullname,
-                "location": location,
-                "emailaddress": email,
-                "phonenumber": phone,
-                "meeting": meeting,
-                "userbio": bio,
-                "notes": notes,
-                "metThrough": metThrough,
-                "linkedin": linkedin,
-                "instagram": instagram,
-                "relevance": relevance,
-                "tags": tags
-            }
+    const requestBody = {
+        creatorUsername: 'josh',
+        newContact: {
+            "fullname": fullname,
+            "location": location,
+            "emailaddress": email,
+            "phonenumber": phone,
+            "meeting": meeting,
+            "userbio": bio,
+            "notes": notes,
+            "metThrough": metThrough,
+            "linkedin": linkedin,
+            "instagram": instagram,
+            "relevance": relevance,
+            "tags": tags
         }
+    }
 
     // Send data to backend and redirect to contact page
-    const [contactId, setContactId] = React.useState('');
     const router = useRouter();
 
     const postNewContact = async () => {
@@ -92,7 +90,7 @@ export default function AddContactPage() {
             if (response.status == 200) {
                 resetData();
                 const redirectLink = "/contact/" + response.data;
-                router.push(redirectLink);
+                router.replace(redirectLink);
             }
 
         }
