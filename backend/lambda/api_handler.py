@@ -23,6 +23,8 @@ def get_contacts_for_user(event, context):
             'statusCode': 200,
             'body': json.dumps(contacts)
         }
+    
+    print("Failed with message", error_message)
 
     return {
         'statusCode': 500,
@@ -43,6 +45,57 @@ def add_contact_for_user(event, context):
 
     status, result = db_accessor.add_contact_for_user(username, new_contact, config)
     
+    if status:
+        return {
+            'statusCode': 200,
+            'body': json.dumps(result)
+        }
+    
+    print("Failed with message", result)
+
+    return {
+        'statusCode': 500,
+        'body': result
+    }
+
+
+def remove_contact_for_user(event, context):
+    print("Got 'removeContactsForUser POST Request - event:\n", event)
+    
+    data = json.loads(event['body'])
+    username = data['creatorUsername']
+    contact_id = data['contactId']
+
+    DB_SECRETS = get_db_secret()
+    config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
+
+    status, result = db_accessor.remove_contact_for_user(username, contact_id, config)
+
+    if status:
+        return {
+            'statusCode': 200,
+            'body': json.dumps(result)
+        }
+    
+    print("Failed with message", result)
+
+    return {
+        'statusCode': 500,
+        'body': result
+    }
+
+
+def get_contact_by_id(event, contex):
+    print("Got 'removeContactsForUser GET Request - event:\n", event)
+
+    username = ""
+    contact_id = event['pathParameters']['id']
+
+    DB_SECRETS = get_db_secret()
+    config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
+
+    status, result = db_accessor.get_contact_by_id(username, contact_id, config)
+
     if status:
         return {
             'statusCode': 200,

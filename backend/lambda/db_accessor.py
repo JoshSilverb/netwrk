@@ -12,6 +12,7 @@ class Db_config:
         self.db_pwd  = db_pwd
         self.db_port = db_port
 
+
 def get_contacts_for_user(username, db_config: Db_config):
     try:
         # Connect to PostgreSQL database
@@ -127,11 +128,10 @@ def remove_contact_for_user(username, contact_id, db_config: Db_config):
         conn.close()
 
         # Return the number of rows affected
-        return rows_deleted, True
+        return True, contact_id 
     except Exception as e:
-        return str(e), False
+        return False, str(e)
     
-
 
 def get_contact_by_id(username, contact_id, db_config: Db_config):
     try:
@@ -145,16 +145,6 @@ def get_contact_by_id(username, contact_id, db_config: Db_config):
         )
 
         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        
-        # Check that username is an acual user, and owns this contact
-        cursor.execute("SELECT user_id,  FROM users WHERE username=%s", (username,))
-
-        result = cursor.fetchall()
-        if len(result) == 0:
-            raise Exception("Unable to add new contact - user '"+username+"' not found")
-
-        user_id = result[0]
-
 
         # Execute a query
         cursor.execute(
@@ -168,14 +158,14 @@ def get_contact_by_id(username, contact_id, db_config: Db_config):
         if len(rawRows) == 0:
              return "", []
 
-        rows = [dict(row) for row in rawRows]
+        row = dict(rawRows[0])
 
         # Close connections
         cursor.close()
         conn.close()
 
         # Return the query results as list of dicts
-        return "", rows
+        return True, row
 
     except Exception as e:
-        return str(e), []
+        return False, str(e)

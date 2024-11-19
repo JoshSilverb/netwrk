@@ -27,13 +27,17 @@ def test_get_contact_by_id():
                        db_pwd="test",
                        db_port="5432")
 
+    username = "josh"
     contact_id = 1
 
-    error, contacts = get_contact_by_id(contact_id, config)
-    print(contacts)
+    error, contact = get_contact_by_id(username, contact_id, config)
+    
+    if error:
+        print(error)
+        exit(1)
+    print(contact)
 
-    assert len(contacts) == 1
-    assert contacts[0]["fullname"] == "Alice Allison"
+    assert contact["fullname"] == "Alice Allison"
 
 
 def test_add_delete_contact():
@@ -79,6 +83,6 @@ def test_add_delete_contact():
 
 
 if __name__ == "__main__":
-    # test_get_contacts()
-    # test_get_contact_by_id()
+    test_get_contacts()
+    test_get_contact_by_id()
     test_add_delete_contact()
