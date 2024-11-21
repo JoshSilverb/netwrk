@@ -1,5 +1,5 @@
 import { View } from '@/components/Themed';
-import { Stack, useLocalSearchParams, Link } from 'expo-router';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { Contact } from '@/constants/Definitions';
 import { Button, Paragraph, XStack, YStack, Avatar, ScrollView, Accordion, Square } from 'tamagui';
 import { ChevronUp, ChevronDown } from '@tamagui/lucide-icons'
@@ -13,7 +13,6 @@ import { useRouter } from 'expo-router';
 
 export default function ContactPage() {
   const { id } = useLocalSearchParams();
-  const editLink = "/contact/edit/" + id;
 
   const requestURL = getContactByIdURL + "/" + id;
   
@@ -68,6 +67,12 @@ export default function ContactPage() {
       }
   }
 
+  
+  const editContact = async () => {
+    // const editLink = "/add/" + id;
+    router.push({ pathname: '/add', params: { id } });
+}
+
   if (errorReceived) {
     return (
       <View className="flex-1 bg-white">
@@ -81,7 +86,8 @@ export default function ContactPage() {
     <View className="flex-1 bg-white">
       <Stack.Screen options={{ title: "" }} />
 
-      <ScrollView>
+      <YStack flex={1} position="relative">
+      <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
       <YStack alignItems="flex-start" gap="$2" padding="$5">
         <Loader loading={loading}>
         {/* Header Stack */}
@@ -161,44 +167,20 @@ export default function ContactPage() {
       </ScrollView>        
       
       {/* Bottom buttons Stack */}
-      <XStack paddingLeft="$5" paddingRight="$5" paddingBottom="$3" alignSelf="center" gap="$2">
-      {/* <Accordion overflow="hidden" type="multiple" marginBottom={10}>
-        <Accordion.Item value={"editbutton"}>
-            <Accordion.Trigger flexDirection="row" justifyContent="space-between">
-                {({
-                open,
-                }: {
-                open: boolean
-                }) => (
-                <>
-                    <Paragraph fontWeight="bold">Edit</Paragraph>
-
-                    <Square  rotate={open ? '0deg' : '180deg'}>
-                    <ChevronDown size="$1" />
-                    </Square>
-                </>
-                )}
-            </Accordion.Trigger>
-            <View flexDirection="row">
-                <View>
-                <Accordion.Content  flex={1} exitStyle={{ opacity: 0 }}>
-                    <YStack alignSelf="center">
-                        <Paragraph className="pb-2">{"opened"}</Paragraph>
-                    </YStack>
-                </Accordion.Content>
-                </View>
-            </View>
-          </Accordion.Item>
-        </Accordion> */}
-        
+      <XStack 
+        position="absolute"
+        bottom={0} // Anchors to the bottom of the screen
+        left={0}
+        right={0}
+        backgroundColor="rgba(255, 255, 255, 0.8)" // Translucent background
+        padding={16}
+        justifyContent="space-between"
+        alignItems="center">
         <Button onPress={removeContact}>Delete</Button>
-        <Link push href="#" asChild >
-          <Button>Share</Button>
-        </Link>
-        <Link push href="#" asChild >
-          <Button>Edit</Button>
-        </Link>
+        <Button>Share</Button>
+        <Button onPress={editContact}>Edit</Button>
       </XStack>
+      </YStack>
     </View>
   );
 }

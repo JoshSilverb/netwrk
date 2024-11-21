@@ -6,3 +6,4 @@ export const getContactsForUserURL   = baseURL + tier + '/getContactsForUser';
 export const addContactForUserURL    = baseURL + tier + '/addContactForUser';
 export const getContactByIdURL       = baseURL + tier + '/getContactById';
 export const removeContactForUserURL =  baseURL + tier + '/removeContactForUser';
+export const updateContactForUserURL =  baseURL + tier + '/updateContactForUser';

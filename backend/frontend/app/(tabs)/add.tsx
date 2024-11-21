@@ -5,12 +5,19 @@ import { TextInput, ScrollView, Pressable } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Months } from '@/constants/Definitions';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { XStack, YStack, Button } from 'tamagui';
-import { addContactForUserURL } from '@/constants/Apis';
+import { XStack, YStack, Button, Paragraph } from 'tamagui';
+import { addContactForUserURL, getContactByIdURL, updateContactForUserURL } from '@/constants/Apis';
 import axios from 'axios';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { Loader } from '@/components/Loader';
 
 export default function AddContactPage() {
+    const { id } = useLocalSearchParams();
+    console.log("Got ID=", id);
+
+    const [loading,       setLoading]       = React.useState(true);
+    // const [errorReceived, setErrorReceived] = React.useState(false);    
+
     // Basic data 
     const [fullname,   onChangeFullname]   = React.useState('');
     const [location,   onChangeLocation]   = React.useState('');
@@ -29,6 +36,40 @@ export default function AddContactPage() {
     // Last Contact date picker
     const [date, setDate] = React.useState(new Date(Date.now()));
     const [show, setShow] = React.useState(false);
+
+    
+    // If id isn't set, then this is in pure add mode, not edit, so don't need 
+    // loading and error flags.
+    const [resolvedId, setResolvedId] = React.useState<string | undefined>(undefined);
+
+    const router = useRouter();
+
+    React.useEffect(() => {
+        if (typeof id === 'undefined') {
+            console.log("Id is undefined");
+            setLoading(false);
+        }
+        else {
+            setResolvedId(id as string);
+            fetchContactById(id as string);
+        }
+
+    }, [id, router]);
+
+    const fetchContactById = async (id: string) => {
+        try {
+            const requestURL = getContactByIdURL + "/" + id;
+            console.log("Request url: ", requestURL);
+            const response = await axios.get(requestURL);
+            setDataFromContact(response.data);
+            setLoading(false);
+            // setErrorReceived(false);
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            setLoading(false);
+            // setErrorReceived(true);
+        }
+    };
 
     const onChange = (event, selectedDate) => {
         const currentDate = selectedDate;
@@ -56,39 +97,56 @@ export default function AddContactPage() {
         setDate(new Date(Date.now()));
     }
 
+    const setDataFromContact = (contact) => {
+        onChangeFullname(contact.fullname);
+        onChangeLocation(contact.location);
+        onChangeEmail(contact.emailaddress);
+        onChangePhone(contact.phonenumber);
+        // onChangeMeeting("");
+        onChangeBio(contact.userbio);
+        // onChangenotes("");
+        // onChangeMetThrough("");
+        // onChangeLinkedin("");
+        // onChangeInstagram("");
+        // onChangeRelevance("");
+        // onChangeTags("");
+        // setDate(new Date(Date.now()));
+    }
+
     //================================
     // Sending this contact to backend
     //================================
 
-    // Contact data to be sent
-    const requestBody = {
-        creatorUsername: 'josh',
-        newContact: {
-            "fullname": fullname,
-            "location": location,
-            "emailaddress": email,
-            "phonenumber": phone,
-            "meeting": meeting,
-            "userbio": bio,
-            "notes": notes,
-            "metThrough": metThrough,
-            "linkedin": linkedin,
-            "instagram": instagram,
-            "relevance": relevance,
-            "tags": tags
-        }
-    }
+    
 
     // Send data to backend and redirect to contact page
-    const router = useRouter();
 
     const postNewContact = async () => {
+        // Contact data to be sent
+        const requestBody = {
+            creatorUsername: 'josh',
+            newContact: {
+                "fullname": fullname,
+                "location": location,
+                "emailaddress": email,
+                "phonenumber": phone,
+                "meeting": meeting,
+                "userbio": bio,
+                "notes": notes,
+                "metThrough": metThrough,
+                "linkedin": linkedin,
+                "instagram": instagram,
+                "relevance": relevance,
+                "tags": tags
+            }
+        }
+
         try {
             const response = await axios.post(addContactForUserURL, requestBody)
             console.log(response.data)
             // setContactId(response.data)
             if (response.status == 200) {
-                resetData();
+                // resetData();   // TODO: SEE IF THIS LINE IS ACTUALLY NEEDED
                 const redirectLink = "/contact/" + response.data;
                 router.replace(redirectLink);
             }
@@ -98,17 +156,53 @@ export default function AddContactPage() {
             console.error("Error during add contact POST request:", error);
         }
     }
-    // ALTERNATIVE REDIRECT APPROACH:
-    // if (contactId != '') {
-    //     const redirectLink = "/contact/" + contactId;
-    //     return <Redirect href={redirectLink} />
-    // }
 
+    // Update contact API call
+
+    const updateContact = async () => {
+        // Contact data to be sent
+        const requestBody = {
+            creatorUsername: 'josh',
+            newContact: {
+                "contact_id": id as string,
+                "fullname": fullname,
+                "location": location,
+                "emailaddress": email,
+                "phonenumber": phone,
+                "meeting": meeting,
+                "userbio": bio,
+                "notes": notes,
+                "metThrough": metThrough,
+                "linkedin": linkedin,
+                "instagram": instagram,
+                "relevance": relevance,
+                "tags": tags
+            }
+        }
+        
+        try {
+            const response = await axios.post(updateContactForUserURL, requestBody)
+            console.log(response.data)
+            // setContactId(response.data)
+            if (response.status == 200) {
+                // resetData();   // TODO: SEE IF THIS LINE IS ACTUALLY NEEDED
+                const redirectLink = "/contact/" + response.data;
+                router.replace(redirectLink);
+            }
+
+        }
+        catch (error) {
+            console.error("Error during add contact POST request:", error);
+        }
+    }
+    
+    console.log("Rendering! loading=", loading);
     return (
 
         <View className="flex-1 flex-col justify-start bg-white">
             <ScrollView automaticallyAdjustKeyboardInsets={true}>
             <YStack>
+                {/* <Loader loading={loading}> */}
                 <View className="flex mx-10 mt-4 border rounded-md border-slate-200">
                     <TextInput 
                         className="flex-2 font-bold text-lg" 
@@ -247,9 +341,14 @@ export default function AddContactPage() {
                         />
                     </View>
                 </View>
-                <Button marginTop="$5" marginHorizontal="$10" onPress={postNewContact} >
-                    Add
-                </Button>
+                {typeof id === 'undefined' 
+                    ? (<Button marginTop="$5" marginHorizontal="$10" onPress={postNewContact} >
+                           Add
+                       </Button>)
+                    : (<Button marginTop="$5" marginHorizontal="$10" onPress={updateContact} >
+                        Update
+                    </Button>)}
+                {/* </Loader> */}
             </YStack>
             </ScrollView>
         </View>
