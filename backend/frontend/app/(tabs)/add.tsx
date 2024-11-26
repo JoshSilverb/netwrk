@@ -45,14 +45,19 @@ export default function AddContactPage() {
     const router = useRouter();
 
     React.useEffect(() => {
-        if (typeof id === 'undefined') {
-            console.log("Id is undefined");
+        if (id === '0') {
+            console.log("Id is 0, not fetching a contact");
             setLoading(false);
         }
         else {
+            console.log("ID is non-0, fetching cause ID=", id);
             setResolvedId(id as string);
             fetchContactById(id as string);
         }
+        return () => {
+            console.log("Cleaning up");
+            resetData();
+        };
 
     }, [id, router]);
 
@@ -183,9 +188,7 @@ export default function AddContactPage() {
         try {
             const response = await axios.post(updateContactForUserURL, requestBody)
             console.log(response.data)
-            // setContactId(response.data)
             if (response.status == 200) {
-                // resetData();   // TODO: SEE IF THIS LINE IS ACTUALLY NEEDED
                 const redirectLink = "/contact/" + response.data;
                 router.replace(redirectLink);
             }
@@ -197,6 +200,7 @@ export default function AddContactPage() {
     }
     
     console.log("Rendering! loading=", loading);
+
     return (
 
         <View className="flex-1 flex-col justify-start bg-white">

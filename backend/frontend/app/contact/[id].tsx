@@ -69,8 +69,8 @@ export default function ContactPage() {
 
   
   const editContact = async () => {
-    // const editLink = "/add/" + id;
-    router.push({ pathname: '/add', params: { id } });
+    // editLink = "/add/?id={id}"
+    router.push({ pathname: '/add', params: { id: id } });
 }
 
   if (errorReceived) {
