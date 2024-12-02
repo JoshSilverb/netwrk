@@ -169,3 +169,44 @@ def get_contact_by_id(username, contact_id, db_config: Db_config):
 
     except Exception as e:
         return False, str(e)
+
+
+def update_contact_for_user(username, contact, db_config: Db_config):
+    try:
+        # Connect to PostgreSQL database
+        conn = psycopg2.connect(
+            host=db_config.db_host,
+            database=db_config.db_name,
+            user=db_config.db_user,
+            password=db_config.db_pwd,
+            port=db_config.db_port
+        )
+
+        cursor = conn.cursor()
+
+        # Check that username is an acual user (and isn't exceeding their limits)
+        cursor.execute("SELECT user_id FROM users WHERE username=%s", (username,))
+
+        result = cursor.fetchall()
+        if len(result) == 0:
+            raise Exception("Unable to update contact - user '"+username+"' not found")
+
+        user_id = result[0]
+
+        # Execute a query
+        cursor.execute(
+            "UPDATE contacts \
+             SET user_id=%s, fullname=%s, location=%s, emailaddress=%s, phonenumber=%s, userbio=%s \
+             WHERE contact_id=%s",
+            (user_id, contact["fullname"], contact["location"], contact["emailaddress"], 
+             contact["phonenumber"], contact["userbio"], contact["contact_id"]))
+        conn.commit()
+
+        # Close connections
+        cursor.close()
+        conn.close()
+
+        return True, contact["contact_id"]
+    except Exception as e:
+        return False, str(e)
+    
