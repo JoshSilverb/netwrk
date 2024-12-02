@@ -26,8 +26,13 @@ export default function mapScreen() {
       fetchContacts();
   }, []);
 
+  useEffect(() => {
+      console.log("Contacts:", contacts);
+  }, [contacts])
+
   const fetchContacts = async () => {
       try {
+          console.log("Getting contacts")
           const response = await axios.get(getContactsForUserURL);
           setContacts(response.data);
           setLoading(false);

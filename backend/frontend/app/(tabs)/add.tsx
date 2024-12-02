@@ -345,7 +345,7 @@ export default function AddContactPage() {
                         />
                     </View>
                 </View>
-                {typeof id === 'undefined' 
+                { id === '0' 
                     ? (<Button marginTop="$5" marginHorizontal="$10" onPress={postNewContact} >
                            Add
                        </Button>)
