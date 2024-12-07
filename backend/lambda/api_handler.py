@@ -2,8 +2,10 @@
 
 """Processor for requests coming in from API Gateway"""
 
-import db_accessor
 import json
+
+import db_accessor
+import login_manager
 
 from get_secret import get_db_secret
 
@@ -134,4 +136,93 @@ def update_contact_for_user(event, context):
     return {
         'statusCode': 500,
         'body': result
+    }
+
+
+def store_user_credentials(event, context):
+    print("Got 'storeUserCredentials POST Request - event:\n", event)
+    
+    data = json.loads(event['body'])
+    username = data['username']
+    password = data['password']
+
+    DB_SECRETS = get_db_secret()
+
+    config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
+
+    try:
+        user_token = login_manager.store_user_credentials(username, password, config)
+    except Exception  as e:
+        print("storeUserCredentials failed with exception:", e)
+
+        return {
+            'statusCode': 500,
+            'body': {
+                'errorMessage': str(e)
+            }
+        }
+    
+    return {
+        'statusCode': 200,
+        'body': {
+            'user_token': user_token
+        }
+    }
+
+
+def validate_user_credentials(event, context):
+    print("Got 'validateUserCredentials POST Request - event:\n", event)
+    
+    data = json.loads(event['body'])
+    username = data['username']
+    password = data['password']
+
+    DB_SECRETS = get_db_secret()
+
+    config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
+
+    try:
+        user_token = login_manager.validate_user_credentials(username, password, config)
+    except Exception  as e:
+        print("validateUserCredentials failed with exception:", e)
+
+        return {
+            'statusCode': 500,
+            'body': {
+                'errorMessage': str(e)
+            }
+        }
+    
+    return {
+        'statusCode': 200,
+        'body': {
+            'user_token': user_token
+        }
+    }
+
+
+def delete_user(event, context):
+    print("Got 'deleteUser POST Request - event:\n", event)
+    
+    data = json.loads(event['body'])
+    user_token = data['userToken']
+
+    DB_SECRETS = get_db_secret()
+
+    config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
+
+    try:
+        user_token = login_manager.delete_user(user_token, config)
+    except Exception  as e:
+        print("deleteUser failed with exception:", e)
+
+        return {
+            'statusCode': 500,
+            'body': {
+                'errorMessage': str(e)
+            }
+        }
+    
+    return {
+        'statusCode': 200
     }

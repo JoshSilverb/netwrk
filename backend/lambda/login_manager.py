@@ -113,3 +113,32 @@ def delete_user(username, password, db_config: Db_config):
     conn.commit()
 
     print(f"Successfully deleted user profile for username={username}")
+
+
+def delete_user(user_token, db_config: Db_config):
+    # Connect to PostgreSQL database
+    conn = psycopg2.connect(
+        host=db_config.db_host,
+        database=db_config.db_name,
+        user=db_config.db_user,
+        password=db_config.db_pwd,
+        port=db_config.db_port
+    )
+
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    # See if this username and password are valid
+    cursor.execute("SELECT COUNT(*) FROM users WHERE user_token=%s", (user_token,))
+    profilesCount = cursor.fetchone()[0]
+    
+    print(f"Found {profilesCount} profiles with user_token={user_token}")
+
+    if profilesCount == 0:
+        raise NameError("No profiles matching the specified user token")
+
+    # Delete user from table if user token validation succeeds
+    cursor.execute(
+        "DELETE FROM users WHERE user_token=%s", (user_token,))
+    conn.commit()
+
+    print(f"Successfully deleted user profile with user_token={user_token}")

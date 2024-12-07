@@ -103,7 +103,8 @@ def test_user_credentials():
         print("Token2:", token2)
         assert len(token2) == 32
 
-        delete_user(username, password, config)
+        delete_user(token2, config)
+        # delete_user(username, password, config)
 
     except Exception as e:
         print("Failed with error:", e)
