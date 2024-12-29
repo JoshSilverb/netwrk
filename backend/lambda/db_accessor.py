@@ -80,6 +80,11 @@ def add_contact_for_user(username, contact, db_config: Db_config):
             (user_id, contact["fullname"], contact["location"], contact["emailaddress"], 
              contact["phonenumber"], contact["userbio"]))
         id_of_new_row = cursor.fetchone()[0]
+
+        # Update corresponding user's num_contacts
+        cursor.execute(
+            "UPDATE users SET num_contacts = num_contacts + 1 WHERE username=%s",
+            (username,))
         conn.commit()
 
         # Close connections
@@ -122,6 +127,12 @@ def remove_contact_for_user(username, contact_id, db_config: Db_config):
         cursor.execute("DELETE FROM contacts WHERE contact_id=%s AND user_id=%s", (contact_id, user_id))
         conn.commit()
         rows_deleted = cursor.rowcount
+        
+        # Update corresponding user's num_contacts
+        cursor.execute(
+            "UPDATE users SET num_contacts = num_contacts - 1 WHERE username=%s",
+            (username,))
+        conn.commit()
 
         # Close connections
         cursor.close()

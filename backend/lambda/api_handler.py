@@ -9,6 +9,10 @@ import login_manager
 
 from get_secret import get_db_secret
 
+#=============================================================================
+#                              Contact manipulators
+#=============================================================================
+
 def get_contacts_for_user(event, context):
     print("Got 'getContactsForUser GET Request - event:\n", event)
 
@@ -138,6 +142,9 @@ def update_contact_for_user(event, context):
         'body': result
     }
 
+#=============================================================================
+#                        User profile manipulators
+#=============================================================================
 
 def store_user_credentials(event, context):
     print("Got 'storeUserCredentials POST Request - event:\n", event)
@@ -162,11 +169,13 @@ def store_user_credentials(event, context):
             }
         }
     
+    returnObject = {
+        'user_token': user_token
+    }
+
     return {
         'statusCode': 200,
-        'body': {
-            'user_token': user_token
-        }
+        'body': json.dumps(returnObject)
     }
 
 
@@ -193,11 +202,13 @@ def validate_user_credentials(event, context):
             }
         }
     
+    returnObject = {
+        'user_token': user_token
+    }
+
     return {
         'statusCode': 200,
-        'body': {
-            'user_token': user_token
-        }
+        'body': json.dumps(returnObject)
     }
 
 
