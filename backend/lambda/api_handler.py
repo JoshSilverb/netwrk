@@ -14,28 +14,30 @@ from get_secret import get_db_secret
 #=============================================================================
 
 def get_contacts_for_user(event, context):
-    print("Got 'getContactsForUser GET Request - event:\n", event)
+    print("Got 'getContactsForUser POST Request - event:\n", event)
 
-    username = "josh"
+    data = json.loads(event['body'])
+    user_token = data['user_token']
 
     DB_SECRETS = get_db_secret()
 
     config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
 
-    error_message, contacts = db_accessor.get_contacts_for_user(username, config)
+    try:
+        contacts = db_accessor.get_contacts_for_user(user_token, config)
 
-    if not error_message:
         return {
             'statusCode': 200,
             'body': json.dumps(contacts)
         }
     
-    print("Failed with message", error_message)
+    except Exception as e:
+        print("Failed with message", str(e))
 
-    return {
-        'statusCode': 500,
-        'body': error_message
-    }
+        return {
+            'statusCode': 500,
+            'body': str(e)
+        }
 
 
 def add_contact_for_user(event, context):

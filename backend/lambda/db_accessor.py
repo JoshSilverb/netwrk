@@ -13,41 +13,39 @@ class Db_config:
         self.db_port = db_port
 
 
-def get_contacts_for_user(username, db_config: Db_config):
-    try:
-        # Connect to PostgreSQL database
-        conn = psycopg2.connect(
-            host=db_config.db_host,
-            database=db_config.db_name,
-            user=db_config.db_user,
-            password=db_config.db_pwd,
-            port=db_config.db_port
-        )
+def get_contacts_for_user(user_token, db_config: Db_config):
+    
+    # Connect to PostgreSQL database
+    conn = psycopg2.connect(
+        host=db_config.db_host,
+        database=db_config.db_name,
+        user=db_config.db_user,
+        password=db_config.db_pwd,
+        port=db_config.db_port
+    )
 
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        # Execute a query
-        cursor.execute(
-            "SELECT contact_id, fullname, location, emailaddress, phonenumber, userbio \
-             FROM contacts \
-             INNER JOIN users ON contacts.user_id=users.user_id \
-             WHERE users.username=%s;",
-            (username,))
+    # Execute a query
+    cursor.execute(
+        "SELECT contact_id, fullname, location, emailaddress, phonenumber, userbio \
+            FROM contacts \
+            INNER JOIN users ON contacts.user_id=users.user_id \
+            WHERE users.user_token=%s;",
+        (user_token,))
 
-        
-        rawRows = cursor.fetchall()
+    
+    rawRows = cursor.fetchall()
 
-        rows = [dict(row) for row in rawRows]
+    rows = [dict(row) for row in rawRows]
 
-        # Close connections
-        cursor.close()
-        conn.close()
+    # Close connections
+    cursor.close()
+    conn.close()
 
-        # Return the query results as list of dicts
-        return "", rows
+    # Return the query results as list of dicts
+    return rows
 
-    except Exception as e:
-        return str(e), []
 
 
 def add_contact_for_user(username, contact, db_config: Db_config):
