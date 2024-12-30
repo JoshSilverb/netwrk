@@ -7,6 +7,7 @@ import { YStack, Button } from 'tamagui';
 import ContactsList from '@/components/ContactsList';
 import { Loader } from '@/components/Loader';
 import { getContactsForUserURL } from '@/constants/Apis';
+import { useAuth } from '@/components/AuthContext';
 import axios from 'axios';
 
 export default function mapScreen() {
@@ -18,9 +19,9 @@ export default function mapScreen() {
     setIsSheetOpen(true);
   };
 
-  
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { token, setToken } = useAuth();
 
   useEffect(() => {
       fetchContacts();
@@ -31,14 +32,18 @@ export default function mapScreen() {
   }, [contacts])
 
   const fetchContacts = async () => {
-      try {
-          console.log("Getting contacts")
-          const response = await axios.get(getContactsForUserURL);
-          setContacts(response.data);
-          setLoading(false);
-      } catch (error) {
-          console.error('Error fetching data:', error);
-      }
+    // Contact data to be sent
+    const requestBody = {
+        user_token: token
+    }
+
+    try {
+        const response = await axios.post(getContactsForUserURL, requestBody);
+        setContacts(response.data);
+        setLoading(false);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
   };
 
   

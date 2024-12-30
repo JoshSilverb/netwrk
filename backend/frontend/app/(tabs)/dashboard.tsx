@@ -24,8 +24,13 @@ export default function DashboardScreen() {
     }, []);
 
     const fetchContacts = async () => {
+        // Contact data to be sent
+        const requestBody = {
+            user_token: token
+        }
+
         try {
-            const response = await axios.get(getContactsForUserURL);
+            const response = await axios.post(getContactsForUserURL, requestBody);
             setContacts(response.data);
             setLoading(false);
         } catch (error) {
