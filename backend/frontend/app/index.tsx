@@ -1,19 +1,40 @@
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { YStack, Input, Button, Label, Text, XStack } from 'tamagui';
+import axios from 'axios';
+import { validateUserCredentialsURL } from '@/constants/Apis';
+import { useAuth } from '@/components/AuthContext';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
   const router = useRouter();
 
-  const handleLogin = () => {
-    if (email === 'A') {
+  const { token, setToken } = useAuth();
+
+  const handleLogin = async () => {
+    // Login form data to be sent
+    const requestBody = {
+      username: username,
+      password: password
+  }
+
+    if (username === 'A') {
       setError('');
       router.replace('/(tabs)/dashboard'); // Navigate to the main tabs screen after login
     } else {
-      setError('Invalid email or password.');
+      try {
+        const response = await axios.post(validateUserCredentialsURL, requestBody);
+        if (response.status == 200) {
+          setToken(response.data['user_token']);
+          router.replace('/(tabs)/dashboard');
+        }
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+      setError('Invalid username or password.');
     }
   };
 
@@ -29,14 +50,14 @@ export default function LoginScreen() {
       <Text fontFamily="$heading" fontSize="$7" color="$color" mb="$4">
         Welcome Back
       </Text>
-      <Label htmlFor="email" mb="$2">
-        Email Address
+      <Label htmlFor="username" mb="$2">
+        Username
       </Label>
       <Input
-        id="email"
-        placeholder="Enter your email"
-        value={email}
-        onChangeText={setEmail}
+        id="username"
+        placeholder="Enter username"
+        value={username}
+        onChangeText={setUsername}
         width="$12"
         size="$4"
         borderWidth="$0.5"
@@ -46,7 +67,7 @@ export default function LoginScreen() {
       </Label>
       <Input
         id="password"
-        placeholder="Enter your password"
+        placeholder="Enter password"
         value={password}
         onChangeText={setPassword}
         width="$12"

@@ -7,12 +7,17 @@ import { Button, YStack, ScrollView } from 'tamagui';
 import axios from 'axios';
 import { getContactsForUserURL } from '@/constants/Apis';
 import { Loader } from '@/components/Loader';
+import { useAuth } from '@/components/AuthContext';
 
 
 export default function DashboardScreen() {
 
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    const { token, setToken } = useAuth();
+
+    console.log(token);
 
     useEffect(() => {
         fetchContacts();
