@@ -9,6 +9,7 @@ import { Loader } from '@/components/Loader';
 import { getContactByIdURL } from '@/constants/Apis';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/components/AuthContext';
 
 
 export default function ContactPage() {
@@ -21,13 +22,18 @@ export default function ContactPage() {
 
   const [errorReceived, setErrorReceived] = useState(false);
 
+  const { token, setToken } = useAuth();
+  
   useEffect(() => {
       fetchContactById();
   }, []);
   const fetchContactById = async () => {
+    const requestBody = {
+        user_token: token
+    }
       try {
         console.log("Request url: ", requestURL);
-          const response = await axios.get(requestURL);
+          const response = await axios.post(requestURL, requestBody);
           setContact(response.data);
           setLoading(false);
           setErrorReceived(false);
@@ -38,20 +44,14 @@ export default function ContactPage() {
       }
   };
 
-    //================================
-    // Sending this contact to backend
-    //================================
-
-    // Contact data to be sent
-    const requestBody = {
-        creatorUsername: 'josh',
-        contactId: id
-    }
-
   // Send data to backend and redirect to contact page
   const router = useRouter();
 
   const removeContact = async () => {
+    const requestBody = {
+        user_token: token,
+        contactId: id
+    }
       try {
           const response = await axios.post(removeContactForUserURL, requestBody)
           console.log(response.data)
@@ -69,7 +69,6 @@ export default function ContactPage() {
 
   
   const editContact = async () => {
-    // editLink = "/add/?id={id}"
     router.push({ pathname: '/add', params: { id: id } });
 }
 

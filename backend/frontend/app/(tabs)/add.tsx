@@ -4,12 +4,11 @@ import { Text, View } from '@/components/Themed';
 import { TextInput, ScrollView, Pressable } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Months } from '@/constants/Definitions';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { XStack, YStack, Button, Paragraph } from 'tamagui';
 import { addContactForUserURL, getContactByIdURL, updateContactForUserURL } from '@/constants/Apis';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Loader } from '@/components/Loader';
+import { useAuth } from '@/components/AuthContext';
 
 export default function AddContactPage() {
     const { id } = useLocalSearchParams();
@@ -32,11 +31,11 @@ export default function AddContactPage() {
     const [relevance,  onChangeRelevance]  = React.useState('');
     const [tags,       onChangeTags]       = React.useState('');
 
-
     // Last Contact date picker
     const [date, setDate] = React.useState(new Date(Date.now()));
     const [show, setShow] = React.useState(false);
 
+    const { token, setToken } = useAuth();
     
     // If id isn't set, then this is in pure add mode, not edit, so don't need 
     // loading and error flags.
@@ -62,10 +61,13 @@ export default function AddContactPage() {
     }, [id, router]);
 
     const fetchContactById = async (id: string) => {
+        const requestBody = {
+            user_token: token
+        }
         try {
             const requestURL = getContactByIdURL + "/" + id;
             console.log("Request url: ", requestURL);
-            const response = await axios.get(requestURL);
+            const response = await axios.post(requestURL, requestBody);
             setDataFromContact(response.data);
             setLoading(false);
             // setErrorReceived(false);
@@ -167,7 +169,7 @@ export default function AddContactPage() {
     const updateContact = async () => {
         // Contact data to be sent
         const requestBody = {
-            creatorUsername: 'josh',
+            user_token: token,
             newContact: {
                 "contact_id": id as string,
                 "fullname": fullname,
