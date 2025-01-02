@@ -44,105 +44,108 @@ def add_contact_for_user(event, context):
     print("Got 'addContactsForUser POST Request - event:\n", event)
 
     data = json.loads(event['body'])
-    username = data['creatorUsername']
+    user_token = data['user_token']
     new_contact = data['newContact']
 
     DB_SECRETS = get_db_secret()
 
     config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
 
-    status, result = db_accessor.add_contact_for_user(username, new_contact, config)
-    
-    if status:
+    try:
+        new_contact_id = db_accessor.add_contact_for_user(user_token, new_contact, config)
+
         return {
             'statusCode': 200,
-            'body': json.dumps(result)
+            'body': json.dumps(new_contact)
         }
     
-    print("Failed with message", result)
+    except Exception as e:    
+        print("Failed with message", str(e))
 
-    return {
-        'statusCode': 500,
-        'body': result
-    }
+        return {
+            'statusCode': 500,
+            'body': str(e)
+        }
 
 
 def remove_contact_for_user(event, context):
     print("Got 'removeContactsForUser POST Request - event:\n", event)
     
     data = json.loads(event['body'])
-    username = data['creatorUsername']
+    user_token = data['user_token']
     contact_id = data['contactId']
 
     DB_SECRETS = get_db_secret()
     config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
 
-    status, result = db_accessor.remove_contact_for_user(username, contact_id, config)
-
-    if status:
+    try:
+        db_accessor.remove_contact_for_user(user_token, contact_id, config)
+        
         return {
-            'statusCode': 200,
-            'body': json.dumps(result)
+            'statusCode': 200
         }
     
-    print("Failed with message", result)
+    except Exception as e:
+        print("Failed with message", str(e))
 
-    return {
-        'statusCode': 500,
-        'body': result
-    }
+        return {
+            'statusCode': 500,
+            'body': str(e)
+        }
 
 
 def get_contact_by_id(event, contex):
     print("Got 'removeContactsForUser GET Request - event:\n", event)
 
-    username = ""
+    data = json.loads(event['body'])
+    user_token = data['user_token']
     contact_id = event['pathParameters']['id']
 
     DB_SECRETS = get_db_secret()
     config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
 
-    status, result = db_accessor.get_contact_by_id(username, contact_id, config)
+    try:
+        contact = db_accessor.get_contact_by_id(user_token, contact_id, config)
 
-    if status:
         return {
             'statusCode': 200,
-            'body': json.dumps(result)
+            'body': json.dumps(contact)
         }
-    
-    print("Failed with message", result)
+    except Exception as e:
+        print("Failed with message", str(e))
 
-    return {
-        'statusCode': 500,
-        'body': result
-    }
+        return {
+            'statusCode': 500,
+            'body': str(e)
+        }
 
 
 def update_contact_for_user(event, context):
     print("Got 'updateContactForUser POST Request - event:\n", event)
 
     data = json.loads(event['body'])
-    username = data['creatorUsername']
+    user_token = data['user_token']
     new_contact = data['newContact']
 
     DB_SECRETS = get_db_secret()
 
     config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
 
-    status, result = db_accessor.update_contact_for_user(username, new_contact, config)
-    
-    if status:
+    try:
+        contact_id = db_accessor.update_contact_for_user(user_token, new_contact, config)
+
         return {
             'statusCode': 200,
-            'body': json.dumps(result)
+            'body': json.dumps(contact_id)
         }
     
-    print("Failed with message", result)
+    except Exception as e:
+        print("Failed with message", str(e))
 
-    return {
-        'statusCode': 500,
-        'body': result
-    }
+        return {
+            'statusCode': 500,
+            'body': str(e)
+        }
 
 #=============================================================================
 #                        User profile manipulators
