@@ -10,3 +10,4 @@ export const updateContactForUserURL =  baseURL + tier + '/updateContactForUser'
 export const validateUserCredentialsURL =  baseURL + tier + '/validateUserCredentials';
 export const storeUserCredentialsURL =  baseURL + tier + '/storeUserCredentials';
 export const deleteUserURL =  baseURL + tier + '/deleteUser';
+export const searchContactsURL   = baseURL + tier + '/searchContacts';
