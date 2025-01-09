@@ -31,6 +31,9 @@ export default function ContactPage() {
     const requestBody = {
         user_token: token
     }
+
+    console.log("Fetching contact with ID:", id);
+
       try {
         console.log("Request url: ", requestURL);
           const response = await axios.post(requestURL, requestBody);
@@ -52,6 +55,9 @@ export default function ContactPage() {
         user_token: token,
         contactId: id
     }
+
+    console.log("Removing contact with ID:", id);
+
       try {
           const response = await axios.post(removeContactForUserURL, requestBody)
           console.log(response.data)

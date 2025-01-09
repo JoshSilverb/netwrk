@@ -131,7 +131,7 @@ export default function AddContactPage() {
     const postNewContact = async () => {
         // Contact data to be sent
         const requestBody = {
-            creatorUsername: 'josh',
+            user_token: token,
             newContact: {
                 "fullname": fullname,
                 "location": location,
@@ -147,6 +147,8 @@ export default function AddContactPage() {
                 "tags": tags
             }
         }
+
+        console.log("Adding new user with details:", requestBody.newContact);
 
         try {
             const response = await axios.post(addContactForUserURL, requestBody)
@@ -187,6 +189,8 @@ export default function AddContactPage() {
             }
         }
         
+        console.log("Updating user to new details:", requestBody.newContact);
+
         try {
             const response = await axios.post(updateContactForUserURL, requestBody)
             console.log(response.data)

@@ -1,40 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { YStack, Input, Button, Label, Text, XStack } from 'tamagui';
+import { YStack, Input, Button, Text, XStack, Checkbox, Label } from 'tamagui';
 import axios from 'axios';
 import { validateUserCredentialsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
+import { Check as CheckIcon } from '@tamagui/lucide-icons';
+import { saveToken, getToken } from '@/utils/tokenstore';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
 
   const router = useRouter();
 
   const { token, setToken } = useAuth();
+  
+
+  useEffect(() => {
+    handleRetrieveSavedToken();
+  }, [])
+
+  const handleRetrieveSavedToken = async () => {
+    const retrievedToken = await getToken();
+    if (retrievedToken) {
+      console.log("Retrieved saved token:", retrievedToken);
+      setToken(retrievedToken);
+      setError('');
+      router.replace('/(tabs)/dashboard');
+    }
+    else {
+      console.log("No saved token");
+    }
+  }
 
   const handleLogin = async () => {
     // Login form data to be sent
     const requestBody = {
       username: username,
       password: password
-  }
-
-    if (username === 'A') {
-      setError('');
-      router.replace('/(tabs)/dashboard'); // Navigate to the main tabs screen after login
-    } else {
-      try {
-        const response = await axios.post(validateUserCredentialsURL, requestBody);
-        if (response.status == 200) {
-          setToken(response.data['user_token']);
-          router.replace('/(tabs)/dashboard');
-        }
-    } catch (error) {
-        console.error('Error fetching data:', error);
     }
-      setError('Invalid username or password.');
+
+    try {
+      const response = await axios.post(validateUserCredentialsURL, requestBody);
+      if (response.status == 200) {
+        setError('');
+        setToken(response.data['user_token']);
+        if (rememberMe) {
+          console.log("Saving token:", response.data['user_token']);
+          await saveToken(response.data['user_token']);
+        }
+        router.replace('/(tabs)/dashboard');
+      }
+      else {
+        setError('Invalid username or password.');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
     }
   };
 
@@ -80,6 +103,7 @@ export default function LoginScreen() {
           {error}
         </Text>
       )}
+
       <Button
         mt="$4"
         width="$12"
@@ -88,6 +112,22 @@ export default function LoginScreen() {
       >
         Login
       </Button>
+      <XStack mt="$4" jc="center" ai="center" space="$2">
+        <Checkbox 
+          id="rememberMeCheckBox"
+          // checked={setRememberMe}
+          onCheckedChange={(checked) => setRememberMe(checked)}
+        >
+          <Checkbox.Indicator>
+            <CheckIcon />
+          </Checkbox.Indicator>  
+        </Checkbox>
+        <Label htmlFor="rememberMeCheckBox">Remember me</Label>
+      </XStack>
+      <Text>
+          Checkbox is {rememberMe ? 'Checked' : 'Unchecked'}
+        </Text>
+      
       <XStack mt="$4" jc="center" ai="center" space="$5">
         <Text>Don't have an account?</Text>
         <Button

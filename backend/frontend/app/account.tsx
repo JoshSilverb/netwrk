@@ -1,10 +1,46 @@
 import { View } from '@/components/Themed';
-import { Stack, useLocalSearchParams, Link } from 'expo-router';
-import { Button, Paragraph, XStack, YStack, Avatar, ScrollView } from 'tamagui';
-
+import { Stack, useLocalSearchParams, Link, router } from 'expo-router';
+import { Button, Paragraph, XStack, YStack, Avatar, ScrollView, Text } from 'tamagui';
+import { getUserDetailsURL } from '@/constants/Apis';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/components/AuthContext';
+import { removeToken } from '@/utils/tokenstore';
+import axios from 'axios';
 
 export default function AccountPage() {
+  const { token, setToken } = useAuth();
+
+  const [username, setUsername] = useState('');
+  const [numContacts, setNumContacts] = useState('');
   
+  useEffect(() => {
+      fetchUserDetails();
+  }, []);
+
+  const fetchUserDetails = async () => {
+      // Search query to be sent
+      const requestBody = {
+          user_token: token
+      }
+
+      try {
+          const response = await axios.post(getUserDetailsURL, requestBody);
+          console.log(response.data);
+          setUsername(response.data["username"]);
+          setNumContacts(response.data["num_contacts"]);
+          // setLoading(false);
+      } catch (error) {
+          console.error('Error fetching data:', error);
+      }
+  };
+  
+  const handleLogOut = async () => {
+    setToken('');
+    await removeToken();
+    router.replace('/');
+  };
+
+
   return (
 
     <View className="flex-1 bg-white">
@@ -23,12 +59,14 @@ export default function AccountPage() {
           </Avatar>
 
           <Paragraph className="font-bold" size="$8">
-            Josh Silverberg
+            {username}
           </Paragraph>
 
           <Paragraph color="gray">New York</Paragraph>
 
-          <Link href='/(tabs)/contacts' asChild><Button size="$2">278 contacts</Button></Link>
+          <Link href='/(tabs)/contacts' asChild>
+            <Button size="$2">
+              <Text>{numContacts} contacts</Text></Button></Link>
           <Paragraph color="gray">#1234567890</Paragraph>
           
         </YStack>
@@ -48,6 +86,10 @@ export default function AccountPage() {
         <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} padding={10}>userbio</Paragraph>
         </YStack>
 
+        <XStack>
+          <Button onPress={handleLogOut}>Log Out</Button>
+          <Button>Preferences</Button>
+        </XStack>
       </YStack>
       </ScrollView>        
     </View>
