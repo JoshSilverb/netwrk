@@ -1,13 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Text, View } from '@/components/Themed';
+import { Text } from '@/components/Themed';
 import MapView, { Marker } from 'react-native-maps';
-import { Image } from 'react-native';
+// import { Image } from 'react-native';
 import { Sheet } from '@tamagui/sheet';
-import { YStack, Button } from 'tamagui'; 
+import { YStack, Button, XStack, Paragraph, ScrollView, View, Image } from 'tamagui'; 
 import ContactsList from '@/components/ContactsList';
 import { Loader } from '@/components/Loader';
 import { getContactsForUserURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
+import { RotateCw } from '@tamagui/lucide-icons';
+// import { Check as CheckIcon } from '@tamagui/lucide-icons';
+
+
 import axios from 'axios';
 
 export default function mapScreen() {
@@ -27,11 +31,9 @@ export default function mapScreen() {
       fetchContacts();
   }, []);
 
-  useEffect(() => {
-      console.log("Contacts:", contacts);
-  }, [contacts])
-
   const fetchContacts = async () => {
+    console.log("Fetching contacts");
+
     // Contact data to be sent
     const requestBody = {
         user_token: token
@@ -40,19 +42,31 @@ export default function mapScreen() {
     try {
         const response = await axios.post(getContactsForUserURL, requestBody);
         setContacts(response.data);
+        console.log("Contacts:", contacts);
         setLoading(false);
     } catch (error) {
         console.error('Error fetching data:', error);
     }
+        
   };
 
-  
+  const handleRefresh = async () => {
+    console.log("Refreshing");
+    setIsSheetOpen(false);
+    setLoading(true);
+    fetchContacts();
+  }
+
   return (
-    <View className='bg-white'>
+    <View className='bg-white pt-5'>
       <YStack>
-      <Text className=" mb-2 mx-2 text-base font-medium text-gray-900">
-          Contacts map
-      </Text>
+        <XStack>
+          <Text className=" mb-2 mx-2 text-base font-medium text-gray-900">
+            Contacts map 
+          </Text>
+          <Button onPress={handleRefresh}><RotateCw /></Button>
+        </XStack>
+      
       <Loader loading={loading}>
         <MapView style={{width: '100%', height: '100%'}}>
           {contacts.map((contact, index) => (
@@ -63,9 +77,10 @@ export default function mapScreen() {
               key={index}
               onPress={handleMarkerPress}
           >
-          <Image
+            <Image
+              // source={require('@/assets/images/mapmarker.png')}
               source={require('@/assets/images/mapmarker.png')}
-              style={{ height: 25 }}
+              style={{ height: 25, width: 25 }}
               resizeMode="contain" 
           />
           </Marker>

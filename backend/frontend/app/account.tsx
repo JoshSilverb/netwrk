@@ -42,7 +42,6 @@ export default function AccountPage() {
 
 
   return (
-
     <View className="flex-1 bg-white">
       <Stack.Screen options={{ title: "" }} />
 
@@ -83,7 +82,9 @@ export default function AccountPage() {
         <Paragraph className="font-bold" size="$6" color="gray">
           About
         </Paragraph>
-        <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} padding={10}>userbio</Paragraph>
+        <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} padding={10}>
+          userbio
+        </Paragraph>
         </YStack>
 
         <XStack>

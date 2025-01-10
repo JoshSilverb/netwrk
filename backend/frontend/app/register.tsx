@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { YStack, Input, Button, Text, XStack, Checkbox, Label, ScrollView, View } from 'tamagui';
 import axios from 'axios';
-import { validateUserCredentialsURL } from '@/constants/Apis';
+import { storeUserCredentialsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
 import { Check as CheckIcon } from '@tamagui/lucide-icons';
 import { saveToken, getToken } from '@/utils/tokenstore';
 
-export default function LoginScreen() {
+export default function createAccountScreen() {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [phonenumber, setphonenumber] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -34,7 +36,7 @@ export default function LoginScreen() {
     }
   }
 
-  const handleLogin = async () => {
+  const handleCreateAccount = async () => {
     // Login form data to be sent
     const requestBody = {
       username: username,
@@ -42,7 +44,7 @@ export default function LoginScreen() {
     }
 
     try {
-      const response = await axios.post(validateUserCredentialsURL, requestBody);
+      const response = await axios.post(storeUserCredentialsURL, requestBody);
       if (response.status == 200) {
         setError('');
         setToken(response.data['user_token']);
@@ -61,16 +63,18 @@ export default function LoginScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white pt-20"> 
+    <View className="flex-1 bg-white pt-10">
     <ScrollView>
     <YStack
       f={1}
       alignItems="center"
       justifyContent="center"
       backgroundColor="$background"
+      // px="$4"
+      // space
     >
       <Text fontFamily="$heading" fontSize="$7" color="$color" mb="$4">
-        Welcome Back
+        Create Account
       </Text>
       <Label htmlFor="username" mb="$2">
         Username
@@ -80,6 +84,18 @@ export default function LoginScreen() {
         placeholder="Enter username"
         value={username}
         onChangeText={setUsername}
+        width="$12"
+        size="$4"
+        borderWidth="$0.5"
+      />
+      <Label htmlFor="email" mb="$2">
+        Email
+      </Label>
+      <Input
+        id="email"
+        placeholder="Enter email"
+        value={email}
+        onChangeText={setEmail}
         width="$12"
         size="$4"
         borderWidth="$0.5"
@@ -107,9 +123,9 @@ export default function LoginScreen() {
         mt="$4"
         width="$12"
         size="$4"
-        onPress={handleLogin}
+        onPress={handleCreateAccount}
       >
-        Login
+        Create account
       </Button>
       <XStack mt="$4" jc="center" ai="center" space="$2">
         <Checkbox 
@@ -124,12 +140,14 @@ export default function LoginScreen() {
       </XStack>
       
       <XStack mt="$4" jc="center" ai="center" space="$5">
-        <Text>Don't have an account?</Text>
+        <Text>Already have an account?</Text>
         <Button
           variant="link"
-          onPress={() => router.push('/register')}
+          onPress={() => {
+            router.replace('/');
+          }}
         >
-          Sign Up
+          Log In
         </Button>
       </XStack>
     </YStack>
