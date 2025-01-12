@@ -47,7 +47,6 @@ def get_contacts_for_user(user_token, db_config: Db_config):
     return rows
 
 
-
 def add_contact_for_user(user_token, contact, db_config: Db_config):
     # Connect to PostgreSQL database
     conn = psycopg2.connect(
@@ -72,10 +71,29 @@ def add_contact_for_user(user_token, contact, db_config: Db_config):
     # Execute a query
     cursor.execute(
         "INSERT INTO contacts \
-            (user_id, fullname, location, emailaddress, phonenumber, userbio) VALUES \
-            (%s, %s, %s, %s, %s, %s) RETURNING contact_id",
-        (user_id, contact["fullname"], contact["location"], contact["emailaddress"], 
-            contact["phonenumber"], contact["userbio"]))
+            (user_id, \
+             fullname, \
+             location, \
+             emailaddress, \
+             phonenumber, \
+             linkedin, \
+             instagram, \
+             metthrough, \
+             userbio, \
+             lastcontact, \
+             importance) VALUES \
+            (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING contact_id",
+        (user_id, 
+         contact["fullname"], 
+         contact["location"], 
+         contact["emailaddress"], 
+         contact["phonenumber"], 
+         contact["linkedin"], 
+         contact["instagram"], 
+         contact["metthrough"], 
+         contact["userbio"], 
+         contact["lastcontact"], 
+         contact["importance"]))
     id_of_new_row = cursor.fetchone()[0]
 
     # Update corresponding user's num_contacts
@@ -150,13 +168,6 @@ def get_contact_by_id(user_token, contact_id, db_config: Db_config):
 
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    cursor.execute(
-        "SELECT contacts.user_id \
-            FROM users \
-            INNER JOIN contacts ON contacts.user_id=users.user_id \
-            WHERE users.user_token=%s AND contacts.contact_id=%s", 
-        (user_token, contact_id))
-
     # Check that user is an acual user and owns this contact, and extract 
     # contact info.
     cursor.execute(
@@ -175,7 +186,7 @@ def get_contact_by_id(user_token, contact_id, db_config: Db_config):
     rawRows = cursor.fetchall()
 
     if len(rawRows) == 0:
-            return "", []
+            return []
 
     row = dict(rawRows[0])
 
@@ -222,3 +233,47 @@ def update_contact_for_user(user_token, contact, db_config: Db_config):
     conn.close()
 
     return contact["contact_id"]
+
+
+def search_contacts(user_token, query_string, tags, db_config: Db_config):
+    # Connect to PostgreSQL database
+    conn = psycopg2.connect(
+        host=db_config.db_host,
+        database=db_config.db_name,
+        user=db_config.db_user,
+        password=db_config.db_pwd,
+        port=db_config.db_port
+    )
+
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    search_term = f"%{query_string}%"
+
+    # Check that user is an acual user and owns this contact, and extract 
+    # contact info.
+    cursor.execute(
+        "SELECT \
+            contacts.contact_id, \
+            contacts.fullname, \
+            contacts.location, \
+            contacts.emailaddress, \
+            contacts.phonenumber, \
+            contacts.userbio \
+        FROM users \
+            INNER JOIN contacts ON contacts.user_id=users.user_id \
+            WHERE users.user_token=%s AND contacts.userbio LIKE '%s'", 
+        (user_token, search_term))
+
+    rawRows = cursor.fetchall()
+
+    if len(rawRows) == 0:
+            return "", []
+
+    rows = dict(rawRows[0])
+
+    # Close connections
+    cursor.close()
+    conn.close()
+
+    # Return the query results as list of dicts
+    return rows

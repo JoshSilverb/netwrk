@@ -82,39 +82,6 @@ def validate_user_credentials(username, password, db_config: Db_config):
     return user_token
 
 
-def delete_user(username, password, db_config: Db_config):
-    # Connect to PostgreSQL database
-    conn = psycopg2.connect(
-        host=db_config.db_host,
-        database=db_config.db_name,
-        user=db_config.db_user,
-        password=db_config.db_pwd,
-        port=db_config.db_port
-    )
-
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-    # See if this username and password are valid
-    cursor.execute("SELECT password FROM users WHERE username=%s", (username,))
-    result = cursor.fetchone()
-    if not result:
-        print(f"Found no user profile matching username={username}")
-        raise NameError("Invalid credentials")
-    
-    stored_password_hash = result[0]
-
-    if not bcrypt.checkpw(password.encode('utf-8'), stored_password_hash.encode('utf-8')):
-        print(f"Password is wrong for username={username}")
-        raise NameError("Invalid credentials")
-
-    # Delete user from table if credential validation succeeds
-    cursor.execute(
-        "DELETE FROM users WHERE username=%s", (username,))
-    conn.commit()
-
-    print(f"Successfully deleted user profile for username={username}")
-
-
 def delete_user(user_token, db_config: Db_config):
     # Connect to PostgreSQL database
     conn = psycopg2.connect(
@@ -127,7 +94,7 @@ def delete_user(user_token, db_config: Db_config):
 
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    # See if this username and password are valid
+    # See if this user token is valid
     cursor.execute("SELECT COUNT(*) FROM users WHERE user_token=%s", (user_token,))
     profilesCount = cursor.fetchone()[0]
     
@@ -142,3 +109,31 @@ def delete_user(user_token, db_config: Db_config):
     conn.commit()
 
     print(f"Successfully deleted user profile with user_token={user_token}")
+
+
+def get_user_details(user_token, db_config: Db_config):
+    # Connect to PostgreSQL database
+    conn = psycopg2.connect(
+        host=db_config.db_host,
+        database=db_config.db_name,
+        user=db_config.db_user,
+        password=db_config.db_pwd,
+        port=db_config.db_port
+    )
+
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    # Get user info
+    cursor.execute("SELECT username, num_contacts FROM users WHERE user_token=%s", (user_token,))    
+    rawRows = cursor.fetchall()
+
+    if len(rawRows) == 0:
+        raise NameError("No profiles matching the specified user token")
+
+    row = dict(rawRows[0])
+
+    # Close connections
+    cursor.close()
+    conn.close()
+
+    return row

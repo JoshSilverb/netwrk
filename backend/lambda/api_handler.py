@@ -10,7 +10,7 @@ import login_manager
 from get_secret import get_db_secret
 
 #=============================================================================
-#                              Contact manipulators
+#                              Contact accessors
 #=============================================================================
 
 def get_contacts_for_user(event, context):
@@ -40,6 +40,70 @@ def get_contacts_for_user(event, context):
         }
 
 
+def get_contact_by_id(event, context):
+    print("Got 'removeContactsForUser GET Request - event:\n", event)
+
+    data = json.loads(event['body'])
+    user_token = data['user_token']
+    contact_id = event['pathParameters']['id']
+
+    DB_SECRETS = get_db_secret()
+    config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
+
+    try:
+        contact = db_accessor.get_contact_by_id(user_token, contact_id, config)
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps(contact)
+        }
+    except Exception as e:
+        print("Failed with message", str(e))
+
+        return {
+            'statusCode': 500,
+            'body': str(e)
+        }
+
+
+def search_contacts(event, context):
+    print("Got 'search contacts request - event:\n", event)
+
+    data = json.loads(event['body'])
+    user_token = data['user_token']
+    query_string = data['query_string']
+    tags = data['tags']
+
+    if not query_string and not tags:
+        return get_contacts_for_user(event, context)
+
+    DB_SECRETS = get_db_secret()
+    config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
+
+    try:
+        contacts = db_accessor.search_contacts(user_token, 
+                                              query_string, 
+                                              tags, 
+                                              config)
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps(contacts)
+        }
+    except Exception as e:
+        print("Failed with message", str(e))
+
+        return {
+            'statusCode': 500,
+            'body': str(e)
+        }
+
+
+#=============================================================================
+#                              Contact manipulators
+#=============================================================================
+
+
 def add_contact_for_user(event, context):
     print("Got 'addContactsForUser POST Request - event:\n", event)
 
@@ -56,7 +120,7 @@ def add_contact_for_user(event, context):
 
         return {
             'statusCode': 200,
-            'body': json.dumps(new_contact)
+            'body': json.dumps(new_contact_id)
         }
     
     except Exception as e:    
@@ -85,32 +149,6 @@ def remove_contact_for_user(event, context):
             'statusCode': 200
         }
     
-    except Exception as e:
-        print("Failed with message", str(e))
-
-        return {
-            'statusCode': 500,
-            'body': str(e)
-        }
-
-
-def get_contact_by_id(event, contex):
-    print("Got 'removeContactsForUser GET Request - event:\n", event)
-
-    data = json.loads(event['body'])
-    user_token = data['user_token']
-    contact_id = event['pathParameters']['id']
-
-    DB_SECRETS = get_db_secret()
-    config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
-
-    try:
-        contact = db_accessor.get_contact_by_id(user_token, contact_id, config)
-
-        return {
-            'statusCode': 200,
-            'body': json.dumps(contact)
-        }
     except Exception as e:
         print("Failed with message", str(e))
 
@@ -221,7 +259,7 @@ def delete_user(event, context):
     print("Got 'deleteUser POST Request - event:\n", event)
     
     data = json.loads(event['body'])
-    user_token = data['userToken']
+    user_token = data['user_token']
 
     DB_SECRETS = get_db_secret()
 
@@ -242,3 +280,33 @@ def delete_user(event, context):
     return {
         'statusCode': 200
     }
+
+
+def get_user_details(event, context):
+    print("Got get user details POST Request - event:\n", event)
+    
+    data = json.loads(event['body'])
+    user_token = data['user_token']
+
+    DB_SECRETS = get_db_secret()
+
+    config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
+
+    try:
+        user_details = login_manager.get_user_details(user_token, config)
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps(user_details)
+        }
+    except Exception  as e:
+        print("getUserDetails failed with exception:", e)
+
+        return {
+            'statusCode': 500,
+            'body': {
+                'errorMessage': str(e)
+            }
+        }
+    
+    

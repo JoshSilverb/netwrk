@@ -22,20 +22,20 @@ CREATE TABLE contacts(
     lastcontact DATE,
     importance INTEGER,
     embedding vector(784),
-    FOREIGN KEY(user_id) REFERENCES users(user_id)
+    FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 -- do search just on userbio for now
 
 -- FUTURE WORK:
 -- CREATE TABLE socialmedia(
-    -- contact_id INTEGER NOT NULL,
-    -- label VARCHAR(32),
-    -- address VARCHAR(64),
-    -- FOREIGN KEY(contact_id) REFERENCES contacts(contact_id)
+--     contact_id INTEGER NOT NULL,
+--     label VARCHAR(32),
+--     address VARCHAR(64),
+--     FOREIGN KEY(contact_id) REFERENCES contacts(contact_id)
 -- )
 
 -- CREATE TABLE tags(
 --     contact_id INTEGER NOT NULL,
---     tag VARCHAR(32
---     FOREIGN KEY(contact_id) REFERENCES contacts(contact_id)
+--     tag VARCHAR(32),
+--     FOREIGN KEY(contact_id) REFERENCES contacts(contact_id) ON DELETE CASCADE
 -- )
