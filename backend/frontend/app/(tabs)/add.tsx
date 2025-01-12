@@ -12,7 +12,7 @@ import { useAuth } from '@/components/AuthContext';
 
 export default function AddContactPage() {
     const { id } = useLocalSearchParams();
-    console.log("Got ID=", id);
+    console.log("Rendering add page with ID param =", id);
 
     const [loading,       setLoading]       = React.useState(true);
     // const [errorReceived, setErrorReceived] = React.useState(false);    
@@ -22,7 +22,6 @@ export default function AddContactPage() {
     const [location,   onChangeLocation]   = React.useState('');
     const [email,      onChangeEmail]      = React.useState('');
     const [phone,      onChangePhone]      = React.useState('');
-    const [meeting,    onChangeMeeting]    = React.useState('');
     const [bio,        onChangeBio]        = React.useState('');
     const [notes,      onChangenotes]      = React.useState('');
     const [metThrough, onChangeMetThrough] = React.useState('');
@@ -93,7 +92,6 @@ export default function AddContactPage() {
         onChangeLocation("");
         onChangeEmail("");
         onChangePhone("");
-        onChangeMeeting("");
         onChangeBio("");
         onChangenotes("");
         onChangeMetThrough("");
@@ -105,26 +103,23 @@ export default function AddContactPage() {
     }
 
     const setDataFromContact = (contact) => {
+        console.log("Editing contact:", contact)
         onChangeFullname(contact.fullname);
         onChangeLocation(contact.location);
         onChangeEmail(contact.emailaddress);
         onChangePhone(contact.phonenumber);
-        // onChangeMeeting("");
         onChangeBio(contact.userbio);
-        // onChangenotes("");
-        // onChangeMetThrough("");
-        // onChangeLinkedin("");
-        // onChangeInstagram("");
-        // onChangeRelevance("");
-        // onChangeTags("");
-        // setDate(new Date(Date.now()));
+        onChangeMetThrough(contact.metthrough);
+        onChangeLinkedin(contact.linkedin);
+        onChangeInstagram(contact.instagram);
+        onChangeRelevance(contact.importance);
+        // onChangeTags();
+        setDate(new Date(contact.lastcontact));
     }
 
     //================================
     // Sending this contact to backend
     //================================
-
-    
 
     // Send data to backend and redirect to contact page
 
@@ -137,13 +132,13 @@ export default function AddContactPage() {
                 "location": location,
                 "emailaddress": email,
                 "phonenumber": phone,
-                "meeting": meeting,
                 "userbio": bio,
                 "notes": notes,
-                "metThrough": metThrough,
+                "metthrough": metThrough,
                 "linkedin": linkedin,
                 "instagram": instagram,
-                "relevance": relevance,
+                "lastcontact": date,
+                "importance": relevance,
                 "tags": tags
             }
         }
@@ -153,9 +148,7 @@ export default function AddContactPage() {
         try {
             const response = await axios.post(addContactForUserURL, requestBody)
             console.log(response.data)
-            // setContactId(response.data)
             if (response.status == 200) {
-                // resetData();   // TODO: SEE IF THIS LINE IS ACTUALLY NEEDED
                 const redirectLink = "/contact/" + response.data;
                 router.replace(redirectLink);
             }
@@ -178,13 +171,13 @@ export default function AddContactPage() {
                 "location": location,
                 "emailaddress": email,
                 "phonenumber": phone,
-                "meeting": meeting,
                 "userbio": bio,
                 "notes": notes,
-                "metThrough": metThrough,
+                "metthrough": metThrough,
                 "linkedin": linkedin,
                 "instagram": instagram,
-                "relevance": relevance,
+                "importance": relevance,
+                "lastcontact": date,
                 "tags": tags
             }
         }
@@ -205,8 +198,6 @@ export default function AddContactPage() {
         }
     }
     
-    console.log("Rendering! loading=", loading);
-
     return (
 
         <View className="flex-1 flex-col justify-start bg-white">
@@ -280,8 +271,8 @@ export default function AddContactPage() {
                     <TextInput 
                         // note that 4px padding is equiv to p-1 in tailwind
                         style={{textAlignVertical: "top", paddingLeft: 4}}
-                        onChangeText={onChangeMeeting} 
-                        value={meeting}
+                        onChangeText={onChangeMetThrough} 
+                        value={metThrough}
                         placeholder="Met through"
                         multiline={true}
                         numberOfLines={2} 

@@ -1,24 +1,62 @@
 import { useState, useEffect } from 'react';
-import { View } from '@/components/Themed';
 import  ContactsList from '@/components/ContactsList'
-import { ScrollView, YStack, Paragraph, Input, Button, XStack, Sheet, Switch, Label, Text } from 'tamagui';
+import { RadioGroup, ScrollView, YStack, Paragraph, Input, Button, XStack, Sheet, Switch, Label, Text, View } from 'tamagui';
 import { Loader } from '@/components/Loader';
 import { searchContactsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
-import { Keyboard } from 'react-native';
+import { Keyboard, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Months } from '@/constants/Definitions';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 import axios from 'axios';
 
 export default function contactsScreen() {
     const tags = ['Friends', 'Family', 'Work', 'Other']; // Example tag list
+    const sortOptions = [
+        'Date added', 
+        'Last contacted (newest)', 
+        'Last contacted (oldest)', 
+        'Alphabetical'];
     const { token, setToken } = useAuth();
 
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
-    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [selectedSortOption, setSelectedSortOption] = useState(String(sortOptions[0]));
+
+    const [dateLowerBound, setDateLowerBound] = useState(new Date(0));
+    const [dateUpperBound, setDateUpperBound] = useState(new Date(Date.now()));
+
+    const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
+    const [tagsDropdownOpen, setTagsDropdownOpen] = useState(false);
+    const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+    const [showDateLowerBound, setShowDateLowerBound] = useState(false);
+    const [showDateUpperBound, setShowDateUpperBound] = useState(false);
+
+    const showDateLowerBoundPicker = () => {
+        setShowDateLowerBound(true);
+    };
+    const showDateUpperBoundPicker = () => {
+        setShowDateUpperBound(true);
+    };
+
+    const onChangeDateLowerBound = (event, selectedDate) => {
+        const currentDate = selectedDate;
+        setShowDateLowerBound(false);
+        setDateLowerBound(currentDate);
+    };
+    const onChangeDateUpperBound = (event, selectedDate) => {
+        const currentDate = selectedDate;
+        setShowDateUpperBound(false);
+        setDateUpperBound(currentDate);
+    };
+
+    function isDateUnset(date: Date): boolean {
+        const minDate = new Date(0);
+        return String(date) === String(minDate);
+    }
 
     useEffect(() => {
         fetchContacts();
@@ -31,11 +69,19 @@ export default function contactsScreen() {
         // Search query to be sent
         const requestBody = {
             user_token: token,
-            query_string: searchQuery,
-            tags: selectedTags
+            search_params: {
+                query_string: searchQuery,
+                order_by: selectedSortOption,
+                tags: selectedTags,
+                lower_bound_date: dateLowerBound,
+                upper_bound_date: dateUpperBound
+            }
         }
 
+        console.log("Sending search request with body:", requestBody);
+
         try {
+            setLoading(true);
             const response = await axios.post(searchContactsURL, requestBody);
             setContacts(response.data);
             console.log(contacts);
@@ -45,8 +91,6 @@ export default function contactsScreen() {
         }
     };
 
-    
-
     const toggleTag = (tag: string) => {
         setSelectedTags((prevTags) =>
             prevTags.includes(tag) ? prevTags.filter((t) => t !== tag) : [...prevTags, tag]
@@ -54,28 +98,26 @@ export default function contactsScreen() {
     };
     
     return (
-        <View className="flex-1 justify-start bg-white	">
+        <View className="flex-1 justify-start bg-white">
             <ScrollView>
-
-                {/* <Paragraph className="block mb-2 mx-2 text-base font-medium">
-                    Sort by...
-                </Paragraph> */}
                 <YStack >
                     {/* Search Bar and Tag Selector */}
                     <XStack alignItems="center" space="$2" width="100%">
                     {/* Dropdown Menu */}
                     <Button
-                        size="$3"
-                        onPress={() => setDropdownOpen(true)}
-                        iconAfter={<Ionicons name={dropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />}
+                        size="$4"
+                        onPress={() => setFilterDropdownOpen(true)}
+                        iconAfter={<Ionicons name={filterDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />}
                         width={120}
                     >
-                        {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : 'Select Tags'}
+                        Filter by...
+                        {/* {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : 'Select Tags'} */}
                     </Button>
 
                     {/* Search Bar */}
                     <XStack flex={1} alignItems="center" borderWidth={1} borderColor="$borderColor" borderRadius="$4">
                         <Input
+                        size="$4"
                         flex={1}
                         placeholder="Search contacts..."
                         value={searchQuery}
@@ -87,17 +129,117 @@ export default function contactsScreen() {
                         returnKeyType="search"
                         />
                         <Button
-                        size="$2"
-                        circular
+                        size="$4"
+                        // circular
                         icon={<Ionicons name="search" size={16} />}
                         onPress={fetchContacts}
                         />
                     </XStack>
                     </XStack>
 
+                    {/* Filter Selection Modal */}
+                    {filterDropdownOpen && (
+                    <Sheet modal open={filterDropdownOpen} onOpenChange={setFilterDropdownOpen} dismissOnOverlayPress>
+                        <Sheet.Frame>
+                        <Sheet.Handle />
+                        <ScrollView>
+                            <YStack space="$4" padding="$4">
+                            <Text fontWeight="700" fontSize="$5">Sort by:</Text>
+                            {/* Sort by filter button */}
+                            <Button
+                                size="$4"
+                                onPress={() => setSortDropdownOpen(true)}
+                                iconAfter={<Ionicons name={sortDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />}
+                            >
+                                {selectedSortOption}
+                            </Button>
+
+                            <Text fontWeight="700" fontSize="$5">Filter by:</Text>
+                            {/* Tags filter button */}
+                            <Button
+                                size="$4"
+                                onPress={() => setTagsDropdownOpen(true)}
+                                iconAfter={<Ionicons name={tagsDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />}
+                            >
+                                {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : 'Select Tags'}
+                            </Button>
+                            {/* Last contact filter buttons */}
+                            <XStack space="$4">
+                            <YStack space="$2">
+                                <Text fontSize="$3">Last contacted after</Text>
+                                <View className="flex border mt-1 rounded-md border-slate-200 ">
+                                    <Pressable onPress={showDateLowerBoundPicker} className="my-1">
+                                        <Text className='pl-1'>{isDateUnset(dateLowerBound) ? 'No lower bound' : `${dateLowerBound.getDate()} ${Months[dateLowerBound.getMonth()]} ${dateLowerBound.getFullYear()}`}</Text>
+                                        {showDateLowerBound && (
+                                            <DateTimePicker
+                                            className="p-1"
+                                            testID="dateTimePicker"
+                                            value={isDateUnset(dateLowerBound) ? dateUpperBound : dateLowerBound}
+                                            mode="date"
+                                            onChange={onChangeDateLowerBound}
+                                            />
+                                        )}
+                                    </Pressable>
+                                </View>
+                                <Button 
+                                    size="$2"
+                                    onPress={() => setDateLowerBound(new Date(0))}
+                                >
+                                    Reset
+                                </Button>
+                            </YStack>
+                            <YStack space="$2" >
+                                <Text fontSize="$3">Last contacted before</Text>
+                                <View className="flex border mt-1 rounded-md border-slate-200 ">
+                                    <Pressable onPress={showDateUpperBoundPicker} className="my-1">
+                                        <Text className='pl-1'>{dateUpperBound.getDate()} {Months[dateUpperBound.getMonth()]} {dateUpperBound.getFullYear()}</Text>
+                                        {showDateUpperBound && (
+                                            <DateTimePicker
+                                            className="p-1"
+                                            testID="dateTimePicker"
+                                            value={dateUpperBound}
+                                            mode="date"
+                                            onChange={onChangeDateUpperBound}
+                                            />
+                                        )}
+                                    </Pressable>
+                                </View>
+                                <Button 
+                                    size="$2"
+                                    onPress={() => setDateUpperBound(new Date(Date.now()))}
+                                >
+                                    Reset
+                                </Button>
+                            </YStack>
+                            
+                            </XStack>
+                            </YStack>
+                        </ScrollView>
+                        <XStack padding="$4" justifyContent="flex-end" space="$2">
+                            <Button
+                            size="$3"
+                            theme="alt2"
+                            onPress={() => setFilterDropdownOpen(false)}
+                            >
+                            Cancel
+                            </Button>
+                            <Button
+                            size="$3"
+                            onPress={() => {
+                                setFilterDropdownOpen(false);
+                                fetchContacts();
+                            }}
+                            >
+                            Apply
+                            </Button>
+                        </XStack>
+                        </Sheet.Frame>
+                    </Sheet>
+                    )}
+
                     {/* Tag Selection Modal */}
-                    {dropdownOpen && (
-                    <Sheet modal open={dropdownOpen} onOpenChange={setDropdownOpen} dismissOnOverlayPress>
+                    {tagsDropdownOpen && (
+                    <Sheet modal open={tagsDropdownOpen} onOpenChange={setTagsDropdownOpen} dismissOnOverlayPress>
                         <Sheet.Frame>
                         <Sheet.Handle />
                         <ScrollView>
@@ -118,15 +260,62 @@ export default function contactsScreen() {
                             <Button
                             size="$3"
                             theme="alt2"
-                            onPress={() => setDropdownOpen(false)}
+                            onPress={() => setTagsDropdownOpen(false)}
                             >
                             Cancel
                             </Button>
                             <Button
                             size="$3"
                             onPress={() => {
-                                setDropdownOpen(false);
-                                fetchContacts();
+                                setTagsDropdownOpen(false);
+                            }}
+                            >
+                            Apply
+                            </Button>
+                        </XStack>
+                        </Sheet.Frame>
+                    </Sheet>
+                    )}
+
+                    {/* Sort Option Selection Modal */}
+                    {sortDropdownOpen && (
+                    <Sheet modal open={sortDropdownOpen} onOpenChange={setSortDropdownOpen} dismissOnOverlayPress>
+                        <Sheet.Frame>
+                        <Sheet.Handle />
+                        <ScrollView>
+                            <YStack space="$4" padding="$4">
+                            <Text fontWeight="700" fontSize="$5">Sort by:</Text>
+                            <RadioGroup 
+                                defaultValue={selectedSortOption}
+                                onValueChange={(value) => setSelectedSortOption(value)}
+                            >
+                            {sortOptions.map((sortOption, index) => (
+                                <XStack width={300} alignItems="center" space="$4" key={`sortoptions-${index}`}>
+                                <RadioGroup.Item value={`${sortOption}`} id={`radiogroup-${index}`}>
+                                  <RadioGroup.Indicator />
+                                </RadioGroup.Item>
+                          
+                                <Label htmlFor={`radiogroup-${index}`}>
+                                  {sortOption}
+                                </Label>
+                              </XStack>
+                            ))}
+
+                            </RadioGroup>
+                            </YStack>
+                        </ScrollView>
+                        <XStack padding="$4" justifyContent="flex-end" space="$2">
+                            <Button
+                            size="$3"
+                            theme="alt2"
+                            onPress={() => setSortDropdownOpen(false)}
+                            >
+                            Cancel
+                            </Button>
+                            <Button
+                            size="$3"
+                            onPress={() => {
+                                setSortDropdownOpen(false);
                             }}
                             >
                             Apply
@@ -137,7 +326,7 @@ export default function contactsScreen() {
                     )}
 
                     <Loader loading={loading}>
-                        <ContactsList contacts={contacts}/>
+                        <ContactsList contacts={contacts} prefix="searchlist"/>
                     </Loader>
                 </YStack>
             </ScrollView>

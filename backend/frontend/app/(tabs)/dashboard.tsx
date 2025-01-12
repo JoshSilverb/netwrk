@@ -49,7 +49,7 @@ export default function DashboardScreen() {
                     FEATURED CONTACTS
                 </Text>
                 <Loader loading={loading} >
-                    <ContactsList contacts={contacts.slice(0,3)} address={"/(tabs)/contacts"} />
+                    <ContactsList contacts={contacts.slice(0,3)} prefix="featured" />
                 </Loader>
                 <Link href='/(tabs)/contacts' asChild><Button>See All</Button></Link>
             </YStack>
@@ -59,7 +59,7 @@ export default function DashboardScreen() {
                     NEARBY CONTACTS
                 </Text>
                 <Loader loading={loading} >
-                    <ContactsList contacts={contacts.slice(4,7)} address={"/(tabs)/contacts"} />
+                    <ContactsList contacts={contacts.slice(4,7)} prefix="nearby" />
                 </Loader>
                 <Link href='/(tabs)/contacts' asChild><Button>See All</Button></Link>
             </YStack>

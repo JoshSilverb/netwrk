@@ -35,8 +35,8 @@ export default function ContactPage() {
     console.log("Fetching contact with ID:", id);
 
       try {
-        console.log("Request url: ", requestURL);
           const response = await axios.post(requestURL, requestBody);
+          console.log(response.data);
           setContact(response.data);
           setLoading(false);
           setErrorReceived(false);
@@ -115,10 +115,16 @@ export default function ContactPage() {
         <Paragraph className="font-bold" size="$6" color="gray">
           Contact info
         </Paragraph>
-        <YStack alignSelf='flex-start' space="$2" paddingLeft="$2">
-          <Button size="$2">{contact.emailaddress}</Button>
-          <Button size="$2">{contact.phonenumber}</Button>
-        </YStack>
+        <XStack space="$4">
+          <YStack space="$4">
+            <Button size="$2">{contact.emailaddress}</Button>
+            <Button size="$2">{contact.linkedin}</Button>
+          </YStack>
+          <YStack space="$4">
+            <Button size="$2">{contact.phonenumber}</Button>
+            <Button size="$2">{contact.instagram}</Button>
+          </YStack>
+        </XStack>
 
         {/* Bio and Notes Stack */}
         <Paragraph className="font-bold" size="$6" color="gray">
@@ -126,16 +132,12 @@ export default function ContactPage() {
         </Paragraph>
         <YStack alignSelf='flex-start' space="$2" paddingLeft="$2">
           <YStack space="$1">
+            <Paragraph className="font-bold" size="$4" color="gray">Met through</Paragraph>
+            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} padding={10}>{contact.metthrough}</Paragraph>
+          </YStack>
+          <YStack space="$1">
             <Paragraph className="font-bold" size="$4" color="gray">User Bio</Paragraph>
             <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} padding={10}>{contact.userbio}</Paragraph>
-          </YStack>
-          <YStack space="$1">
-            <Paragraph className="font-bold" size="$4" color="gray">User Notes</Paragraph>
-            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} padding={10}>Notes notes ntoes notes</Paragraph>
-          </YStack>
-          <YStack space="$1">
-            <Paragraph className="font-bold" size="$4" color="gray">Met through</Paragraph>
-            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} padding={10}>Met in college</Paragraph>
           </YStack>
         </YStack>
 
@@ -143,16 +145,16 @@ export default function ContactPage() {
         <Paragraph className="font-bold" size="$6" color="gray">
           Stats
         </Paragraph>
-        <YStack alignSelf='flex-start' space="$2" paddingLeft="$2">
-          <XStack space="$5">
+        <XStack alignSelf='flex-start' space="$5" paddingLeft="$2">
+          <YStack space="$1">
             <Paragraph className="font-bold" size="$4" color="gray">Last contacted:</Paragraph>
-            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} paddingLeft={10} paddingRight={10}>8 Sep 2024</Paragraph>
-          </XStack>
-          <XStack space="$5">
+            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} paddingLeft={10} paddingRight={10}>{contact.lastcontact}</Paragraph>
+          </YStack>
+          <YStack space="$1">
             <Paragraph className="font-bold" size="$4" color="gray">Relevance score:</Paragraph>
-            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} paddingLeft={10} paddingRight={10}>5</Paragraph>
-          </XStack>
-        </YStack>
+            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} paddingLeft={10} paddingRight={10}>{contact.importance}</Paragraph>
+          </YStack>
+        </XStack>
 
         {/* Tags Stack */}
         <Paragraph className="font-bold" size="$6" color="gray">
