@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Text } from '@/components/Themed';
 import MapView, { Marker } from 'react-native-maps';
-// import { Image } from 'react-native';
 import { Sheet } from '@tamagui/sheet';
-import { YStack, Button, XStack, Paragraph, ScrollView, View, Image } from 'tamagui'; 
+import { YStack, Button, XStack, ScrollView, View, Image } from 'tamagui'; 
 import ContactsList from '@/components/ContactsList';
 import { Loader } from '@/components/Loader';
 import { getContactsForUserURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
 import { RotateCw } from '@tamagui/lucide-icons';
-// import { Check as CheckIcon } from '@tamagui/lucide-icons';
+import { RefreshControl } from 'react-native';
 
 
 import axios from 'axios';
@@ -17,6 +16,7 @@ import axios from 'axios';
 export default function mapScreen() {
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Function to open the modal sheet
   const handleMarkerPress = () => {
@@ -59,16 +59,18 @@ export default function mapScreen() {
 
   return (
     <View className='bg-white pt-5'>
+      <ScrollView
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}>
       <YStack>
         <XStack>
           <Text className=" mb-2 mx-2 text-base font-medium text-gray-900">
             Contacts map 
           </Text>
-          <Button onPress={handleRefresh}><RotateCw /></Button>
+          {/* <Button onPress={handleRefresh}><RotateCw /></Button> */}
         </XStack>
       
       <Loader loading={loading}>
-        <MapView style={{width: '100%', height: '100%'}}>
+        <MapView style={{width: '100%', height: 500}}>
           {contacts.map((contact, index) => (
             <Marker
               coordinate={{latitude: Math.random() * 180 - 90,
@@ -89,6 +91,7 @@ export default function mapScreen() {
         </MapView>
         </Loader>
       </YStack>
+      </ScrollView>
       {/* Tamagui Sheet - Modal that slides up */}
       <Sheet
         forceRemoveScrollEnabled={isSheetOpen}

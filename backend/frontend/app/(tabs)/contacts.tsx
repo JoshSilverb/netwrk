@@ -4,7 +4,7 @@ import { RadioGroup, ScrollView, YStack, Paragraph, Input, Button, XStack, Sheet
 import { Loader } from '@/components/Loader';
 import { searchContactsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
-import { Keyboard, Pressable } from 'react-native';
+import { Keyboard, Pressable, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Months } from '@/constants/Definitions';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -22,6 +22,7 @@ export default function contactsScreen() {
 
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [selectedSortOption, setSelectedSortOption] = useState(String(sortOptions[0]));
@@ -99,10 +100,11 @@ export default function contactsScreen() {
     
     return (
         <View className="flex-1 justify-start bg-white">
-            <ScrollView>
+            <ScrollView
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchContacts} />}>
                 <YStack >
                     {/* Search Bar and Tag Selector */}
-                    <XStack alignItems="center" space="$2" width="100%">
+                    <XStack alignItems="center" space="$2" width="100%" paddingLeft="$2" paddingRight="$2">
                     {/* Dropdown Menu */}
                     <Button
                         size="$4"
@@ -111,7 +113,6 @@ export default function contactsScreen() {
                         width={120}
                     >
                         Filter by...
-                        {/* {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : 'Select Tags'} */}
                     </Button>
 
                     {/* Search Bar */}
@@ -127,12 +128,6 @@ export default function contactsScreen() {
                             fetchContacts();
                         }}
                         returnKeyType="search"
-                        />
-                        <Button
-                        size="$4"
-                        // circular
-                        icon={<Ionicons name="search" size={16} />}
-                        onPress={fetchContacts}
                         />
                     </XStack>
                     </XStack>

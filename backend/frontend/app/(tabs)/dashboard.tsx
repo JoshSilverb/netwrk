@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native';
+import { Text, View, RefreshControl } from 'react-native';
 import { useState, useEffect } from 'react';
 
 import ContactsList from '@/components/ContactsList'
@@ -14,6 +14,7 @@ export default function DashboardScreen() {
 
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
     const { token, setToken } = useAuth();
 
@@ -40,7 +41,8 @@ export default function DashboardScreen() {
 
     return (
         <View className="flex-1 bg-white">
-        <ScrollView>
+        <ScrollView
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchContacts} />}>
         {/* Scrolling Stack */}
         <YStack space="$5" marginBottom="$5">
             {/* Featured Contacts Stack */}
