@@ -9,6 +9,7 @@ import config from '@/tamagui.config' // your configuration
 import { TamaguiProvider } from '@tamagui/core'
 import { PortalProvider } from '@tamagui/portal'
 import { AuthProvider } from '@/components/AuthContext';
+import 'react-native-get-random-values';
 
 import { useColorScheme } from '@/components/useColorScheme';
 

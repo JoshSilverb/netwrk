@@ -9,6 +9,8 @@ import { addContactForUserURL, getContactByIdURL, updateContactForUserURL } from
 import axios from 'axios';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/components/AuthContext';
+import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
+import { placesApiKey } from '@/constants/Secrets';
 
 export default function AddContactPage() {
     const { id } = useLocalSearchParams();
@@ -29,6 +31,11 @@ export default function AddContactPage() {
     const [instagram,  onChangeInstagram]  = React.useState('');
     const [relevance,  onChangeRelevance]  = React.useState('');
     const [tags,       onChangeTags]       = React.useState('');
+
+    // Extra location var
+    const ref = React.useRef();
+
+
 
     // Last Contact date picker
     const [date, setDate] = React.useState(new Date(Date.now()));
@@ -71,7 +78,7 @@ export default function AddContactPage() {
             setLoading(false);
             // setErrorReceived(false);
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error('Error fetching data:', error.response.data);
             setLoading(false);
             // setErrorReceived(true);
         }
@@ -90,6 +97,7 @@ export default function AddContactPage() {
     const resetData = () => {
         onChangeFullname("");
         onChangeLocation("");
+        ref.current?.setAddressText('');
         onChangeEmail("");
         onChangePhone("");
         onChangeBio("");
@@ -201,7 +209,7 @@ export default function AddContactPage() {
     return (
 
         <View className="flex-1 flex-col justify-start bg-white">
-            <ScrollView automaticallyAdjustKeyboardInsets={true}>
+            <ScrollView automaticallyAdjustKeyboardInsets={true} keyboardShouldPersistTaps='always'>
             <YStack>
                 {/* <Loader loading={loading}> */}
                 <View className="flex mx-10 mt-4 border rounded-md border-slate-200">
@@ -216,14 +224,27 @@ export default function AddContactPage() {
                 </View>
 
                 <View className="flex mt-4 mx-12 border rounded-md border-slate-200">
-                    <TextInput 
+                <GooglePlacesAutocomplete
+                    placeholder='Location'
+                    onPress={(data, details = null) => {
+                        // 'details' is provided when fetchDetails = true
+                        onChangeLocation(data.description);
+                        console.log(data);
+                    }}
+                    query={{
+                        key: placesApiKey,
+                        language: 'en',
+                    }}
+                    disableScroll={true}
+                />
+                    {/* <TextInput 
                         className="" 
                         onChangeText={onChangeLocation} 
                         value={location} 
                         placeholder="Location"
                         textContentType='location' 
                         textAlign='center'
-                    />
+                    /> */}
                 </View>
                 <View className="flex flex-row mt-4">
                     <View className="flex-1 flex mt-4 ml-10 mr-1 border rounded-md border-slate-200">

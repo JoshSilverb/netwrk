@@ -66,7 +66,6 @@ export default function mapScreen() {
           <Text className=" mb-2 mx-2 text-base font-medium text-gray-900">
             Contacts map 
           </Text>
-          {/* <Button onPress={handleRefresh}><RotateCw /></Button> */}
         </XStack>
       
       <Loader loading={loading}>
@@ -80,7 +79,6 @@ export default function mapScreen() {
               onPress={handleMarkerPress}
           >
             <Image
-              // source={require('@/assets/images/mapmarker.png')}
               source={require('@/assets/images/mapmarker.png')}
               style={{ height: 25, width: 25 }}
               resizeMode="contain" 
