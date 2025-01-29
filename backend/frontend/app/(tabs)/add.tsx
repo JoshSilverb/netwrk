@@ -114,6 +114,7 @@ export default function AddContactPage() {
         console.log("Editing contact:", contact)
         onChangeFullname(contact.fullname);
         onChangeLocation(contact.location);
+        ref.current?.setAddressText(contact.location);
         onChangeEmail(contact.emailaddress);
         onChangePhone(contact.phonenumber);
         onChangeBio(contact.userbio);
@@ -227,7 +228,6 @@ export default function AddContactPage() {
                 <GooglePlacesAutocomplete
                     placeholder='Location'
                     onPress={(data, details = null) => {
-                        // 'details' is provided when fetchDetails = true
                         onChangeLocation(data.description);
                         console.log(data);
                     }}
@@ -237,14 +237,6 @@ export default function AddContactPage() {
                     }}
                     disableScroll={true}
                 />
-                    {/* <TextInput 
-                        className="" 
-                        onChangeText={onChangeLocation} 
-                        value={location} 
-                        placeholder="Location"
-                        textContentType='location' 
-                        textAlign='center'
-                    /> */}
                 </View>
                 <View className="flex flex-row mt-4">
                     <View className="flex-1 flex mt-4 ml-10 mr-1 border rounded-md border-slate-200">
