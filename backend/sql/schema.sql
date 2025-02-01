@@ -36,8 +36,8 @@ CREATE TABLE socials(
     contact_id INTEGER NOT NULL,
     social_id INTEGER NOT NULL,
     address VARCHAR(64),
-    FOREIGN KEY(contact_id) REFERENCES contacts(contact_id),
-    FOREIGN KEY(social_id) REFERENCES sociallabels(id)
+    FOREIGN KEY(contact_id) REFERENCES contacts(contact_id) ON DELETE CASCADE,
+    FOREIGN KEY(social_id) REFERENCES sociallabels(id) ON DELETE CASCADE
 );
 
 CREATE TABLE taglabels(

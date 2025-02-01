@@ -28,12 +28,11 @@ def get_contacts_for_user(user_token, db_config: Db_config):
 
     # Execute a query
     cursor.execute(
-        "SELECT contact_id, fullname, location, emailaddress, phonenumber, userbio \
+        "SELECT contact_id, fullname, location, coordinates, userbio \
             FROM contacts \
             INNER JOIN users ON contacts.user_id=users.user_id \
             WHERE users.user_token=%s;",
         (user_token,))
-
     
     rawRows = cursor.fetchall()
 
@@ -74,10 +73,6 @@ def add_contact_for_user(user_token, contact, db_config: Db_config):
             (user_id, \
              fullname, \
              location, \
-             emailaddress, \
-             phonenumber, \
-             linkedin, \
-             instagram, \
              metthrough, \
              userbio, \
              lastcontact, \
@@ -85,16 +80,41 @@ def add_contact_for_user(user_token, contact, db_config: Db_config):
             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING contact_id",
         (user_id, 
          contact["fullname"], 
-         contact["location"], 
-         contact["emailaddress"], 
-         contact["phonenumber"], 
-         contact["linkedin"], 
-         contact["instagram"], 
+         contact["location"],
          contact["metthrough"], 
          contact["userbio"], 
          contact["lastcontact"], 
          contact["importance"]))
-    id_of_new_row = cursor.fetchone()[0]
+    new_contact_id = cursor.fetchone()[0]
+
+    # Add socials
+    hardcoded_socials = [
+        {'label': 'Email Address', 'address': contact["emailaddress"]},
+        {'label': 'Phone Number', 'address': contact["phonenumber"]},
+        {'label': 'LinkedIn', 'address': contact["linkedin"]},
+        {'label': 'Instagram', 'address': contact['instagram']}]
+    
+    for social in hardcoded_socials:
+        if len(social['address']) == 0:
+            continue
+
+        cursor.execute("SELECT id \
+                        FROM sociallabels \
+                        WHERE label=%s",
+                        social['label'])
+        results = cursor.fetchall()
+
+        if len(results) == 0:
+            cursor.execute("INSERT INTO sociallables (label) VALUES \
+                            (%s) RETURNING id", 
+                            social["label"])
+            label_id = cursor.fetchone()[0]
+        else:
+            label_id = results[0]
+        
+        cursor.execute("INSERT INTO socials (contact_id, social_id, address) \
+                       VALUES (%s, %s, %s)",
+                       new_contact_id, label_id, social['address'])
 
     # Update corresponding user's num_contacts
     cursor.execute(
@@ -106,7 +126,7 @@ def add_contact_for_user(user_token, contact, db_config: Db_config):
     cursor.close()
     conn.close()
 
-    return str(id_of_new_row)
+    return str(new_contact_id)
     
 
 def remove_contact_for_user(user_token, contact_id, db_config: Db_config):
@@ -175,8 +195,6 @@ def get_contact_by_id(user_token, contact_id, db_config: Db_config):
             contacts.contact_id, \
             contacts.fullname, \
             contacts.location, \
-            contacts.emailaddress, \
-            contacts.phonenumber, \
             contacts.userbio \
         FROM users \
             INNER JOIN contacts ON contacts.user_id=users.user_id \
@@ -188,14 +206,27 @@ def get_contact_by_id(user_token, contact_id, db_config: Db_config):
     if len(rawRows) == 0:
             return []
 
-    row = dict(rawRows[0])
+    contact = dict(rawRows[0])
+
+    # Pull socials into contact before returning
+    cursor.execute("SELECT sl.label as label, s.address as address \
+                    FROM socials s  \
+                    JOIN sociallabels sl \
+                        ON s.social_id = sl.id \
+                    WHERE s.contact_id = %s",
+                    contact_id)
+    rawSocials = cursor.fetchall()
+
+    socials = dict(rawSocials[0])
+
+    contact['socials'] = socials
 
     # Close connections
     cursor.close()
     conn.close()
 
     # Return the query results as list of dicts
-    return row
+    return contact
 
 
 def update_contact_for_user(user_token, contact, db_config: Db_config):
