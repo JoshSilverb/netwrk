@@ -1,4 +1,4 @@
-INSERT INTO users (username, password) VALUES ('josh', '$2b$12$72O1dSQ1/x7.ulYhVznk/uTpfDc8r9WmPqI0tgAQMayAjd2ZJ3vwS');
+INSERT INTO users (username, password) VALUES ('josh', '$2b$12$icpnD3q8iX3eQxXXBLcXa.8Su2FP3BEcBIW4t/PXY5TByaabExary');
 
 INSERT INTO contacts (user_id, fullname, location, userbio, metthrough) VALUES
 (1, 'Alice Allison', 'San Francisco, CA, USA', 'Alice is a software engineer in the bay', 'met in college'),

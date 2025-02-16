@@ -8,6 +8,7 @@ CREATE TABLE users(
     password TEXT NOT NULL,  -- hash of the password plaintext
     num_contacts INTEGER DEFAULT 0  -- number of contacts user has
 );
+-- TEST PASSWORD: "Pwd"
 
 CREATE TABLE contacts(
     contact_id SERIAL PRIMARY KEY UNIQUE,
@@ -29,7 +30,7 @@ CREATE INDEX locations_gix ON contacts USING GIST (coordinates);
 
 CREATE TABLE sociallabels(
     id SERIAL PRIMARY KEY UNIQUE,
-    label VARCHAR(16)
+    label VARCHAR(16) UNIQUE
 );
 
 CREATE TABLE socials(
@@ -43,13 +44,15 @@ CREATE TABLE socials(
 CREATE TABLE taglabels(
     id SERIAL PRIMARY KEY UNIQUE,
     user_id INTEGER NOT NULL,
-    label VARCHAR(16),
+    label VARCHAR(16) UNIQUE,
+    UNIQUE(user_id, label),
     FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE tags(
     contact_id INTEGER NOT NULL,
     tag_id INTEGER NOT NULL,
+    UNIQUE(contact_id, tag_id),
     FOREIGN KEY(contact_id) REFERENCES contacts(contact_id) ON DELETE CASCADE,
     FOREIGN KEY(tag_id) REFERENCES taglabels(id) ON DELETE CASCADE
 );
