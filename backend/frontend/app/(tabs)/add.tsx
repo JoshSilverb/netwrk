@@ -11,6 +11,8 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/components/AuthContext';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { placesApiKey } from '@/constants/Secrets';
+import { Plus as PlusIcon, Minus as MinusIcon } from '@tamagui/lucide-icons';
+
 
 export default function AddContactPage() {
     const { id } = useLocalSearchParams();
@@ -22,26 +24,38 @@ export default function AddContactPage() {
     // Basic data 
     const [fullname,   onChangeFullname]   = React.useState('');
     const [location,   onChangeLocation]   = React.useState('');
-    const [email,      onChangeEmail]      = React.useState('');
-    const [phone,      onChangePhone]      = React.useState('');
     const [bio,        onChangeBio]        = React.useState('');
-    const [notes,      onChangenotes]      = React.useState('');
     const [metThrough, onChangeMetThrough] = React.useState('');
-    const [linkedin,   onChangeLinkedin]   = React.useState('');
-    const [instagram,  onChangeInstagram]  = React.useState('');
+    const [socials,    setSocials]         = React.useState([]);
+    const [newSocial,  setNewSocial]       = React.useState({ label: '', address: ''});
     const [relevance,  onChangeRelevance]  = React.useState('');
     const [tags,       onChangeTags]       = React.useState('');
 
     // Extra location var
     const ref = React.useRef();
 
-
-
     // Last Contact date picker
     const [date, setDate] = React.useState(new Date(Date.now()));
     const [show, setShow] = React.useState(false);
 
     const { token, setToken } = useAuth();
+
+    const addSocial = () => {
+        if (newSocial.label && newSocial.address) {
+            setSocials([...socials, newSocial]);
+            setNewSocial({ label: '', address: '' }); // Reset input
+        }
+    };
+    
+    const editSocial = (index, key, value) => {
+        const updatedSocials = [...socials];
+        updatedSocials[index][key] = value;
+        setSocials(updatedSocials);
+    };
+
+    const removeSocial = (index) => {
+        setSocials(socials.filter((_, i) => i !== index));
+    };
     
     // If id isn't set, then this is in pure add mode, not edit, so don't need 
     // loading and error flags.
@@ -98,13 +112,10 @@ export default function AddContactPage() {
         onChangeFullname("");
         onChangeLocation("");
         ref.current?.setAddressText('');
-        onChangeEmail("");
-        onChangePhone("");
         onChangeBio("");
-        onChangenotes("");
         onChangeMetThrough("");
-        onChangeLinkedin("");
-        onChangeInstagram("");
+        setSocials([]);
+        setNewSocial({ label: '', address: ''});
         onChangeRelevance("");
         onChangeTags("");
         setDate(new Date(Date.now()));
@@ -115,12 +126,10 @@ export default function AddContactPage() {
         onChangeFullname(contact.fullname);
         onChangeLocation(contact.location);
         ref.current?.setAddressText(contact.location);
-        onChangeEmail(contact.emailaddress);
-        onChangePhone(contact.phonenumber);
         onChangeBio(contact.userbio);
         onChangeMetThrough(contact.metthrough);
-        onChangeLinkedin(contact.linkedin);
-        onChangeInstagram(contact.instagram);
+        setSocials(contact.socials);
+        setNewSocial({ label: '', address: ''});
         onChangeRelevance(contact.importance);
         // onChangeTags();
         setDate(new Date(contact.lastcontact));
@@ -139,13 +148,9 @@ export default function AddContactPage() {
             newContact: {
                 "fullname": fullname,
                 "location": location,
-                "emailaddress": email,
-                "phonenumber": phone,
                 "userbio": bio,
-                "notes": notes,
                 "metthrough": metThrough,
-                "linkedin": linkedin,
-                "instagram": instagram,
+                "socials": socials,
                 "lastcontact": date,
                 "importance": relevance,
                 "tags": tags
@@ -178,13 +183,9 @@ export default function AddContactPage() {
                 "contact_id": id as string,
                 "fullname": fullname,
                 "location": location,
-                "emailaddress": email,
-                "phonenumber": phone,
                 "userbio": bio,
-                "notes": notes,
                 "metthrough": metThrough,
-                "linkedin": linkedin,
-                "instagram": instagram,
+                "socials": socials,
                 "importance": relevance,
                 "lastcontact": date,
                 "tags": tags
@@ -238,52 +239,57 @@ export default function AddContactPage() {
                     disableScroll={true}
                 />
                 </View>
-                <View className="flex flex-row mt-4">
-                    <View className="flex-1 flex mt-4 ml-10 mr-1 border rounded-md border-slate-200">
-                        <TextInput 
-                            className="pl-1" 
-                            onChangeText={onChangeEmail} 
-                            value={email} 
-                            placeholder="Email Address" 
-                            textContentType='emailAddress'
-                            textAlign='start'
+                {/* Dynamically Render Existing Socials */}
+                {socials.map((social, index) => (
+                    <View key={index} className="flex flex-row mx-10 mt-4">
+                        <View className="flex-1 border rounded-md border-slate-200 p-1 min-h-[36px] justify-center">
+                            <TextInput
+                                className="flex-1 pl-1"
+                                value={social.label}
+                                onChangeText={(text) => editSocial(index, 'label', text)}
+                            />
+                        </View>
+                        <View className="flex-1 border rounded-md border-slate-200 p-1 mx-1 min-h-[36px] justify-center">
+                            <TextInput
+                                className="flex-1 pl-1"
+                                value={social.address}
+                                onChangeText={(text) => editSocial(index, 'address', text)}
+                            />
+                        </View>
+                        <View className="border rounded-md border-slate-200 px-2 min-h-[36px] items-center justify-center">
+                            <Pressable onPress={() => removeSocial(index)} className="ml-2">
+                                <MinusIcon />
+                            </Pressable>
+                        </View>
+                    </View>
+                ))}
+
+                {/* Input for Adding a New Social */}
+                <View className="flex flex-row mx-10 mt-4">
+                    <View className="flex-1 border rounded-md border-slate-200 p-1 min-h-[36px] justify-center">
+                        <TextInput
+                            className="flex-1 pl-1"
+                            placeholder="Enter social media"
+                            value={newSocial.label}
+                            onChangeText={(text) => setNewSocial({ ...newSocial, label: text })}
                         />
                     </View>
-                    <View className="flex-1 mt-4 ml-1 mr-10 border rounded-md border-slate-200">
-                        <TextInput 
-                            className="pl-1" 
-                            onChangeText={onChangePhone} 
-                            value={phone} 
-                            placeholder="Phone Number" 
-                            textContentType='telephoneNumber'
-                            textAlign='start'
+                    <View className="flex-1 border rounded-md border-slate-200 p-1 mx-1 min-h-[36px] justify-center">
+                        <TextInput
+                            className="flex-1 pl-1"
+                            placeholder="Enter address"
+                            value={newSocial.address}
+                            onChangeText={(text) => setNewSocial({ ...newSocial, address: text })}
                         />
+                    </View>
+                    <View className="border rounded-md border-slate-200 px-2 min-h-[36px] items-center justify-center">
+                        <Pressable onPress={addSocial} className="ml-2">
+                            <PlusIcon />
+                        </Pressable>
                     </View>
                 </View>
-                <View className="flex flex-row">
-                    <View className="flex-1 mt-4 ml-10 mr-1 border rounded-md border-slate-200">
-                        <TextInput 
-                            className="pl-1" 
-                            onChangeText={onChangeLinkedin} 
-                            value={linkedin} 
-                            placeholder="LinkedIn" 
-                            textAlign='start'
-                        />
-                    </View>
-                    <View className="flex-1 mt-4 ml-1 mr-10 border rounded-md border-slate-200">
-                        <TextInput 
-                            className="pl-1" 
-                            onChangeText={onChangeInstagram} 
-                            value={instagram} 
-                            placeholder="Instagram" 
-                            textAlign='start'
-                        />
-                    </View>
-                </View>
-                <View className="flex mt-4 mx-10 border rounded-md border-slate-200">
-                    <TextInput 
-                        // note that 4px padding is equiv to p-1 in tailwind
-                        style={{textAlignVertical: "top", paddingLeft: 4}}
+                <View className="flex mt-4 mx-10 border rounded-md border-slate-200 p-1">
+                    <TextInput className="align-top"
                         onChangeText={onChangeMetThrough} 
                         value={metThrough}
                         placeholder="Met through"
@@ -292,10 +298,8 @@ export default function AddContactPage() {
                         
                     />
                 </View>
-                <View className="flex mt-4 mx-10 border rounded-md border-slate-200">
-                    <TextInput 
-                        // note that 4px padding is equiv to p-1 in tailwind
-                        style={{textAlignVertical: "top", paddingLeft: 4}}
+                <View className="flex mt-4 mx-10 border rounded-md border-slate-200 p-1">
+                    <TextInput className="align-top"
                         onChangeText={onChangeBio} 
                         value={bio}
                         placeholder="Bio"
@@ -314,7 +318,7 @@ export default function AddContactPage() {
                                 <Text className='pl-1'>{date.getDate()} {Months[date.getMonth()]} {date.getFullYear()}</Text>
                                 {show && (
                                     <DateTimePicker
-                                    className="p-1"
+                                    className="pl-1"
                                     testID="dateTimePicker"
                                     value={date}
                                     mode="date"
@@ -330,7 +334,7 @@ export default function AddContactPage() {
                         </View>
                         <View className="flex border mt-1 rounded-md border-slate-200">
                             <TextInput 
-                                className="pl-1" 
+                                className="p-1" 
                                 onChangeText={onChangeRelevance} 
                                 value={relevance} 
                                 placeholder="5" 

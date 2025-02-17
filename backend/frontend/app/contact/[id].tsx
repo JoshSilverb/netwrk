@@ -1,7 +1,7 @@
 import { View } from '@/components/Themed';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Contact } from '@/constants/Definitions';
-import { Button, Paragraph, XStack, YStack, Avatar, ScrollView, Accordion, Square } from 'tamagui';
+import { Text, Group, Button, Paragraph, XStack, YStack, Avatar, ScrollView, Accordion, Square } from 'tamagui';
 import { ChevronUp, ChevronDown } from '@tamagui/lucide-icons'
 import { removeContactForUserURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
@@ -115,16 +115,21 @@ export default function ContactPage() {
         <Paragraph className="font-bold" size="$6" color="gray">
           Contact info
         </Paragraph>
-        <XStack space="$4">
-          <YStack space="$4">
-            <Button size="$2">{contact.emailaddress}</Button>
-            <Button size="$2">{contact.linkedin}</Button>
-          </YStack>
-          <YStack space="$4">
-            <Button size="$2">{contact.phonenumber}</Button>
-            <Button size="$2">{contact.instagram}</Button>
-          </YStack>
-        </XStack>
+        <YStack alignSelf='flex-start' paddingLeft="$2">
+          {console.log("contact", contact)}
+          {contact.socials && contact.socials.map((social, index) => (
+              <Group orientation="horizontal" className='py-1'>
+                <Group.Item>
+                  <View className="border rounded-md border-slate-200 p-1 justify-center">
+                    <Text>{social.label}</Text>
+                  </View>
+                </Group.Item>
+                <Group.Item>
+                  <Button className="border rounded-md border-slate-200 p-1 justify-center" backgroundColor="white">{social.address}</Button>
+                </Group.Item>
+              </Group>
+          ))}
+        </YStack>
 
         {/* Bio and Notes Stack */}
         <Paragraph className="font-bold" size="$6" color="gray">
