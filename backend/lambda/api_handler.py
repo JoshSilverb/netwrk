@@ -183,6 +183,33 @@ def update_contact_for_user(event, context):
             'body': str(e)
         }
 
+
+def get_tags_for_user(event, context):
+    print("Got 'getTagsForUser POST Request - event:\n", event)
+
+    data = json.loads(event['body'])
+    user_token = data['user_token']
+
+    DB_SECRETS = get_db_secret()
+
+    config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
+
+    try:
+        tags = db_accessor.get_tags_for_user(user_token, config)
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps(tags)
+        }
+    
+    except Exception as e:
+        print("Failed with message", str(e))
+
+        return {
+            'statusCode': 500,
+            'body': str(e)
+        }
+
 #=============================================================================
 #                        User profile manipulators
 #=============================================================================

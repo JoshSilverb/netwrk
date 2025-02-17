@@ -514,3 +514,29 @@ def search_contacts(user_token, search_params, db_config: Db_config):
 
     # Return the query results as list of dicts
     return contacts
+
+
+def get_tags_for_user(user_token, db_config: Db_config):
+    # Connect to PostgreSQL database
+    conn = psycopg2.connect(
+        host=db_config.db_host,
+        database=db_config.db_name,
+        user=db_config.db_user,
+        password=db_config.db_pwd,
+        port=db_config.db_port
+    )
+
+    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    cursor.execute(
+        "SELECT \
+            tl.label \
+        FROM taglabels tl \
+            INNER JOIN users ON users.user_id=tl.user_id \
+            WHERE users.user_token=%s", 
+        (user_token,))
+
+    rawTags = cursor.fetchall()
+    tags = [tag for [tag] in rawTags]
+
+    return tags
