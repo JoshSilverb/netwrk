@@ -71,10 +71,9 @@ def search_contacts(event, context):
 
     data = json.loads(event['body'])
     user_token = data['user_token']
-    query_string = data['query_string']
-    tags = data['tags']
+    search_params = data['search_params']
 
-    if not query_string and not tags:
+    if not search_params:
         return get_contacts_for_user(event, context)
 
     DB_SECRETS = get_db_secret()
@@ -82,8 +81,7 @@ def search_contacts(event, context):
 
     try:
         contacts = db_accessor.search_contacts(user_token, 
-                                              query_string, 
-                                              tags, 
+                                              search_params, 
                                               config)
 
         return {

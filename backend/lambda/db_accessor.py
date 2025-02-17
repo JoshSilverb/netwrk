@@ -13,6 +13,12 @@ class Db_config:
         self.db_pwd  = db_pwd
         self.db_port = db_port
 
+sortOptions = {
+        'Date added': 'contact_id DESC', 
+        'Last contacted (newest)': 'lastcontact DESC', 
+        'Last contacted (oldest)': 'lastcontact ASC', 
+        'Alphabetical': 'fullname ASC'}
+
 
 def get_contacts_for_user(user_token, db_config: Db_config):
     
@@ -46,12 +52,14 @@ def get_contacts_for_user(user_token, db_config: Db_config):
                         JOIN sociallabels sl \
                             ON s.social_id = sl.id \
                         WHERE s.contact_id = %s",
-                        c.contact_id)
+                        (c['contact_id'],))
         rawSocials = cursor.fetchall()
 
-        socials = [{"label": label, "address": address} for label, address in rawSocials]
-
-        c['socials'] = socials
+        if len(rawSocials) > 0:
+            socials = dict(rawSocials[0])
+            c['socials'] = socials
+        else:
+            c['socials'] = []
 
     # Close connections
     cursor.close()
@@ -398,15 +406,15 @@ def update_contact_for_user(user_token, contact, db_config: Db_config):
     
     cursor.execute(
         """
-        -- Insert new tags into taglabels (if they don't already exist)
         WITH new_tags AS (
-            SELECT id, label FROM taglabels WHERE user_id = %s AND label = ANY(%s)
+            SELECT id, label FROM taglabels WHERE user_id = %s AND label = ANY(%s::text[])
         ), inserted AS (
             INSERT INTO taglabels (user_id, label)
-            SELECT %s, unnest(%s)
-            WHERE NOT EXISTS (
-                SELECT 1 FROM new_tags WHERE new_tags.label IN (SELECT unnest(%s))
-            )
+            SELECT %s, new_labels.label
+            FROM (SELECT unnest(%s::text[]) AS label) new_labels
+            LEFT JOIN taglabels tl
+            ON tl.user_id = %s AND tl.label = new_labels.label
+            WHERE tl.id IS NULL  -- Only insert if label does not exist
             RETURNING id, label
         )
         -- Insert corresponding entries into the tags table
@@ -417,12 +425,11 @@ def update_contact_for_user(user_token, contact, db_config: Db_config):
             UNION ALL 
             SELECT id, label FROM inserted
         ) tl;""", 
-        (user_id, 
-         contact['tags'], 
-         user_id, 
-         contact['tags'], 
-         contact['tags'],
-         contact['contact_id'])
+        (user_id, contact['tags'],  # For new_tags selection
+        user_id, contact['tags'],  # For inserting new labels
+        user_id,  # For LEFT JOIN check
+        contact['contact_id']  # For inserting into tags table
+        )
     )
     conn.commit()
 
@@ -441,7 +448,7 @@ def update_contact_for_user(user_token, contact, db_config: Db_config):
     return contact["contact_id"]
 
 
-def search_contacts(user_token, query_string, tags, db_config: Db_config):
+def search_contacts(user_token, search_params, db_config: Db_config):
     # Connect to PostgreSQL database
     conn = psycopg2.connect(
         host=db_config.db_host,
@@ -452,6 +459,12 @@ def search_contacts(user_token, query_string, tags, db_config: Db_config):
     )
 
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    query_string = search_params['query_string']
+    order_by = search_params['order_by']
+    tags = search_params['tags']
+    lower_bound_date = search_params['lower_bound_date']
+    upper_bound_date = search_params['upper_bound_date']
 
     search_term = f"%{query_string}%"
 
@@ -465,7 +478,8 @@ def search_contacts(user_token, query_string, tags, db_config: Db_config):
             contacts.userbio \
         FROM users \
             INNER JOIN contacts ON contacts.user_id=users.user_id \
-            WHERE users.user_token=%s AND contacts.userbio LIKE %s", 
+            WHERE users.user_token=%s AND contacts.userbio LIKE %s \
+        ORDER BY " + sortOptions[order_by], 
         (user_token, search_term))
 
     rawRows = cursor.fetchall()
