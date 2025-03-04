@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import  ContactsList from '@/components/ContactsList'
 import { RadioGroup, ScrollView, YStack, Paragraph, Input, Button, XStack, Sheet, Switch, Label, Text, View } from 'tamagui';
 import { Loader } from '@/components/Loader';
-import { searchContactsURL } from '@/constants/Apis';
+import { searchContactsURL, getTagsForUserURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
 import { Keyboard, Pressable, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,13 +12,15 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import axios from 'axios';
 
 export default function contactsScreen() {
-    const tags = ['Friends', 'Family', 'Work', 'Other']; // Example tag list
+    // const tags = ['Friends', 'Family', 'Work', 'Other']; // Example tag list
     const sortOptions = [
         'Date added', 
         'Last contacted (newest)', 
         'Last contacted (oldest)', 
         'Alphabetical'];
     const { token, setToken } = useAuth();
+
+    const [tags, setTags] = useState([]);
 
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -60,8 +62,28 @@ export default function contactsScreen() {
     }
 
     useEffect(() => {
-        fetchContacts();
+        fetchAll();
     }, []);
+
+    const fetchTags = async () => {
+
+        // Get Tags query to be sent
+        const requestBody = {
+            user_token: token
+        }
+
+        console.log("Sending get tags request with body:", requestBody);
+
+        try {
+            setLoading(true);
+            const response = await axios.post(getTagsForUserURL, requestBody);
+            setTags(response.data);
+            console.log(tags);
+            setLoading(false);
+        } catch (error) {
+            console.error('Error fetching tags data:', error);
+        }
+    };
 
     const fetchContacts = async () => {
         console.log(`Search query: ${searchQuery}`);
@@ -92,6 +114,11 @@ export default function contactsScreen() {
         }
     };
 
+    const fetchAll = async () => {
+        fetchTags();
+        fetchContacts();
+    }
+
     const toggleTag = (tag: string) => {
         setSelectedTags((prevTags) =>
             prevTags.includes(tag) ? prevTags.filter((t) => t !== tag) : [...prevTags, tag]
@@ -101,7 +128,7 @@ export default function contactsScreen() {
     return (
         <View className="flex-1 justify-start bg-white">
             <ScrollView
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchContacts} />}>
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAll} />}>
                 <YStack >
                     {/* Search Bar and Tag Selector */}
                     <XStack alignItems="center" space="$2" width="100%" paddingLeft="$2" paddingRight="$2">

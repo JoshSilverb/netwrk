@@ -118,7 +118,7 @@ export default function ContactPage() {
         <YStack alignSelf='flex-start' paddingLeft="$2">
           {console.log("contact", contact)}
           {contact.socials && contact.socials.map((social, index) => (
-              <Group orientation="horizontal" className='py-1'>
+              <Group orientation="horizontal" className='py-1' key={`social-${index}`}>
                 <Group.Item>
                   <View className="border rounded-md border-slate-200 p-1 justify-center">
                     <Text>{social.label}</Text>
@@ -165,15 +165,14 @@ export default function ContactPage() {
         <Paragraph className="font-bold" size="$6" color="gray">
           Tags
         </Paragraph>
-        <XStack flexWrap="wrap" alignItems="flex-start" justifyContent="flex-start" space="$2" paddingLeft="$2" rowGap="$2">  
-          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">College Friend</Button>
-          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">In AI</Button>
-          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">Party Friend</Button>
-          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">Product Manager</Button>
-          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">New York</Button>
-          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">Microsoft</Button>
-          <Button size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">CEO</Button>
+        {/* Dynamically Render Contact's Tags */}
+        {contact.tags && 
+        <XStack className="border rounded-md border-slate-200 flex-wrap items-start justify-start  mt-2 p-1" space="$2" rowGap="$2">  
+        {contact.tags.map((tag, index) => (
+          <Button key={`tag-${index}`} size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">{tag}</Button>
+        ))}
         </XStack>
+        }
         </Loader>
       </YStack>
       </ScrollView>        

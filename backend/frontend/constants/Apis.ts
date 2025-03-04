@@ -12,3 +12,4 @@ export const storeUserCredentialsURL    = baseURL + tier + '/storeUserCredential
 export const deleteUserURL              = baseURL + tier + '/deleteUser';
 export const searchContactsURL          = baseURL + tier + '/searchContacts';
 export const getUserDetailsURL          = baseURL + tier + '/getUserDetails';
+export const getTagsForUserURL          = baseURL + tier + '/getTagsForUser';
