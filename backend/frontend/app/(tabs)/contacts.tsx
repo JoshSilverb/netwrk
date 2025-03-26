@@ -8,6 +8,7 @@ import { Keyboard, Pressable, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Months } from '@/constants/Definitions';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { getCurrentLocation } from '@/utils/locationutil';
 
 import axios from 'axios';
 
@@ -17,7 +18,8 @@ export default function contactsScreen() {
         'Date added', 
         'Last contacted (newest)', 
         'Last contacted (oldest)', 
-        'Alphabetical'];
+        'Alphabetical',
+        'Distance'];
     const { token, setToken } = useAuth();
 
     const [tags, setTags] = useState([]);
@@ -86,8 +88,11 @@ export default function contactsScreen() {
     };
 
     const fetchContacts = async () => {
+        const location = await getCurrentLocation();
+        
         console.log(`Search query: ${searchQuery}`);
         console.log(`Selected tags: ${selectedTags}`);
+        console.log(`Current location: ${location}`);
 
         // Search query to be sent
         const requestBody = {
@@ -97,7 +102,9 @@ export default function contactsScreen() {
                 order_by: selectedSortOption,
                 tags: selectedTags,
                 lower_bound_date: dateLowerBound,
-                upper_bound_date: dateUpperBound
+                upper_bound_date: dateUpperBound,
+                user_lat: location.latitude,
+                user_lon: location.longitude,
             }
         }
 
