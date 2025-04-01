@@ -19,7 +19,9 @@ export default function contactsScreen() {
         'Last contacted (newest)', 
         'Last contacted (oldest)', 
         'Alphabetical',
-        'Distance'];
+        'Distance',
+        'Relevance'];
+
     const { token, setToken } = useAuth();
 
     const [tags, setTags] = useState([]);

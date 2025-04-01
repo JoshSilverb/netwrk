@@ -45,10 +45,12 @@ const ProfileCard = ({ contact, keyNum } : { contact : Contact, keyNum : number}
                     <View>
                     <Accordion.Content  flex={1} exitStyle={{ opacity: 0 }}>
                         <YStack alignSelf="center">
+                            <View className="flex-1">
                             <Paragraph className="pb-2">{contact.userbio}</Paragraph>
                             <Link href={contactLinkUrl} key={keyNum} asChild >
                                 <Button>More...</Button>
                             </Link>
+                            </View>
                         </YStack>
                     </Accordion.Content>
                     </View>
