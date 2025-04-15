@@ -12,14 +12,13 @@ import { useAuth } from '@/components/AuthContext';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { placesApiKey } from '@/constants/Secrets';
 import { Plus as PlusIcon, X as XIcon } from '@tamagui/lucide-icons';
-
+import { CommunicationFrequencySelector } from '@/components/CommunicationFrequencySelector'
 
 export default function AddContactPage() {
     const { id } = useLocalSearchParams();
     console.log("Rendering add page with ID param =", id);
 
     const [loading,       setLoading]       = React.useState(true);
-    // const [errorReceived, setErrorReceived] = React.useState(false);    
 
     // Basic data 
     const [fullname,   onChangeFullname]   = React.useState('');
@@ -29,7 +28,8 @@ export default function AddContactPage() {
     const [socials,    setSocials]         = React.useState([]);
     const [newSocial,  setNewSocial]       = React.useState({ label: '', address: ''});
     const [openNewSocial, setOpenNewSocial] = React.useState(false);
-    const [relevance,  onChangeRelevance]  = React.useState('3');
+    const [remindPeriodWks, setRemindPeriodWks]  = React.useState(0);
+    const [remindPeriodMos, setRemindPeriodMos]  = React.useState(0);
     const [tags,       setTags]       = React.useState([]);
     const [newTag,     setNewTag]          = React.useState('');
 
@@ -68,7 +68,6 @@ export default function AddContactPage() {
         setOpenNewSocial(false);
     }
     
-
     // Tags
     const addTag = () => {
         if (newTag && !tags.includes(newTag)) {
@@ -81,6 +80,13 @@ export default function AddContactPage() {
         setTags(tags.filter((_, i) => i !== index));
     };
     
+    // Reminder periods
+    const onChangeRemindPeriod = (weeks, months) => {
+        setRemindPeriodWks(weeks);
+        setRemindPeriodMos(months);
+        console.log(`[ADD] remind period: wks=${remindPeriodWks} mos=${remindPeriodMos}`)
+    }
+
     // If id isn't set, then this is in pure add mode, not edit, so don't need 
     // loading and error flags.
     const [resolvedId, setResolvedId] = React.useState<string | undefined>(undefined);
@@ -140,8 +146,9 @@ export default function AddContactPage() {
         onChangeMetThrough("");
         setSocials([]);
         setNewSocial({ label: '', address: ''});
-        onChangeRelevance("");
-        setTags("");
+        setRemindPeriodWks(0);
+        setRemindPeriodMos(0);
+        setTags([]);
         setDate(new Date(Date.now()));
     }
 
@@ -154,7 +161,8 @@ export default function AddContactPage() {
         onChangeMetThrough(contact.metthrough);
         setSocials(contact.socials);
         setNewSocial({ label: '', address: ''});
-        onChangeRelevance(contact.importance);
+        setRemindPeriodWks(0);
+        setRemindPeriodMos(0);
         setTags(contact.tags);
         setDate(new Date(contact.lastcontact));
     }
@@ -176,7 +184,10 @@ export default function AddContactPage() {
                 "metthrough": metThrough,
                 "socials": socials,
                 "lastcontact": date,
-                "importance": relevance,
+                "reminderPeriod": {
+                    "weeks": remindPeriodWks,
+                    "months": remindPeriodMos
+                },
                 "tags": tags
             }
         }
@@ -210,8 +221,11 @@ export default function AddContactPage() {
                 "userbio": bio,
                 "metthrough": metThrough,
                 "socials": socials,
-                "importance": relevance,
                 "lastcontact": date,
+                "reminderPeriod": {
+                    "weeks": remindPeriodWks,
+                    "months": remindPeriodMos
+                },
                 "tags": tags
             }
         }
@@ -231,6 +245,8 @@ export default function AddContactPage() {
             console.error("Error during add contact POST request:", error);
         }
     }
+
+    const FrequencyOption = ['1 month', '3 months', '6 months', '1 year', 'custom'];
     
     return (
 
@@ -378,18 +394,12 @@ export default function AddContactPage() {
                     </View>
                     <View className="flex-1 flex-col mt-4 ml-1 mr-10 ">
                         <View className="flex ">
-                            <Text>Relevance</Text>
+                            <Text>Contact frequency - every</Text>
                         </View>
-                        <View className="flex border mt-1 rounded-md border-slate-200">
-                            <TextInput 
-                                className="p-1" 
-                                onChangeText={onChangeRelevance} 
-                                value={relevance} 
-                                placeholder="5" 
-                                textAlign='start'
-                                inputMode='numeric'
-                            />
-                        </View>
+                        <CommunicationFrequencySelector 
+                            items={FrequencyOption}
+                            onChange={onChangeRemindPeriod}/>
+                        <Text>Remind period: wks={remindPeriodWks} mos={remindPeriodMos}</Text>
                     </View>
                 </View>
 
