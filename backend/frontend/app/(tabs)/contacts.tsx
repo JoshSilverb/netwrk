@@ -20,7 +20,8 @@ export default function contactsScreen() {
         'Last contacted (oldest)', 
         'Alphabetical',
         'Distance',
-        'Relevance'];
+        'Relevance',
+        'Next contact date'];
 
     const { token, setToken } = useAuth();
 

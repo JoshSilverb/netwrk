@@ -29,7 +29,7 @@ export default function AddContactPage() {
     const [newSocial,  setNewSocial]       = React.useState({ label: '', address: ''});
     const [openNewSocial, setOpenNewSocial] = React.useState(false);
     const [remindPeriodWks, setRemindPeriodWks]  = React.useState(0);
-    const [remindPeriodMos, setRemindPeriodMos]  = React.useState(0);
+    const [remindPeriodMos, setRemindPeriodMos]  = React.useState(1);
     const [tags,       setTags]       = React.useState([]);
     const [newTag,     setNewTag]          = React.useState('');
 
@@ -161,10 +161,14 @@ export default function AddContactPage() {
         onChangeMetThrough(contact.metthrough);
         setSocials(contact.socials);
         setNewSocial({ label: '', address: ''});
-        setRemindPeriodWks(0);
-        setRemindPeriodMos(0);
+        setRemindPeriodWks(contact.remind_in_weeks);
+        setRemindPeriodMos(contact.remind_in_months);
         setTags(contact.tags);
-        setDate(new Date(contact.lastcontact));
+        let dateStr = contact.lastcontact.replace(',', '');  // "17 Apr 2025"
+        console.log(`Setting last contact date from value=${dateStr} with type=${typeof dateStr}`)
+        console.log(`Casting that to date gives ${new Date(dateStr)}`)
+        setDate(new Date(cdateStr));
+        console.log(`Set last contact date to value=${date}`)
     }
 
     //================================

@@ -27,6 +27,7 @@ export default function ContactPage() {
   useEffect(() => {
       fetchContactById();
   }, []);
+
   const fetchContactById = async () => {
     const requestBody = {
         user_token: token
@@ -72,11 +73,28 @@ export default function ContactPage() {
           console.error("Error during remove contact POST request:", error);
       }
   }
-
   
   const editContact = async () => {
     router.push({ pathname: '/add', params: { id: id } });
-}
+  }
+
+  function getDateString(date: Date) {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+
+    return `${year}-${month}-${day}`
+  }
+
+  function nextContactDate(lastcontact: string, weeks: number, months: number) {
+    console.log(`Calculating next contact date with lastcontact=${lastcontact}, weeks=${weeks}, months=${months}`)
+    const lastContactDate = new Date(lastcontact);
+    let nextContactDate = new Date(lastContactDate);
+    nextContactDate.setMonth(lastContactDate.getMonth() + months);
+    nextContactDate.setDate(lastContactDate.getDate() + (weeks * 7));
+
+    return getDateString(nextContactDate)
+  }
 
   if (errorReceived) {
     return (
@@ -148,19 +166,28 @@ export default function ContactPage() {
 
         {/* Stats Stack */}
         <Paragraph className="font-bold" size="$6" color="gray">
-          Stats
+          Outreach Stats
         </Paragraph>
         <XStack alignSelf='flex-start' space="$5" paddingLeft="$2">
           <YStack space="$1">
-            <Paragraph className="font-bold" size="$4" color="gray">Last contacted:</Paragraph>
+            <Paragraph className="font-bold" size="$4" color="gray">Previous:</Paragraph>
             <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} paddingLeft={10} paddingRight={10}>{contact.lastcontact}</Paragraph>
           </YStack>
           <YStack space="$1">
-            <Paragraph className="font-bold" size="$4" color="gray">Relevance score:</Paragraph>
-            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} paddingLeft={10} paddingRight={10}>{contact.importance}</Paragraph>
+            <Paragraph className="font-bold" size="$4" color="gray">Frequency:</Paragraph>
+            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} paddingLeft={10} paddingRight={10}>
+              {(contact.remind_in_months !== 0) && `${contact.remind_in_months} months`}
+              {(contact.remind_in_weeks !== 0) && `${contact.remind_in_weeks} weeks`}
+            </Paragraph>
+          </YStack>
+          <YStack space="$1">
+            <Paragraph className="font-bold" size="$4" color="gray">Next:</Paragraph>
+            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} paddingLeft={10} paddingRight={10}>
+              {contact.nextcontact}
+            </Paragraph>
           </YStack>
         </XStack>
-
+        
         {/* Tags Stack */}
         <Paragraph className="font-bold" size="$6" color="gray">
           Tags
