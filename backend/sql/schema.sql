@@ -19,8 +19,10 @@ CREATE TABLE contacts(
     metthrough VARCHAR(256),
     userbio VARCHAR(500),
     lastcontact DATE DEFAULT CURRENT_DATE,
-    importance INTEGER,
-    embedding vector(784),
+    remind_in_weeks INTEGER DEFAULT 0,
+    remind_in_months INTEGER DEFAULT 0,
+    nextcontact DATE,
+    embedding vector(1536), -- Default number of dimensions, can also reduce this: https://platform.openai.com/docs/guides/embeddings#embedding-models:~:text=To%20reduce%20the%20embedding%27s%20dimensions%20without%20losing%20its%20concept%2Drepresenting%20properties%2C%20pass%20in%20the%20dimensions%20parameter.
     FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 -- Index on contacts.coordinates to make location lookup quicker

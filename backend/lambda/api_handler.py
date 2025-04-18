@@ -3,6 +3,11 @@
 """Processor for requests coming in from API Gateway"""
 
 import json
+import boto3
+import requests
+from botocore.exceptions import ClientError
+from openai import OpenAI
+
 
 import db_accessor
 import login_manager
@@ -74,15 +79,40 @@ def search_contacts(event, context):
     search_params = data['search_params']
 
     if not search_params:
-        return get_contacts_for_user(event, context)
+        return {
+            'statusCode': 400,
+            'body': 'No search params given'
+        }        
 
     DB_SECRETS = get_db_secret()
     config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
 
+     # Create a Secrets Manager client
+    openai_api_secret_name = "openai-api-key"
+    region_name = "us-east-2"
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+    print("Created secret session client")
+
     try:
-        contacts = db_accessor.search_contacts(user_token, 
-                                              search_params, 
-                                              config)
+        get_secret_value_response = client.get_secret_value(
+            SecretId=openai_api_secret_name
+        )
+        secret_string = get_secret_value_response['SecretString']
+        openai_api_key = json.loads(secret_string)['api-key']
+    except ClientError as e:
+        return {
+            'statusCode': 500,
+            'body': str(e)
+        }
+    
+    client = OpenAI(api_key=openai_api_key)
+
+    try:
+        contacts = db_accessor.search_contacts(user_token, search_params, client, config)
 
         return {
             'statusCode': 200,
@@ -113,8 +143,70 @@ def add_contact_for_user(event, context):
 
     config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
 
+    print("Generated config")
+    
+    location_coords = None
+
+    google_api_secret_name = "google-api-key-1"
+    openai_api_secret_name = "openai-api-key"
+    region_name = "us-east-2"
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+    print("Created secret session client")
+
     try:
-        new_contact_id = db_accessor.add_contact_for_user(user_token, new_contact, config)
+        get_secret_value_response = client.get_secret_value(
+            SecretId=google_api_secret_name
+        )
+        secret_string = get_secret_value_response['SecretString']
+        google_api_key = json.loads(secret_string)['api-key']
+
+        get_secret_value_response = client.get_secret_value(
+            SecretId=openai_api_secret_name
+        )
+        secret_string = get_secret_value_response['SecretString']
+        openai_api_key = json.loads(secret_string)['api-key']
+    except ClientError as e:
+        return {
+            'statusCode': 500,
+            'body': str(e)
+        }
+
+    print("Successfully loaded secrets")
+    
+    if "location" in new_contact and new_contact['location'] != "":
+        print("Entering coordinate fetching block")
+
+        location_url_segment = '+'.join(new_contact["location"].split(' '))
+        geocode_request_url = f"https://maps.googleapis.com/maps/api/geocode/json?address={location_url_segment}&key={google_api_key}"
+        print("Geocode request url:", geocode_request_url)
+        geocode_response = requests.get(geocode_request_url)
+        print("Got geocode response:", geocode_response.json())
+        
+        geocode_response.raise_for_status()
+        location_coords = geocode_response.json()["results"][0]["geometry"]["location"]
+        print("Parsed location coords:", location_coords)
+    
+    # Embedding block
+    embedding_text = f"location='{new_contact['location']}'; bio='{new_contact['userbio']}'"
+
+
+    client = OpenAI(api_key=openai_api_key)
+    embedding_object = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=embedding_text,
+        encoding_format="float"
+    )
+
+    embedding_vector = embedding_object.data[0].embedding
+
+    try:
+        new_contact_id = db_accessor.add_contact_for_user(user_token, new_contact, location_coords, embedding_vector, config)
 
         return {
             'statusCode': 200,
@@ -167,8 +259,70 @@ def update_contact_for_user(event, context):
 
     config = db_accessor.Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
 
+    print("Generated config")
+
+    location_coords = None
+
+    google_api_secret_name = "google-api-key-1"
+    openai_api_secret_name = "openai-api-key"
+    region_name = "us-east-2"
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+    print("Created secret session client")
+
     try:
-        contact_id = db_accessor.update_contact_for_user(user_token, new_contact, config)
+        get_secret_value_response = client.get_secret_value(
+            SecretId=google_api_secret_name
+        )
+        secret_string = get_secret_value_response['SecretString']
+        google_api_key = json.loads(secret_string)['api-key']
+
+        get_secret_value_response = client.get_secret_value(
+            SecretId=openai_api_secret_name
+        )
+        secret_string = get_secret_value_response['SecretString']
+        openai_api_key = json.loads(secret_string)['api-key']
+    except ClientError as e:
+        return {
+            'statusCode': 500,
+            'body': str(e)
+        }
+
+    print("Successfully loaded secrets")
+    
+    if "location" in new_contact and new_contact['location'] != "":
+        print("Entering coordinate fetching block")
+
+        location_url_segment = '+'.join(new_contact["location"].split(' '))
+        geocode_request_url = f"https://maps.googleapis.com/maps/api/geocode/json?address={location_url_segment}&key={google_api_key}"
+        print("Geocode request url:", geocode_request_url)
+        geocode_response = requests.get(geocode_request_url)
+        print("Got geocode response:", geocode_response.json())
+        
+        geocode_response.raise_for_status()
+        location_coords = geocode_response.json()["results"][0]["geometry"]["location"]
+        print("Parsed location coords:", location_coords)
+    
+    # Embedding block
+    embedding_text = f"location='{new_contact['location']}'; bio='{new_contact['userbio']}'"
+
+
+    client = OpenAI(api_key=openai_api_key)
+    embedding_object = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=embedding_text,
+        encoding_format="float"
+    )
+
+    embedding_vector = embedding_object.data[0].embedding
+
+    try:
+        contact_id = db_accessor.update_contact_for_user(user_token, new_contact, location_coords, embedding_vector, config)
 
         return {
             'statusCode': 200,
