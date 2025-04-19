@@ -26,55 +26,6 @@ sortOptions = {
     } 
 
 
-def get_contacts_for_user(user_token, db_config: Db_config):
-    
-    # Connect to PostgreSQL database
-    conn = psycopg2.connect(
-        host=db_config.db_host,
-        database=db_config.db_name,
-        user=db_config.db_user,
-        password=db_config.db_pwd,
-        port=db_config.db_port
-    )
-
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-    # Execute a query
-    cursor.execute(
-        "SELECT contact_id, fullname, location, coordinates, userbio \
-            FROM contacts \
-            INNER JOIN users ON contacts.user_id=users.user_id \
-            WHERE users.user_token=%s;",
-        (user_token,))
-    
-    rawRows = cursor.fetchall()
-
-    contacts = [dict(row) for row in rawRows]
-
-    for c in contacts:
-        # Pull socials into contact before returning
-        cursor.execute("SELECT sl.label as label, s.address as address \
-                        FROM socials s  \
-                        JOIN sociallabels sl \
-                            ON s.social_id = sl.id \
-                        WHERE s.contact_id = %s",
-                        (c['contact_id'],))
-        rawSocials = cursor.fetchall()
-
-        if len(rawSocials) > 0:
-            socials = dict(rawSocials[0])
-            c['socials'] = socials
-        else:
-            c['socials'] = []
-
-    # Close connections
-    cursor.close()
-    conn.close()
-
-    # Return the query results as list of dicts
-    return contacts
-
-
 def add_contact_for_user(user_token, contact, coordinates, embedding_vector, db_config: Db_config):
     # Connect to PostgreSQL database
     conn = psycopg2.connect(

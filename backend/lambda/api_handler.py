@@ -46,7 +46,7 @@ def get_contacts_for_user(event, context):
 
 
 def get_contact_by_id(event, context):
-    print("Got 'removeContactsForUser GET Request - event:\n", event)
+    print("Got 'get_contact_by_id GET Request - event:\n", event)
 
     data = json.loads(event['body'])
     user_token = data['user_token']
