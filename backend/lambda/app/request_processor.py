@@ -11,6 +11,7 @@ from database.db_config import Db_config
 from database.db_accessor import Db_Accessor
 from aws import secrets 
 from openai import OpenAI
+from database.contact_searcher import Contact_Searcher
 
 class RequestProcessor:
     """
@@ -78,6 +79,24 @@ class RequestProcessor:
         return embedding_object.data[0].embedding
 
 
+    def _get_query_string_embedding(self, query_string: str,) -> list[float]:
+        """
+        Get the embedding of the given query string.
+        Args:
+            query_string: user-specified query to semantically search contacts 
+        Returns:
+            A 1536-dimensional list representing the embedding of the input
+        """
+        
+        embedding_object = self.openai_api_key.embeddings.create(
+            model="text-embedding-3-small",
+            input=query_string,
+            encoding_format="float"
+        )
+
+        return embedding_object.data[0].embedding
+
+
     def __init__(self):
         """
         Initialize a 'RequestProcessor' object that calls functions of the 
@@ -103,6 +122,7 @@ class RequestProcessor:
         self.db_config = Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
 
         self.db_accessor = Db_Accessor(self.db_config)
+        self.contact_searcher = Contact_Searcher(self.db_config)
 
         self.google_api_key = secrets.get_google_api_secret(self.secrets_client)
         self.openai_api_key = secrets.get_openai_api_secret(self.secrets_client)
@@ -163,7 +183,25 @@ class RequestProcessor:
                 given search parameters if the operation succeeds; otherwise an  
                 error response with a message describing the request.
         """
-        pass
+        
+        searchContactsArgs = Translator.extract_searchContactsArgs(event)
+        print(f"[SearchContacts] Got request with args: {searchContactsArgs}")
+
+        embedding_vector = self._get_query_string_embedding(searchContactsArgs["query_string"])
+        print(f"[SearchContacts] Got embedding vector")
+
+        try:
+            contacts = self.db_accessor.search_contacts_and_sort(searchContactsArgs, embedding_vector)
+            print(f"[SearchContacts] Got {len(contacts)} contacts")
+
+            contacts = self.db_accessor.get_socials_for_contacts(contacts)
+            print(f"[SearchContacts] Got socials for {len(contacts)} contacts")
+
+            return self._make_return_json(200, contacts)
+        
+        except Exception as e:
+            print(f"[AddNewContact] Failed while adding contact with error: {str(e)}")
+            return self._make_return_json(500, {'message': str(e)})
 
 
     def _handle_addNewContact(self, event):
@@ -222,26 +260,148 @@ class RequestProcessor:
 
 
     def _handle_updateContact(self, event):
-        pass
+        """
+        Process an 'UpdateContact' request.
+        Args:
+            event: AWS API Gateway event given to the Lambda
+        Returns:
+            A dictionary object containing the contact ID of the updated 
+                contact if the operation succeeds; otherwise an error response
+                with a message describing the request.
+        """
+
+        updateContactArgs = Translator.extract_updateContactArgs(event)
+
+        print(f"[UpdateContact] Got request with args: {updateContactArgs}")
+
+        location_coords = self._location_to_coords(updateContactArgs["location"])
+        print(f"[UpdateContact] Got coordinates: {location_coords}")
+
+        # Embedding block
+
+        embedding_vector = self._get_contact_embedding(updateContactArgs['location'], updateContactArgs['user_bio'])
+        print(f"[UpdateContact] Got embedding vector")
+
+        try:
+            new_contact_id = self.db_accessor.update_contact_for_user(updateContactArgs, location_coords, embedding_vector)
+            print(f"[UpdateContact] Successfully added contact")
+            return self._make_return_json(200, new_contact_id)
+        except Exception as e:
+            print(f"[UpdateContact] Failed while adding contact with error: {str(e)}")
+            return self._make_return_json(500, {'message': str(e)})
+
 
 
     def _handle_getTagsForUser(self, event):
-        pass
+        """
+        Process a 'GetTags' request.
+        Args:
+            event: AWS API Gateway event given to the Lambda
+        Returns:
+            A dictionary object containing a list of tags associated with the 
+                user with the user ID given in the event.
+        """
+
+        getTagsArgs = Translator.extract_getTagsForUserArgs(event)
+
+        print(f"[GetTags] Got request with args: {getTagsArgs}")
+
+        try:
+            tags = self.db_accessor.get_tags_for_user(getTagsArgs)
+            print(f"[GetTags] Successfully retrieved tags: {tags}")
+            return self._make_return_json(200, tags)
+        except Exception as e:
+            print(f"[GetTags] Failed while retrieviing tags with error: {str(e)}")
+            return self._make_return_json(500, {'message': str(e)})
 
 
     def _handle_storeUserCredentials(self, event):
-        pass
+        """
+        Process a 'StoreUserCredentials' request.
+        Args:
+            event: AWS API Gateway event given to the Lambda
+        Returns:
+            The new user token associated with this user.
+        """
+
+        storeCredsArgs = Translator.extract_storeUserCredentialsArgs(event)
+
+        print(f"[StoreUserCredentials] Got request with args: {storeCredsArgs}")
+
+        try:
+            user_token = self.db_accessor.store_user_credentials(storeCredsArgs)
+            print(f"[StoreUserCredentials] Successfully stored user credentials and got user token: {user_token}")
+            return self._make_return_json(200, {'user_token': user_token})
+        except Exception as e:
+            print(f"[StoreUserCredentials] Failed while storing user credentials with error: {str(e)}")
+            return self._make_return_json(500, {'message': str(e)})
 
 
     def _handle_validateUserCredentials(self, event):
-        pass
+        """
+        Process a 'ValidateUserCredentials' request.
+        Args:
+            event: AWS API Gateway event given to the Lambda
+        Returns:
+            The new user token associated with this user.
+        """
+
+        validateCredsArgs = Translator.extract_validateUserCredentialsArgs(event)
+
+        print(f"[ValidateUserCredentials] Got request with args: {validateCredsArgs}")
+
+        try:
+            user_token = self.db_accessor.validate_user_credentials(validateCredsArgs)
+            print(f"[ValidateUserCredentials] Successfully validated user credentials and got user token: {user_token}")
+            return self._make_return_json(200, {'user_token': user_token})
+        except Exception as e:
+            print(f"[ValidateUserCredentials] Failed while storing user credentials with error: {str(e)}")
+            return self._make_return_json(500, {'message': str(e)})
+
 
 
     def _handle_deleteUser(self, event):
-        pass
+        """
+        Process a 'DeleteUser' request.
+        Args:
+            event: AWS API Gateway event given to the Lambda
+        Returns:
+            The new user token associated with this user.
+        """
+
+        deleteUserArgs = Translator.extract_deleteUserArgs(event)
+
+        print(f"[DeleteUser] Got request with args: {deleteUserArgs}")
+
+        try:
+            self.db_accessor.delete_user(deleteUserArgs)
+            print(f"[DeleteUser] Successfully deleted user")
+            return self._make_return_json(200, {})
+        except Exception as e:
+            print(f"[DeleteUser] Failed while deleting user with error: {str(e)}")
+            return self._make_return_json(500, {'message': str(e)})
 
 
     def _handle_getUserDetails(self, event):
-        pass
+        """
+        Process a 'GetUserDetails' request.
+        Args:
+            event: AWS API Gateway event given to the Lambda
+        Returns:
+            The details of the specified user.
+        """
+
+        getUserDetailsArgs = Translator.extract_getUserDetailsArgs(event)
+
+        print(f"[GetUserDetails] Got request with args: {getUserDetailsArgs}")
+
+        try:
+            user_details = self.db_accessor.get_user_details(getUserDetailsArgs)
+            print(f"[GetUserDetails] Successfully got user details: {user_details}")
+            return self._make_return_json(200, {user_details})
+        except Exception as e:
+            print(f"[GetUserDetails] Failed while getting user details with error: {str(e)}")
+            return self._make_return_json(500, {'message': str(e)})
+
 
 
