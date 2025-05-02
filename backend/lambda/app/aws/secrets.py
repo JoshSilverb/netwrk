@@ -21,8 +21,14 @@ def get_secrets_client() -> boto3.session.client:
 
 def get_db_secret(client: boto3.session.client | None):
 
-    if client is None:
-        client = get_secrets_client()
+    # if client is None:
+    #     client = get_secrets_client()
+
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name="us-east-2"
+    )
 
     secret_name = "netwrkdb-pwd-1"
 

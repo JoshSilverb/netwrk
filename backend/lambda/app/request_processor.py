@@ -11,7 +11,6 @@ from database.db_config import Db_config
 from database.db_accessor import Db_Accessor
 from aws import secrets 
 from openai import OpenAI
-from database.contact_searcher import Contact_Searcher
 
 class RequestProcessor:
     """
@@ -29,7 +28,7 @@ class RequestProcessor:
 
         return {
             'statusCode': status,
-            'body': body
+            'body': json.dumps(body)
         }
 
 
@@ -122,7 +121,6 @@ class RequestProcessor:
         self.db_config = Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
 
         self.db_accessor = Db_Accessor(self.db_config)
-        self.contact_searcher = Contact_Searcher(self.db_config)
 
         self.google_api_key = secrets.get_google_api_secret(self.secrets_client)
         self.openai_api_key = secrets.get_openai_api_secret(self.secrets_client)
