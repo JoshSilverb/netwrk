@@ -1,28 +1,16 @@
-# Use this code snippet in your app.
-# If you need more information about configurations
-# or implementing the sample code, visit the AWS docs:
-# https://aws.amazon.com/developer/language/python/
+""""""
 
 import boto3
 import json
 from botocore.exceptions import ClientError
 
 
-def get_secrets_client() -> boto3.session.client:
-    # Create a Secrets Manager client
-    session = boto3.session.Session()
-    client = session.client(
-        service_name='secretsmanager',
-        region_name="us-east-2"
-    )
-
-    return client
-
-
-def get_db_secret(client: boto3.session.client | None):
-
-    # if client is None:
-    #     client = get_secrets_client()
+def get_db_secret():
+    """
+    Query AWS Secret Store for the secrets associated with the database
+    Returns:
+        A dictionary contianing "host", "username", "password", and "port" f
+    """
 
     session = boto3.session.Session()
     client = session.client(
@@ -37,8 +25,7 @@ def get_db_secret(client: boto3.session.client | None):
             SecretId=secret_name
         )
     except ClientError as e:
-        # For a list of exceptions thrown, see
-        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+        print(f"Failed to get DB secret with error: {str(e)}")
         raise e
 
     secret = get_secret_value_response['SecretString']
@@ -46,10 +33,18 @@ def get_db_secret(client: boto3.session.client | None):
     return json.loads(secret)
 
 
-def get_google_api_secret(client: boto3.session.client | None):
+def get_google_api_secret() -> str:
+    """
+    Query AWS Secret Store for the Google API key
+    Returns:
+        A string containing the retrieved Google API key
+    """
 
-    if client is None:
-        client = get_secrets_client()
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name="us-east-2"
+    )
 
     secret_name = "google-api-key-1"
 
@@ -58,8 +53,7 @@ def get_google_api_secret(client: boto3.session.client | None):
             SecretId=secret_name
         )
     except ClientError as e:
-        # For a list of exceptions thrown, see
-        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+        print(f"Failed to get Google API secret with error: {str(e)}")
         raise e
 
     secret = get_secret_value_response['SecretString']
@@ -68,10 +62,18 @@ def get_google_api_secret(client: boto3.session.client | None):
     return api_key
 
 
-def get_openai_api_secret(client: boto3.session.client | None):
+def get_openai_api_secret():
+    """
+    Query AWS Secret Store for the OpenAI API key
+    Returns:
+        A string containing the retrieved OpenAI API key
+    """
 
-    if client is None:
-        client = get_secrets_client()
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name="us-east-2"
+    )
 
     secret_name = "openai-api-key"
 
@@ -80,8 +82,7 @@ def get_openai_api_secret(client: boto3.session.client | None):
             SecretId=secret_name
         )
     except ClientError as e:
-        # For a list of exceptions thrown, see
-        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+        print(f"Failed to get OpenAI API secret with error: {str(e)}")
         raise e
 
     secret = get_secret_value_response['SecretString']

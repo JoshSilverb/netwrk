@@ -6,10 +6,10 @@
 
 import json
 import requests
-from aws.api_event_translator_util import ApiEventTranslatorUtil as Translator
-from database.db_config import Db_config
-from database.db_accessor import Db_Accessor
-from aws import secrets 
+from app.aws.api_event_translator_util import ApiEventTranslatorUtil as Translator
+from app.database.db_config import Db_config
+from app.database.db_accessor import Db_Accessor
+from app.aws import secrets 
 from openai import OpenAI
 
 class RequestProcessor:
@@ -18,7 +18,7 @@ class RequestProcessor:
     out any AWS-specific data. 
     """
 
-    def _make_return_json(status: int, body: dict) -> dict:
+    def _make_return_json(self, status: int, body: dict) -> dict:
         """
         Compile a JSON dict from the given args to return to the client.
 
@@ -45,7 +45,7 @@ class RequestProcessor:
 
         print(f"Getting coordinates for location {location}")
 
-        if not location == 0:
+        if len(location) == 0:
             return None
 
         location_url_segment = '+'.join(location.split(' '))
@@ -55,6 +55,8 @@ class RequestProcessor:
         geocode_response.raise_for_status()
         location_coords = geocode_response.json()["results"][0]["geometry"]["location"]
         print(f"Parsed location coords: {location_coords}")
+
+        return location_coords
 
     
     def _get_contact_embedding(self, location: str, bio: str) -> list[float]:
@@ -69,7 +71,7 @@ class RequestProcessor:
 
         embedding_text = f"location='{location}'; bio='{bio}'"
         
-        embedding_object = self.openai_api_key.embeddings.create(
+        embedding_object = self.openai_client.embeddings.create(
             model="text-embedding-3-small",
             input=embedding_text,
             encoding_format="float"
@@ -87,7 +89,7 @@ class RequestProcessor:
             A 1536-dimensional list representing the embedding of the input
         """
         
-        embedding_object = self.openai_api_key.embeddings.create(
+        embedding_object = self.openai_client.embeddings.create(
             model="text-embedding-3-small",
             input=query_string,
             encoding_format="float"
@@ -115,19 +117,20 @@ class RequestProcessor:
             "/validateUserCredentials": self._handle_validateUserCredentials
         }
 
-        self.secrets_client = secrets.get_secrets_client()
+        # self.secrets_client = secrets.get_secrets_client()
+        self.secrets_client = None
 
-        DB_SECRETS = secrets.get_db_secret(self.secrets_client)
+        DB_SECRETS = secrets.get_db_secret()
         self.db_config = Db_config(DB_SECRETS["host"], "netwrkdb", DB_SECRETS["username"], DB_SECRETS["password"], DB_SECRETS["port"])
 
         self.db_accessor = Db_Accessor(self.db_config)
 
-        self.google_api_key = secrets.get_google_api_secret(self.secrets_client)
-        self.openai_api_key = secrets.get_openai_api_secret(self.secrets_client)
+        self.google_api_key = secrets.get_google_api_secret()
+        self.openai_api_key = secrets.get_openai_api_secret()
 
         self.openai_client = OpenAI(api_key=self.openai_api_key)
 
-    def route_request(self, event, context):
+    def route_request(self, event, context) -> dict[str,str]:
         """
         Pass on the specified 'event' to the appropriate handler function
         and return the handler function's response.
@@ -145,7 +148,7 @@ class RequestProcessor:
         return self._routingTable[request_path](event)
 
     
-    def _handle_getContactById(self, event):
+    def _handle_getContactById(self, event) -> dict[str,str]:
         """
         Process a 'GetContactById' request.
         Args:
@@ -171,7 +174,7 @@ class RequestProcessor:
             return self._make_return_json(500, {'message': str(e)})
 
 
-    def _handle_searchContacts(self, event):
+    def _handle_searchContacts(self, event) -> dict[str,str]:
         """
         Process a 'SearchContacts' request.
         Args:
@@ -185,8 +188,12 @@ class RequestProcessor:
         searchContactsArgs = Translator.extract_searchContactsArgs(event)
         print(f"[SearchContacts] Got request with args: {searchContactsArgs}")
 
-        embedding_vector = self._get_query_string_embedding(searchContactsArgs["query_string"])
-        print(f"[SearchContacts] Got embedding vector")
+        if searchContactsArgs["order_by"] == 'Relevance' and len(searchContactsArgs["query_string"]) != 0:
+            embedding_vector = self._get_query_string_embedding(searchContactsArgs["query_string"])
+            print(f"[SearchContacts] Got embedding vector")
+        else:
+            embedding_vector = None
+            print(f"[SearchContacts] No embedding vector")
 
         try:
             contacts = self.db_accessor.search_contacts_and_sort(searchContactsArgs, embedding_vector)
@@ -198,11 +205,11 @@ class RequestProcessor:
             return self._make_return_json(200, contacts)
         
         except Exception as e:
-            print(f"[AddNewContact] Failed while adding contact with error: {str(e)}")
+            print(f"[SearchContacts] Failed while searching contacts with error: {str(e)}")
             return self._make_return_json(500, {'message': str(e)})
 
 
-    def _handle_addNewContact(self, event):
+    def _handle_addNewContact(self, event) -> dict[str,str]:
         """
         Process an 'AddNewContact' request.
         Args:
@@ -234,7 +241,7 @@ class RequestProcessor:
             return self._make_return_json(500, {'message': str(e)})
 
 
-    def _handle_removeContact(self, event):
+    def _handle_removeContact(self, event) -> dict[str,str]:
         """
         Process a 'RemoveContact' request.
         Args:
@@ -257,7 +264,7 @@ class RequestProcessor:
             return self._make_return_json(500, {'message': str(e)})
 
 
-    def _handle_updateContact(self, event):
+    def _handle_updateContact(self, event) -> dict[str,str]:
         """
         Process an 'UpdateContact' request.
         Args:
@@ -290,7 +297,7 @@ class RequestProcessor:
 
 
 
-    def _handle_getTagsForUser(self, event):
+    def _handle_getTagsForUser(self, event) -> dict[str,str]:
         """
         Process a 'GetTags' request.
         Args:
@@ -313,7 +320,7 @@ class RequestProcessor:
             return self._make_return_json(500, {'message': str(e)})
 
 
-    def _handle_storeUserCredentials(self, event):
+    def _handle_storeUserCredentials(self, event) -> dict[str,str]:
         """
         Process a 'StoreUserCredentials' request.
         Args:
@@ -335,7 +342,7 @@ class RequestProcessor:
             return self._make_return_json(500, {'message': str(e)})
 
 
-    def _handle_validateUserCredentials(self, event):
+    def _handle_validateUserCredentials(self, event) -> dict[str,str]:
         """
         Process a 'ValidateUserCredentials' request.
         Args:
@@ -357,8 +364,7 @@ class RequestProcessor:
             return self._make_return_json(500, {'message': str(e)})
 
 
-
-    def _handle_deleteUser(self, event):
+    def _handle_deleteUser(self, event) -> dict[str,str]:
         """
         Process a 'DeleteUser' request.
         Args:
@@ -380,7 +386,7 @@ class RequestProcessor:
             return self._make_return_json(500, {'message': str(e)})
 
 
-    def _handle_getUserDetails(self, event):
+    def _handle_getUserDetails(self, event) -> dict[str,str]:
         """
         Process a 'GetUserDetails' request.
         Args:
@@ -396,10 +402,7 @@ class RequestProcessor:
         try:
             user_details = self.db_accessor.get_user_details(getUserDetailsArgs)
             print(f"[GetUserDetails] Successfully got user details: {user_details}")
-            return self._make_return_json(200, {user_details})
+            return self._make_return_json(200, user_details)
         except Exception as e:
             print(f"[GetUserDetails] Failed while getting user details with error: {str(e)}")
             return self._make_return_json(500, {'message': str(e)})
-
-
-

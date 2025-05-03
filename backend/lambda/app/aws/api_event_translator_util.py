@@ -5,10 +5,8 @@
 """
 
 import json
-from aws import method_args
+from app.aws import method_args
 from datetime import date, datetime
-# from method_args import *
-
 
 
 class ApiEventTranslatorUtil:
@@ -45,12 +43,9 @@ class ApiEventTranslatorUtil:
             GetContactByIdArgs
         """
 
-        print(event)
-        print(event['pathParameters'])
-
         data = json.loads(event['body'])
         user_token: str = data['user_token']
-        contact_id: int = int(event['pathParameters']['id'])
+        contact_id: int = int(data['contact_id'])
 
         return method_args.GetContactByIdArgs(user_token=user_token, contact_id=contact_id)
     
@@ -77,11 +72,11 @@ class ApiEventTranslatorUtil:
         lower_bound_date_str  = search_params['lower_bound_date'].split('T')[0]
         upper_bound_date_str  = search_params['upper_bound_date'].split('T')[0]
 
-        lower_bound_date = datetime.strptime(lower_bound_date_str, "%Y-%M-%d").date()
-        upper_bound_date = datetime.strptime(upper_bound_date_str, "%Y-%M-%d").date()
+        lower_bound_date = datetime.strptime(lower_bound_date_str, "%Y-%m-%d").date()
+        upper_bound_date = datetime.strptime(upper_bound_date_str, "%Y-%m-%d").date()
         
-        user_lat = search_params['user_lat']
-        user_lon = search_params['user_lon']
+        user_lat = search_params['user_lat'] if 'user_lat' in search_params else None
+        user_lon = search_params['user_lon'] if 'user_lon' in search_params else None
 
         return method_args.SearchContactsArgs(user_token=user_token, \
                                               query_string=query_string, \

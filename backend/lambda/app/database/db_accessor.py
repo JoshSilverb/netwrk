@@ -4,8 +4,8 @@ import psycopg2
 import psycopg2.extras
 import uuid
 
-from aws import method_args
-from database.db_config import Db_config
+from app.aws import method_args
+from app.database.db_config import Db_config
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from enum import Enum
@@ -13,30 +13,36 @@ from enum import Enum
 
 
 class SortOptions(Enum):
-    DATE_ADDED = 'Date added',
-    LAST_CONTACT_NEWEST = 'Last contacted (newest)',
-    LAST_CONTACT_OLDEST = 'Last contacted (oldest)',
-    ALPHABETICAL = 'Alphabetical',
-    DISTANCE = 'Distance',
-    RELEVANCE = 'Relevance',
+    DATE_ADDED = 'Date added'
+    LAST_CONTACT_NEWEST = 'Last contacted (newest)'
+    LAST_CONTACT_OLDEST = 'Last contacted (oldest)'
+    ALPHABETICAL = 'Alphabetical'
+    DISTANCE = 'Distance'
+    RELEVANCE = 'Relevance'
     NEXT_CONTACT_DATE = 'Next contact date'
-
-    order_by = {
-        DATE_ADDED: 'contact_id DESC',
-        LAST_CONTACT_NEWEST: 'lastcontact DESC',
-        LAST_CONTACT_OLDEST: 'lastcontact ASC',
-        ALPHABETICAL: 'fullname ASC',
-        DISTANCE: 'coordinates <-> ST_MakePoint',
-        RELEVANCE: 'embedding <-> ',
-        NEXT_CONTACT_DATE: 'nextcontact ASC'
-    }
 
 
 def sort_option_from_string(option: str) -> SortOptions:
+    """
+    Convert the given string to a SortOptions enum value.
+    Args:
+        option (str): The string to convert.
+    Returns:
+        SortOptions: The corresponding SortOptions enum value.
+    Raises:
+        ValueError: If the given string is not a valid sort option.
+    """
+
+    print(f"option: {option}")
+    option = option.strip("'")
+    print(f"stripped option: {option}")
+
     for sortOpt in SortOptions:
+        print(f"comparing to sortOpt: {sortOpt.value}")
         if sortOpt.value == option:
             return sortOpt
-        
+    
+    print("not found")
     raise ValueError(f"'{option}' is not a valid sort option")
 
 
@@ -49,7 +55,7 @@ class Db_Accessor:
     # PRIVATE METHODS
     #######################
 
-    def _add_contact_to_db(cursor, user_id, fullname, location, coordinate, user_bio, last_contact, met_through, reminder_period_weeks, reminder_period_months, next_contact, embedding_vector):
+    def _add_contact_to_db_with_coord(self, cursor, user_id, fullname, location, coordinate, user_bio, last_contact, met_through, reminder_period_weeks, reminder_period_months, next_contact, embedding_vector):
         """
         Add the given variables to the database as a new contact with 
             coordinates set.
@@ -90,7 +96,7 @@ class Db_Accessor:
         return new_contact_id
     
 
-    def _add_contact_to_db(cursor, user_id, fullname, location, user_bio, last_contact, met_through, reminder_period_weeks, reminder_period_months, next_contact, embedding_vector):
+    def _add_contact_to_db_no_coord(self, cursor, user_id, fullname, location, user_bio, last_contact, met_through, reminder_period_weeks, reminder_period_months, next_contact, embedding_vector):
         """
         Add the given variables to the database as a new contact without 
             coordinates set.
@@ -129,7 +135,7 @@ class Db_Accessor:
 
 
 
-    def _update_contact_in_db(cursor, user_id, contact_id, fullname, location, coordinate, user_bio, last_contact, met_through, reminder_period_weeks, reminder_period_months, next_contact, embedding_vector):
+    def _update_contact_in_db_with_coord(self, cursor, user_id, contact_id, fullname, location, coordinate, user_bio, last_contact, met_through, reminder_period_weeks, reminder_period_months, next_contact, embedding_vector):
         """
         Add the given variables to the database as a new contact with 
             coordinates set.
@@ -140,7 +146,7 @@ class Db_Accessor:
 
         # Execute a query
         cursor.execute(
-            f"IUPDATE contacts \
+            f"UPDATE contacts \
                 SET \
                     user_id=%s, \
                     fullname=%s, \
@@ -169,7 +175,7 @@ class Db_Accessor:
             contact_id))
     
 
-    def _update_contact_in_db(cursor, user_id, contact_id, fullname, location, user_bio, last_contact, met_through, reminder_period_weeks, reminder_period_months, next_contact, embedding_vector):
+    def _update_contact_in_db_no_coord(self, cursor, user_id, contact_id, fullname, location, user_bio, last_contact, met_through, reminder_period_weeks, reminder_period_months, next_contact, embedding_vector):
         """
         Add the given variables to the database as a new contact without 
             coordinates set.
@@ -391,9 +397,9 @@ class Db_Accessor:
         # whether it has a coordinate or not.
 
         if coordinate:
-            new_contact_id = self._add_contact_to_db(user_id, fullname, location, coordinate, user_bio, last_contact, met_through, reminder_period_weeks, reminderPeriod_months, nextcontact, embedding_vector)
+            new_contact_id = self._add_contact_to_db_with_coord(cursor, user_id, fullname, location, coordinate, user_bio, last_contact, met_through, reminder_period_weeks, reminderPeriod_months, nextcontact, embedding_vector)
         else:
-            new_contact_id = self._add_contact_to_db(user_id, fullname, location, user_bio, last_contact, met_through, reminder_period_weeks, reminderPeriod_months, nextcontact, embedding_vector)
+            new_contact_id = self._add_contact_to_db_no_coord(cursor, user_id, fullname, location, user_bio, last_contact, met_through, reminder_period_weeks, reminderPeriod_months, nextcontact, embedding_vector)
 
         print("Inserted into contacts")
         # Add socials
@@ -582,12 +588,14 @@ class Db_Accessor:
 
         nextcontact = last_contact + relativedelta(months=+reminderPeriod_months, days=+reminderPeriod_days)
 
-        print("Main update query")
+        print("Main update query, coordinate =", coordinate)
 
         if coordinate:
-            self._update_contact_in_db(user_id, contact_id, fullname, location, coordinate, user_bio, last_contact, met_through, reminder_period_weeks, reminder_period_months, nextcontact, embedding_vector)
+            print("Has coordinate")
+            self._update_contact_in_db_with_coord(cursor, user_id, contact_id, fullname, location, coordinate, user_bio, last_contact, met_through, reminder_period_weeks, reminder_period_months, nextcontact, embedding_vector)
         else:
-            self._update_contact_in_db(user_id, contact_id, fullname, location, user_bio, last_contact, met_through, reminder_period_weeks, reminder_period_months, nextcontact, embedding_vector)
+            print("No coordinate")
+            self._update_contact_in_db_no_coord(cursor, user_id, contact_id, fullname, location, user_bio, last_contact, met_through, reminder_period_weeks, reminder_period_months, nextcontact, embedding_vector)
         conn.commit()
 
         print("Main update query finished")
@@ -934,7 +942,9 @@ class Db_Accessor:
         cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # Can't search by relevance to a query if no query is given
-        if sort_option == SortOptions.RELEVANCE and len(embedding_string) == 0:
+        print(f"sort_option: {sort_option}, query_string: '{query_string}'")
+        if sort_option == SortOptions.RELEVANCE and len(query_string) == 0:
+            print("Can't search by relevance to a query if no query is given")
             sort_option = SortOptions.DATE_ADDED
         
         # Can't search by distance in no coordinate is given
@@ -954,7 +964,7 @@ class Db_Accessor:
             case SortOptions.DISTANCE:
                 order_operation = f'coordinates <-> St_MakePoint({user_lon}, {user_lat})'
             case SortOptions.RELEVANCE:
-                order_operation = f'embedding <-> {embedding_string} LIMIT 15'
+                order_operation = f"embedding <-> '{embedding_string}' LIMIT 15"
             case SortOptions.NEXT_CONTACT_DATE:
                 order_operation = 'nextcontact ASC'
 
@@ -983,10 +993,26 @@ class Db_Accessor:
             'upper_bound_date': upper_bound_date,
             'tags': tags,
             'embedding_string': embedding_string,
-            'order': order_operation
         }
 
+        print(f"Sorting by {sort_option}")
         print(f"about to execute with params: {query_parameters}")
+        print(f"and sql query:\nSELECT \
+                contacts.contact_id, \
+                contacts.fullname, \
+                contacts.location, \
+                ST_AsText(contacts.coordinates) as coordinate, \
+                contacts.userbio \
+            FROM users \
+            INNER JOIN contacts ON contacts.user_id = users.user_id \
+            {tags_join} \
+            WHERE users.user_token=%(user_token)s \
+                {exact_match_query} \
+                AND contacts.lastcontact >= %(lower_bound_date)s \
+                AND contacts.lastcontact <= %(upper_bound_date)s \
+                {tags_operation} \
+            GROUP BY contacts.contact_id \
+            ORDER BY {order_operation};")
 
         cursor.execute(
             f"SELECT \
@@ -1004,7 +1030,7 @@ class Db_Accessor:
                 AND contacts.lastcontact <= %(upper_bound_date)s \
                 {tags_operation} \
             GROUP BY contacts.contact_id \
-            ORDER BY %(order)s;", 
+            ORDER BY {order_operation};", 
             query_parameters)
 
         rawRows = cursor.fetchall()
