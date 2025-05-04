@@ -253,7 +253,7 @@ class ApiEventTranslatorUtil:
         """
 
         data = json.loads(event['body'])
-        user_token: str = data['userToken']
+        user_token: str = data['user_token']
 
         return method_args.DeleteUserArgs(user_token=user_token)
     

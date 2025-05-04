@@ -760,7 +760,7 @@ class Db_Accessor:
 
         # Add new user to DB if not
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        user_token = uuid.uuid4().hex
+        user_token = str(uuid.uuid4().hex).strip()
 
         cursor.execute(
             "INSERT INTO users (username, user_token, password) \

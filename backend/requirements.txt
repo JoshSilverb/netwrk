@@ -1,0 +1,16 @@
+boto3
+botocore
+iniconfig
+jmespath
+packaging
+pluggy
+psycopg2-binary
+pytest
+python-dateutil
+s3transfer
+six
+urllib3
+requests
+openai
+bcrypt
+moto
