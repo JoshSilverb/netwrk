@@ -1,0 +1,246 @@
+from flask import Blueprint, jsonify, request
+from datetime import datetime
+
+from app.models.user import User
+from app.models.contact import Contact
+from app.db import accessor as db_accessor
+
+import json
+import requests
+# from app.aws.api_event_translator_util import ApiEventTranslatorUtil as Translator
+# from app.database.db_config import Db_config
+# from app.database.db_accessor import Db_Accessor
+# from app.aws import secrets 
+from openai import OpenAI
+
+contacts_bp = Blueprint("contacts", __name__)
+
+
+def _location_to_coords(self, location: str) -> dict[str, str] | None:
+    """
+    Get the coordinates of a given location.
+    Args:
+        location: an address or name of a place as a string
+    Returns:
+        A dict in the form {'lat': num, 'lng': num} representing the 
+            coordinates of the given location if it can be determined, 
+            othewise return 'None'
+    """
+
+    print(f"Getting coordinates for location {location}")
+
+    if len(location) == 0:
+        return None
+
+    location_url_segment = '+'.join(location.split(' '))
+    geocode_request_url = f"https://maps.googleapis.com/maps/api/geocode/json?address={location_url_segment}&key={self.google_api_key}"
+    geocode_response = requests.get(geocode_request_url)
+    
+    geocode_response.raise_for_status()
+    location_coords = geocode_response.json()["results"][0]["geometry"]["location"]
+    print(f"Parsed location coords: {location_coords}")
+
+    return location_coords
+
+def _get_contact_embedding(self, location: str, bio: str) -> list[float]:
+    """
+    Get the embedding of the given contact fields.
+    Args:
+        location: an address or name of a place as a string
+        bio: user-specified description of the contact as a string
+    Returns:
+        A 1536-dimensional list representing the embedding of the fields
+    """
+
+    embedding_text = f"location='{location}'; bio='{bio}'"
+    
+    embedding_object = self.openai_client.embeddings.create(
+        model="text-embedding-3-small",
+        input=embedding_text,
+        encoding_format="float"
+    )
+
+    return embedding_object.data[0].embedding
+
+
+def _get_query_string_embedding(self, query_string: str,) -> list[float]:
+    """
+    Get the embedding of the given query string.
+    Args:
+        query_string: user-specified query to semantically search contacts 
+    Returns:
+        A 1536-dimensional list representing the embedding of the input
+    """
+    
+    embedding_object = self.openai_client.embeddings.create(
+        model="text-embedding-3-small",
+        input=query_string,
+        encoding_format="float"
+    )
+
+    return embedding_object.data[0].embedding
+
+
+@contacts_bp.route("/getContactById", methods=["POST"])
+def get_contact_by_id():
+    print("got get contact by ID request")
+
+    data = request.get_json()
+    user_token = data["user_token"]
+    contact_id = int(data["contact_id"])
+
+    print(f"Got token '{user_token}' and contact ID '{contact_id}'")
+
+    contact = db_accessor.get_contact_by_id(user_token, contact_id)
+    print("Retrieved contact:", contact)
+    return jsonify(contact)
+
+
+@contacts_bp.route("/addContactForUser", methods=["POST"])
+def add_new_contact():
+    print("Got add contact request")
+    data = request.get_json()
+    newcontact = data["newContact"]
+
+    user_token: str = data['user_token']
+    fullname: str = newcontact['fullname']
+    location: str = newcontact['location']
+    userbio: str = newcontact['userbio']
+    metthrough: str = newcontact['metthrough']
+    socials: list[dict] = newcontact['socials']
+
+    lastcontact_str  = newcontact['lastcontact'].split('T')[0]
+    lastcontact = datetime.strptime(lastcontact_str, "%Y-%M-%d").date()
+    
+    tags: list[str] = newcontact['tags']
+    reminder_period_weeks: int = int(newcontact['reminderPeriod']['weeks'])
+    reminder_period_months: int = int(newcontact['reminderPeriod']['months'])
+
+    coordinate = None
+    if location:
+        coordinate = _location_to_coords(location)
+    
+    embedding_vector = _get_contact_embedding(location, userbio)
+
+    new_contact_id = db_accessor.add_contact(
+        user_token=user_token,
+        fullname=fullname,
+        location=location,
+        coordinate=coordinate,
+        met_through=metthrough,
+        user_bio=userbio,
+        last_contact=lastcontact,
+        reminder_period_weeks=reminder_period_weeks,
+        reminder_period_months=reminder_period_months,
+        embedding_vector=embedding_vector,
+        socials=socials,
+        tags=tags
+    )
+
+    return jsonify(new_contact_id)
+
+
+@contacts_bp.route("/removeContactForUser", methods=["POST"])
+def remove_contact():
+    print("Got remove contact request")
+
+    data = request.get_json()
+    user_token = data["user_token"]
+    contact_id = int(data["contact_id"])
+
+    print(f"Got token '{user_token}' and contact ID '{contact_id}'")
+
+    db_accessor.delete_contact(user_token, contact_id)
+
+    return jsonify({})
+
+
+@contacts_bp.route("/updateContactForUser", methods=["POST"])
+def update_contact():
+    print("Got add contact request")
+
+    data = request.get_json()
+    newcontact = data["newContact"]
+
+    user_token: str = data['user_token']
+
+    contact_id: int = int(newcontact["contact_id"])
+    fullname: str = newcontact['fullname']
+    location: str = newcontact['location']
+    userbio: str = newcontact['userbio']
+    metthrough: str = newcontact['metthrough']
+    socials: list[dict] = newcontact['socials']
+
+    lastcontact_str  = newcontact['lastcontact'].split('T')[0]
+    lastcontact = datetime.strptime(lastcontact_str, "%Y-%M-%d").date()
+    
+    tags: list[str] = newcontact['tags']
+    reminder_period_weeks: int = int(newcontact['reminderPeriod']['weeks'])
+    reminder_period_months: int = int(newcontact['reminderPeriod']['months'])
+
+    coordinate = None
+    if location:
+        coordinate = _location_to_coords(location)
+    
+    embedding_vector = _get_contact_embedding(location, userbio)
+
+    new_contact_id = db_accessor.update_contact(
+        user_token=user_token,
+        contact_id=contact_id,
+        fullname=fullname,
+        location=location,
+        coordinate=coordinate,
+        met_through=metthrough,
+        user_bio=userbio,
+        last_contact=lastcontact,
+        reminder_period_weeks=reminder_period_weeks,
+        reminder_period_months=reminder_period_months,
+        embedding_vector=embedding_vector,
+        socials=socials,
+        tags=tags
+    )
+
+    return jsonify(new_contact_id)
+
+
+@contacts_bp.route("/searchContacts", methods=["POST"])
+def search_contacts():
+    print("Got search contact request")
+
+    data = request.get_json()
+    user_token: str = data['user_token']
+    search_params: dict = data['search_params']
+
+    query_string: str = search_params['query_string']
+    order_by: str     = search_params['order_by']
+    tags: list[str]   = search_params['tags']
+
+    lower_bound_date_str  = search_params['lower_bound_date'].split('T')[0]
+    upper_bound_date_str  = search_params['upper_bound_date'].split('T')[0]
+
+    lower_bound_date = datetime.strptime(lower_bound_date_str, "%Y-%m-%d").date()
+    upper_bound_date = datetime.strptime(upper_bound_date_str, "%Y-%m-%d").date()
+    
+    user_lat = search_params['user_lat'] if 'user_lat' in search_params else None
+    user_lon = search_params['user_lon'] if 'user_lon' in search_params else None
+
+    if order_by == 'Relevance' and len(query_string) > 0:
+        embedding_vector = _get_query_string_embedding(query_string)
+        print(f"[SearchContacts] Got embedding vector")
+    else:
+        embedding_vector = None
+        print(f"[SearchContacts] No embedding vector")
+
+    contacts = db_accessor.search_contacts_and_sort(
+        user_token=user_token,
+        query_string=query_string,
+        embedding_string=embedding_vector,
+        sort_option=order_by,
+        tags=tags,
+        lower_bound_date=lower_bound_date,
+        upper_bound_date=upper_bound_date,
+        user_latitude=user_lat,
+        user_longitude=user_lon
+    )
+
+    return jsonify(contacts)

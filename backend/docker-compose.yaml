@@ -28,7 +28,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./lambda/app:/app/app
-      - ./lambda/integration_tests:/app/integration_tests
+      - ./app:/app/app
+      - ./integration_tests:/app/integration_tests
     stdin_open: true
     tty: true
