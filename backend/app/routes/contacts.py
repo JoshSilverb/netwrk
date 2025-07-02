@@ -1,19 +1,11 @@
+import requests
 from flask import Blueprint, jsonify, request
 from datetime import datetime
+from openai import OpenAI
 
-from app.models.user import User
-from app.models.contact import Contact
 from app.db import accessor as db_accessor
-
 from app.config import Config
 
-import json
-import requests
-# from app.aws.api_event_translator_util import ApiEventTranslatorUtil as Translator
-# from app.database.db_config import Db_config
-# from app.database.db_accessor import Db_Accessor
-# from app.aws import secrets 
-from openai import OpenAI
 
 contacts_bp = Blueprint("contacts", __name__)
 

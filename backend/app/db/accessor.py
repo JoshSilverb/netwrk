@@ -366,8 +366,9 @@ def get_tags_for_user(user_token: str):
         The tags associated with the user with the user ID given in the args.
     """
 
-    user_tags = db.session.query(TagLabel).options(joinedload(TagLabel.user)).filter_by(user_token=user_token)
+    labels = db.session.query(TagLabel.label).join(User).filter(User.user_token == user_token).all()
 
+    user_tags = [label[0] for label in labels]
     return user_tags
 
 
