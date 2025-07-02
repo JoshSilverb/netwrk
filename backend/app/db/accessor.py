@@ -117,10 +117,9 @@ def add_contact(
     """
 
     # Step 1: Look up user_id from user_token
-    user_id = db.session.scalar(
-        select(User.user_id).where(User.user_token == user_token)
-    )
-    if user_id is None:
+    user = db.session.query(User).where(User.user_token == user_token).first()
+    
+    if user is None:
         raise ValueError("Invalid user_token — user not found.")
 
     # Prepare coordinate field
@@ -140,7 +139,7 @@ def add_contact(
     stmt = (
         insert(Contact)
         .values(
-            user_id=user_id,
+            user_id=user.user_id,
             fullname=fullname,
             location=location,
             coordinates=geo_point,
@@ -203,7 +202,7 @@ def add_contact(
         existing_tags = (
             db.session.query(TagLabel)
             .filter(
-                TagLabel.user_id == user_id,
+                TagLabel.user_id == user.user_id,
                 TagLabel.label.in_(tags)
             )
             .all()
@@ -212,7 +211,7 @@ def add_contact(
 
         # Step 2: Insert missing taglabels
         new_taglabels = [
-            TagLabel(user_id=user_id, label=label)
+            TagLabel(user_id=user.user_id, label=label)
             for label in tags
             if label not in existing_tag_map
         ]
@@ -229,6 +228,10 @@ def add_contact(
             for label in tags
         ]
         db.session.add_all(tag_entries)
+
+    # Increment user's num_contacts
+
+    user.num_contacts = user.num_contacts + 1
 
     db.session.commit()
 
