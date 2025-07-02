@@ -15,7 +15,7 @@ class TagLabel(db.Model):
     user = db.relationship(
         "User", 
         back_populates="tag_label",
-        cascade="all, delete-orphan"
+        cascade="all"
     )
 
     __table_args__ = (

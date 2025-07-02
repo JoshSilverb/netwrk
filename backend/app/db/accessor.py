@@ -155,9 +155,8 @@ def add_contact(
         .returning(Contact.contact_id)
     )
 
-    with db.session.begin():
-        result = db.session.execute(stmt)
-        new_contact_id = result.scalar_one()
+    result = db.session.execute(stmt)
+    new_contact_id = result.scalar_one()
     
     print("Inserted into contacts")
 
@@ -231,6 +230,8 @@ def add_contact(
         ]
         db.session.add_all(tag_entries)
 
+    db.session.commit()
+
     return new_contact_id
 
 
@@ -248,7 +249,7 @@ def delete_contact(user_token: str, contact_id: int):
         raise Exception(f"Unable to remove contact - invalid user_token {user_token}")
 
     # Find the contact that matches both contact_id and belongs to the user
-    contact = next((c for c in user.contacts if c.id == contact_id), None)
+    contact = next((c for c in user.contacts if c.contact_id == contact_id), None)
 
     if not contact:
         raise Exception(f"Unable to remove contact - no contact with ID '{contact_id}' for user_token {user_token}")
@@ -290,7 +291,7 @@ def update_contact(
         raise Exception(f"Invalid user_token: {user_token}")
 
     # 2. Get the contact, make sure it belongs to the user
-    contact = db.session.query(Contact).filter_by(id=contact_id, user_id=user.user_id).first()
+    contact = db.session.query(Contact).filter_by(contact_id=contact_id, user_id=user.user_id).first()
     if not contact:
         raise Exception(f"No contact with ID {contact_id} found for user")
 
@@ -319,7 +320,7 @@ def update_contact(
 
         for social_dict in socials:
             label_name = social_dict["label"]
-            value = social_dict["value"]
+            address = social_dict["address"]
 
             # Get or create social label
             social_label = db.session.query(SocialLabel).filter_by(label=label_name).first()
@@ -331,8 +332,8 @@ def update_contact(
             # Add new social entry
             new_social = Social(
                 contact_id=contact_id,
-                label_id=social_label.id,
-                value=value
+                social_id=social_label.id,
+                address=address
             )
             db.session.add(new_social)
 
@@ -350,7 +351,7 @@ def update_contact(
                 db.session.flush()
 
             # Add tag association
-            tag = Tag(contact_id=contact_id, label_id=tag_label.id)
+            tag = Tag(contact_id=contact_id, tag_id=tag_label.id)
             db.session.add(tag)
 
     # 6. Commit changes

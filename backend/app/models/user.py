@@ -12,3 +12,7 @@ class User(db.Model):
     contacts = db.relationship("Contact", 
                                back_populates="user", 
                                cascade="all, delete-orphan")
+
+    tag_label = db.relationship("TagLabel",
+                                 back_populates="user",
+                                 cascade="all, delete-orphan")

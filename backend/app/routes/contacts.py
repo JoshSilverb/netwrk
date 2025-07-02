@@ -5,6 +5,8 @@ from app.models.user import User
 from app.models.contact import Contact
 from app.db import accessor as db_accessor
 
+from app.config import Config
+
 import json
 import requests
 # from app.aws.api_event_translator_util import ApiEventTranslatorUtil as Translator
@@ -16,7 +18,7 @@ from openai import OpenAI
 contacts_bp = Blueprint("contacts", __name__)
 
 
-def _location_to_coords(self, location: str) -> dict[str, str] | None:
+def _location_to_coords(location: str) -> dict[str, str] | None:
     """
     Get the coordinates of a given location.
     Args:
@@ -33,7 +35,7 @@ def _location_to_coords(self, location: str) -> dict[str, str] | None:
         return None
 
     location_url_segment = '+'.join(location.split(' '))
-    geocode_request_url = f"https://maps.googleapis.com/maps/api/geocode/json?address={location_url_segment}&key={self.google_api_key}"
+    geocode_request_url = f"https://maps.googleapis.com/maps/api/geocode/json?address={location_url_segment}&key={Config.GOOGLE_API_KEY}"
     geocode_response = requests.get(geocode_request_url)
     
     geocode_response.raise_for_status()
@@ -42,7 +44,7 @@ def _location_to_coords(self, location: str) -> dict[str, str] | None:
 
     return location_coords
 
-def _get_contact_embedding(self, location: str, bio: str) -> list[float]:
+def _get_contact_embedding(location: str, bio: str) -> list[float]:
     """
     Get the embedding of the given contact fields.
     Args:
@@ -53,8 +55,9 @@ def _get_contact_embedding(self, location: str, bio: str) -> list[float]:
     """
 
     embedding_text = f"location='{location}'; bio='{bio}'"
-    
-    embedding_object = self.openai_client.embeddings.create(
+
+    openai_client = OpenAI(api_key=Config.OPENAI_API_KEY)
+    embedding_object = openai_client.embeddings.create(
         model="text-embedding-3-small",
         input=embedding_text,
         encoding_format="float"
@@ -63,7 +66,7 @@ def _get_contact_embedding(self, location: str, bio: str) -> list[float]:
     return embedding_object.data[0].embedding
 
 
-def _get_query_string_embedding(self, query_string: str,) -> list[float]:
+def _get_query_string_embedding(query_string: str,) -> list[float]:
     """
     Get the embedding of the given query string.
     Args:
@@ -72,7 +75,8 @@ def _get_query_string_embedding(self, query_string: str,) -> list[float]:
         A 1536-dimensional list representing the embedding of the input
     """
     
-    embedding_object = self.openai_client.embeddings.create(
+    openai_client = OpenAI(api_key=Config.OPENAI_API_KEY)
+    embedding_object = openai_client.embeddings.create(
         model="text-embedding-3-small",
         input=query_string,
         encoding_format="float"
