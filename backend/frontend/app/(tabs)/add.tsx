@@ -112,12 +112,11 @@ export default function AddContactPage() {
 
     const fetchContactById = async (id: string) => {
         const requestBody = {
-            user_token: token
+            user_token: token,
+            contact_id: id
         }
         try {
-            const requestURL = getContactByIdURL + "/" + id;
-            console.log("Request url: ", requestURL);
-            const response = await axios.post(requestURL, requestBody);
+            const response = await axios.post(getContactByIdURL, requestBody);
             setDataFromContact(response.data);
             setLoading(false);
             // setErrorReceived(false);

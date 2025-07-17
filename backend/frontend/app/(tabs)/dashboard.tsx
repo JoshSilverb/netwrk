@@ -5,7 +5,7 @@ import ContactsList from '@/components/ContactsList'
 import { Link } from 'expo-router';
 import { Button, YStack, ScrollView } from 'tamagui';
 import axios from 'axios';
-import { getContactsForUserURL, searchContactsURL } from '@/constants/Apis';
+import { searchContactsURL } from '@/constants/Apis';
 import { Loader } from '@/components/Loader';
 import { useAuth } from '@/components/AuthContext';
 
@@ -25,31 +25,50 @@ export default function DashboardScreen() {
     console.log(token);
 
     useEffect(() => {
-        fetchContacts();
+        fetchContactsByNextContactDate();
         fetchContactsByLocation();
     }, []);
 
     const getContacts = async () => {
-        fetchContacts();
+        fetchContactsByNextContactDate();
         fetchContactsByLocation();
     }
 
-    const fetchContacts = async () => {
-        // Contact data to be sent
+    const fetchContactsByNextContactDate = async () => {
+        console.log("Searching for contacts by nextContactDate")
+        setFeatLoading(true);
+        const dateLowerBound = new Date(0);
+        const dateUpperBound = new Date(Date.now());
+        console.log("Got Dates");
+    
+        // Search query to be sent
         const requestBody = {
-            user_token: token
+            user_token: token,
+            search_params: {
+                query_string: "",
+                order_by: "Next contact date",
+                tags: [],
+                lower_bound_date: dateLowerBound,
+                upper_bound_date: dateUpperBound
+            }
         }
+        console.log("Sending FetchContactsByNextContactDate request with body:", requestBody);
 
         try {
-            const response = await axios.post(getContactsForUserURL, requestBody);
+            const response = await axios.post(searchContactsURL, requestBody);
             setContacts(response.data);
             setFeatLoading(false);
+            console.log("Successfully got FetchContactsByNextContactDate response");
+
         } catch (error) {
-            console.error('Error fetching data:', error);
+            console.error('Error received in FetchContactsByNextContactDate response:', error);
+        } finally {
+            setFeatLoading(false);
         }
     };
 
     const fetchContactsByLocation = async () => {
+        console.log("Searching for contacts by location")
         setNearbyLoading(true);
         const location = await getCurrentLocation();
         if (!location) {
@@ -75,15 +94,14 @@ export default function DashboardScreen() {
                 user_lon: location.longitude,
             }
         }
-        console.log("Sending this request body1:", requestBody);
+        console.log("Sending FetchContactsByLocation request with body:", requestBody);
 
         try {
-            console.log("Sending this request body:", requestBody);
             const response = await axios.post(searchContactsURL, requestBody);
             setNearbyContacts(response.data);
             setNearbyLoading(false);
         } catch (error) {
-            console.error('Error fetching location contact data:', error);
+            console.error('Error received in FetchContactsByLocation response:', error);
         } finally {
             setNearbyLoading(false);
         }

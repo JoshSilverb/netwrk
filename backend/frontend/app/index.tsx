@@ -41,6 +41,8 @@ export default function LoginScreen() {
       password: password
     }
 
+    console.log(`sending login request with body=${requestBody} to URL=${validateUserCredentialsURL}`)
+
     try {
       const response = await axios.post(validateUserCredentialsURL, requestBody);
       if (response.status == 200) {
@@ -56,7 +58,7 @@ export default function LoginScreen() {
         setError('Invalid username or password.');
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching data:', error.message);
     }
   };
 

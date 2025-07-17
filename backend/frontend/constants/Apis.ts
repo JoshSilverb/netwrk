@@ -1,8 +1,7 @@
 // This file contains URLs for APIs used in this app
 
-const baseURL = 'https://x8bhwx3sva.execute-api.us-east-2.amazonaws.com';
-const tier = '/default';
-export const getContactsForUserURL      = baseURL + tier + '/getContactsForUser';
+const baseURL = 'https://netwrk-env.eba-megsk2ie.us-east-2.elasticbeanstalk.com';
+const tier = '';
 export const addContactForUserURL       = baseURL + tier + '/addContactForUser';
 export const getContactByIdURL          = baseURL + tier + '/getContactById';
 export const removeContactForUserURL    = baseURL + tier + '/removeContactForUser';

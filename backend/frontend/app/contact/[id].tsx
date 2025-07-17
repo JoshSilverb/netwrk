@@ -14,8 +14,6 @@ import { useAuth } from '@/components/AuthContext';
 
 export default function ContactPage() {
   const { id } = useLocalSearchParams();
-
-  const requestURL = getContactByIdURL + "/" + id;
   
   const [contact, setContact] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,13 +28,14 @@ export default function ContactPage() {
 
   const fetchContactById = async () => {
     const requestBody = {
-        user_token: token
+        user_token: token,
+        contact_id: id
     }
 
-    console.log("Fetching contact with ID:", id);
+    console.log("Sending FetchContactById request to", getContactByIdURL, "with body:", requestBody);
 
       try {
-          const response = await axios.post(requestURL, requestBody);
+          const response = await axios.post(getContactByIdURL, requestBody);
           console.log(response.data);
           setContact(response.data);
           setLoading(false);
