@@ -302,7 +302,7 @@ def update_contact(
     contact.fullname = fullname
     contact.location = location
     contact.met_through = met_through
-    contact.user_bio = user_bio
+    contact.userbio = user_bio
     contact.last_contact = last_contact
     contact.reminder_period_weeks = reminder_period_weeks
     contact.reminder_period_months = reminder_period_months
@@ -506,35 +506,35 @@ def search_contacts_and_sort(
     # Base query
     query = (
         db.session.query(
-            Contact.id.label("contact_id"),
+            Contact.contact_id.label("contact_id"),
             Contact.fullname,
             Contact.location,
             func.ST_AsText(Contact.coordinates).label("coordinate"),
-            Contact.user_bio
+            Contact.userbio
         )
-        .join(User, Contact.user_id == User.id)
+        .join(User, Contact.user_id == User.user_id)
         .filter(User.user_token == user_token)
-        .filter(Contact.last_contact >= lower_bound_date)
-        .filter(Contact.last_contact <= upper_bound_date)
+        .filter(Contact.lastcontact >= lower_bound_date)
+        .filter(Contact.lastcontact <= upper_bound_date)
     )
 
     # Add search filter
     if sort_option != SortOptions.RELEVANCE and query_string:
         like_term = f"%{query_string}%"
         query = query.filter(or_(
-            Contact.user_bio.ilike(like_term),
+            Contact.userbio.ilike(like_term),
             Contact.fullname.ilike(like_term)
         ))
 
     # Add tag filter if needed
     if tags:
-        query = query.join(Tag, Tag.contact_id == Contact.id)
-        query = query.join(TagLabel, Tag.label_id == TagLabel.id)
+        query = query.join(Tag, Tag.contact_id == Contact.contact_id)
+        query = query.join(TagLabel, Tag.tag_id == TagLabel.id)
         query = query.filter(TagLabel.label.in_(tags))
 
     # Add ordering
     if sort_option == SortOptions.DATE_ADDED:
-        query = query.order_by(Contact.id.desc())
+        query = query.order_by(Contact.contact_id.desc())
     elif sort_option == SortOptions.LAST_CONTACT_NEWEST:
         query = query.order_by(Contact.last_contact.desc())
     elif sort_option == SortOptions.LAST_CONTACT_OLDEST:
@@ -551,7 +551,7 @@ def search_contacts_and_sort(
     elif sort_option == SortOptions.NEXT_CONTACT_DATE:
         query = query.order_by(Contact.next_contact.asc())
 
-    print(f"Sorting by {sort_option.name}, searching with query '{query_string}'")
+    print(f"Sorting by {sort_option}, searching with query '{query_string}'")
     print(f"Final SQL:\n{str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
 
     contacts_raw = query.all()
@@ -567,10 +567,10 @@ def search_contacts_and_sort(
     socials_rows = (
         db.session.query(
             Social.contact_id,
-            Social.value,
+            Social.address,
             SocialLabel.label
         )
-        .join(SocialLabel, Social.label_id == SocialLabel.id)
+        .join(SocialLabel, Social.social_id == SocialLabel.id)
         .filter(Social.contact_id.in_(contact_ids))
         .all()
     )
@@ -580,7 +580,7 @@ def search_contacts_and_sort(
     for s in socials_rows:
         socials_by_contact.setdefault(s.contact_id, []).append({
             'label': s.label,
-            'value': s.value
+            'address': s.address
         })
 
     # Attach socials to contact dicts
