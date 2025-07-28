@@ -209,8 +209,9 @@ export default function AddContactPage() {
             const response = await axios.post(addContactForUserURL, requestBody)
             console.log(response.data)
             if (response.status == 200) {
+                // For new contacts, navigate to the contact page and reset the nav stack
                 const redirectLink = "/contact/" + response.data;
-                router.push(redirectLink);
+                router.replace(redirectLink);
             }
 
         }
@@ -247,6 +248,8 @@ export default function AddContactPage() {
             const response = await axios.post(updateContactForUserURL, requestBody)
             console.log(response.data)
             if (response.status == 200) {
+                // For updates, replace the current edit page with the updated contact view
+                // This preserves the navigation stack so back button works correctly
                 const redirectLink = "/contact/" + response.data;
                 router.replace(redirectLink);
             }
@@ -261,6 +264,28 @@ export default function AddContactPage() {
     
     return (
         <View style={CONTAINER_STYLES.screen}>
+            <Stack.Screen 
+                options={{
+                    title: id === '0' ? 'Add Contact' : 'Edit Contact',
+                    headerShown: true,
+                    headerBackTitleVisible: false,
+                    presentation: id === '0' ? 'modal' : 'card',
+                    gestureEnabled: true,
+                    headerBackButtonMenuEnabled: false,
+                    headerLeft: id !== '0' ? () => (
+                        <Button
+                            size="$2"
+                            variant="ghost"
+                            onPress={() => {
+                                const contactViewLink = "/contact/" + id;
+                                router.replace(contactViewLink);
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                    ) : undefined,
+                }} 
+            />
             <ScrollView 
                 automaticallyAdjustKeyboardInsets={true} 
                 keyboardShouldPersistTaps='always'

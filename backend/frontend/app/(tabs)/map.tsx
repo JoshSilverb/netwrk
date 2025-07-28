@@ -8,7 +8,7 @@ import { searchContactsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
 import { RotateCw } from '@tamagui/lucide-icons';
 import { RefreshControl } from 'react-native';
-
+import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 
 import axios from 'axios';
 
@@ -112,58 +112,145 @@ export default function mapScreen() {
   } 
 
   return (
-    <View className='bg-white pt-5'>
+    <View style={CONTAINER_STYLES.screen}>
       <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}>
-      <YStack>
-        <XStack>
-          <Text className=" mb-2 mx-2 text-base font-medium text-gray-900">
-            Contacts map 
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
+      <YStack space={SPACING.lg} padding={SPACING.lg}>
+        {/* Header */}
+        <YStack 
+          space={SPACING.sm}
+          padding={SPACING.md}
+          marginVertical={SPACING.sm}
+          borderWidth={1}
+          borderColor="$borderColor"
+          borderRadius={BORDER_RADIUS.md}
+          backgroundColor="$gray1"
+        >
+          <Text 
+            fontSize={TYPOGRAPHY.sizes.md}
+            fontWeight={TYPOGRAPHY.weights.medium}
+            color="$gray11"
+            marginBottom={SPACING.xs}
+          >
+            Contacts Map
           </Text>
-        </XStack>
+          <Text 
+            fontSize={TYPOGRAPHY.sizes.sm}
+            color="$gray10"
+          >
+            Tap on markers to see contacts at each location
+          </Text>
+        </YStack>
       
-      <Loader loading={loading}>
-        <MapView style={{width: '100%', height: 500}}>
-          {contacts.map((contact, index) => (
-            <View key={index}>
-              {contactsByLocation.has(contact.location) && 
-              <Marker
-              coordinate={getContactCoords(contact)}
-              title={contact.location}
-              onPress={() => handleMarkerPress(contact.location)}
+        {/* Map Container */}
+        <YStack 
+          marginVertical={SPACING.sm}
+          borderWidth={1}
+          borderColor="$borderColor"
+          borderRadius={BORDER_RADIUS.md}
+          backgroundColor="$gray1"
+          overflow="hidden"
+        >
+          <Loader loading={loading}>
+            <MapView 
+              style={{
+                width: '100%', 
+                height: 400,
+                borderRadius: BORDER_RADIUS.md
+              }}
             >
-            <Image
-              source={require('@/assets/images/mapmarker.png')}
-              style={{ height: 25, width: 25 }}
-              resizeMode="contain" 
-            />
-          </Marker>
-          }
-          </View>
-          ))}
-        
-        </MapView>
-        </Loader>
+              {contacts.map((contact, index) => (
+                <View key={index}>
+                  {contactsByLocation.has(contact.location) && 
+                  <Marker
+                  coordinate={getContactCoords(contact)}
+                  title={contact.location}
+                  onPress={() => handleMarkerPress(contact.location)}
+                >
+                <Image
+                  source={require('@/assets/images/mapmarker.png')}
+                  style={{ height: 25, width: 25 }}
+                  resizeMode="contain" 
+                />
+              </Marker>
+              }
+              </View>
+              ))}
+            
+            </MapView>
+            </Loader>
+        </YStack>
       </YStack>
       </ScrollView>
-      {/* Tamagui Sheet - Modal that slides up */}
+      {/* Location Details Sheet */}
       <Sheet
         forceRemoveScrollEnabled={isSheetOpen}
         modal
         open={isSheetOpen}
         onOpenChange={setIsSheetOpen}
-        snapPoints={[70]} // This sets the distance from the bottom (e.g., 80% of screen height)
+        snapPoints={[70]}
         dismissOnSnapToBottom
       >
-        <Sheet.Frame>
-          <Sheet.Handle />
+        <Sheet.Frame backgroundColor="$background">
+          <Sheet.Handle backgroundColor="$gray8" />
           <Sheet.Overlay />
           <Sheet.ScrollView>
-            <YStack p="$4" space>
-              {/* Content inside the modal */}
-              {(activeLocation.length != 0) && <ContactsList contacts={contactsByLocation.get(activeLocation)} prefix="locationlist" />}
-              <Button onPress={() => setIsSheetOpen(false)}>Close</Button>
-              {/* Add more content here */}
+            <YStack space={SPACING.lg} padding={SPACING.lg}>
+              {/* Sheet Header */}
+              <YStack 
+                space={SPACING.sm}
+                padding={SPACING.md}
+                borderWidth={1}
+                borderColor="$borderColor"
+                borderRadius={BORDER_RADIUS.md}
+                backgroundColor="$gray1"
+              >
+                <Text 
+                  fontSize={TYPOGRAPHY.sizes.md}
+                  fontWeight={TYPOGRAPHY.weights.medium}
+                  color="$gray11"
+                  marginBottom={SPACING.xs}
+                >
+                  Contacts in {activeLocation}
+                </Text>
+                <Text 
+                  fontSize={TYPOGRAPHY.sizes.sm}
+                  color="$gray10"
+                >
+                  {contactsByLocation.get(activeLocation)?.length || 0} contact{contactsByLocation.get(activeLocation)?.length !== 1 ? 's' : ''} found
+                </Text>
+              </YStack>
+              
+              {/* Contacts List */}
+              <YStack 
+                space={SPACING.sm}
+                padding={SPACING.md}
+                marginVertical={SPACING.sm}
+                borderWidth={1}
+                borderColor="$borderColor"
+                borderRadius={BORDER_RADIUS.md}
+                backgroundColor="$gray1"
+              >
+                {(activeLocation.length != 0) && 
+                  <ContactsList 
+                    contacts={contactsByLocation.get(activeLocation)} 
+                    prefix="locationlist" 
+                  />
+                }
+              </YStack>
+              
+              {/* Close Button */}
+              <Button 
+                onPress={() => setIsSheetOpen(false)}
+                size="$4"
+                backgroundColor="$blue9"
+                color="white"
+                marginTop={SPACING.md}
+              >
+                Close
+              </Button>
             </YStack>
           </Sheet.ScrollView>
         </Sheet.Frame>

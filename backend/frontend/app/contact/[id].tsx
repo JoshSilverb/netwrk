@@ -9,6 +9,7 @@ import { getContactByIdURL } from '@/constants/Apis';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/components/AuthContext';
+import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 
 
 export default function ContactPage() {
@@ -103,16 +104,20 @@ export default function ContactPage() {
   }
 
   return (
-
-    <View className="flex-1 bg-white">
+    <View style={CONTAINER_STYLES.screen}>
       <Stack.Screen options={{ title: "" }} />
 
       <YStack flex={1} position="relative">
-      <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
-      <YStack alignItems="flex-start" gap="$2" padding="$5">
+      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+      <YStack space={SPACING.xl} padding={SPACING.lg}>
         <Loader loading={loading}>
-        {/* Header Stack */}
-        <YStack alignSelf="center" alignItems='center' gap="$2">
+        {/* Header */}
+        <YStack 
+          alignSelf="center" 
+          alignItems='center' 
+          space={SPACING.md}
+          paddingVertical={SPACING.lg}
+        >
           <Avatar circular size="$10">
               <Avatar.Image
               accessibilityLabel={contact.fullname}
@@ -120,101 +125,346 @@ export default function ContactPage() {
               />
           </Avatar>
 
-          <Paragraph className="font-bold" size="$8">
+          <Text 
+            fontSize={TYPOGRAPHY.sizes.title}
+            fontWeight={TYPOGRAPHY.weights.bold}
+            textAlign="center"
+          >
             {contact.fullname}
-          </Paragraph>
+          </Text>
 
-          <Paragraph color="gray">{contact.location}</Paragraph>
+          <Text 
+            fontSize={TYPOGRAPHY.sizes.md}
+            color="$gray10"
+            textAlign="center"
+          >
+            {contact.location}
+          </Text>
         </YStack>
 
-        {/* Contact Info Stack */}
-        <Paragraph className="font-bold" size="$6" color="gray">
-          Contact info
-        </Paragraph>
-        <YStack alignSelf='flex-start' paddingLeft="$2">
-          {console.log("contact", contact)}
-          {contact.socials && contact.socials.map((social, index) => (
-              <Group orientation="horizontal" className='py-1' key={`social-${index}`}>
-                <Group.Item>
-                  <View className="border rounded-md border-slate-200 p-1 justify-center">
-                    <Text>{social.label}</Text>
-                  </View>
-                </Group.Item>
-                <Group.Item>
-                  <Button className="border rounded-md border-slate-200 p-1 justify-center" backgroundColor="white">{social.address}</Button>
-                </Group.Item>
-              </Group>
-          ))}
+
+        {/* How you met */}
+        <YStack 
+          space={SPACING.sm}
+          padding={SPACING.md}
+          marginVertical={SPACING.sm}
+          borderWidth={1}
+          borderColor="$borderColor"
+          borderRadius={BORDER_RADIUS.md}
+          backgroundColor="$gray1"
+        >
+          <Text 
+            fontSize={TYPOGRAPHY.sizes.md}
+            fontWeight={TYPOGRAPHY.weights.medium}
+            color="$gray11"
+            marginBottom={SPACING.xs}
+          >
+            How you met
+          </Text>
+          <View 
+            padding={SPACING.md}
+            borderWidth={1}
+            borderColor="$borderColor"
+            borderRadius={BORDER_RADIUS.sm}
+            backgroundColor="$background"
+          >
+            <Text fontSize={TYPOGRAPHY.sizes.sm}>
+              {contact.metthrough || "No information provided"}
+            </Text>
+          </View>
         </YStack>
 
-        {/* Bio and Notes Stack */}
-        <Paragraph className="font-bold" size="$6" color="gray">
-          About
-        </Paragraph>
-        <YStack alignSelf='flex-start' space="$2" paddingLeft="$2">
-          <YStack space="$1">
-            <Paragraph className="font-bold" size="$4" color="gray">Met through</Paragraph>
-            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} padding={10}>{contact.metthrough}</Paragraph>
-          </YStack>
-          <YStack space="$1">
-            <Paragraph className="font-bold" size="$4" color="gray">User Bio</Paragraph>
-            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} padding={10}>{contact.userbio}</Paragraph>
-          </YStack>
+        {/* Notes */}
+        <YStack 
+          space={SPACING.sm}
+          padding={SPACING.md}
+          marginVertical={SPACING.sm}
+          borderWidth={1}
+          borderColor="$borderColor"
+          borderRadius={BORDER_RADIUS.md}
+          backgroundColor="$gray1"
+        >
+          <Text 
+            fontSize={TYPOGRAPHY.sizes.md}
+            fontWeight={TYPOGRAPHY.weights.medium}
+            color="$gray11"
+            marginBottom={SPACING.xs}
+          >
+            Notes
+          </Text>
+          <View 
+            padding={SPACING.md}
+            borderWidth={1}
+            borderColor="$borderColor"
+            borderRadius={BORDER_RADIUS.sm}
+            backgroundColor="$background"
+          >
+            <Text fontSize={TYPOGRAPHY.sizes.sm}>
+              {contact.userbio || "No notes added"}
+            </Text>
+          </View>
         </YStack>
 
-        {/* Stats Stack */}
-        <Paragraph className="font-bold" size="$6" color="gray">
-          Outreach Stats
-        </Paragraph>
-        <XStack alignSelf='flex-start' space="$5" paddingLeft="$2">
-          <YStack space="$1">
-            <Paragraph className="font-bold" size="$4" color="gray">Previous:</Paragraph>
-            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} paddingLeft={10} paddingRight={10}>{contact.lastcontact}</Paragraph>
+        {/* Contact Schedule */}
+        <YStack 
+          space={SPACING.md}
+          padding={SPACING.md}
+          marginVertical={SPACING.sm}
+          borderWidth={1}
+          borderColor="$borderColor"
+          borderRadius={BORDER_RADIUS.md}
+          backgroundColor="$gray1"
+        >
+          <Text 
+            fontSize={TYPOGRAPHY.sizes.md}
+            fontWeight={TYPOGRAPHY.weights.medium}
+            color="$gray11"
+            marginBottom={SPACING.xs}
+          >
+            Contact Schedule
+          </Text>
+          
+          <YStack space={SPACING.sm}>
+            <XStack justifyContent="space-between" alignItems="center">
+              <Text 
+                fontSize={TYPOGRAPHY.sizes.sm}
+                fontWeight={TYPOGRAPHY.weights.medium}
+                color="$gray10"
+                flex={1}
+              >
+                Last Contact:
+              </Text>
+              <View 
+                padding={SPACING.sm}
+                borderWidth={1}
+                borderColor="$borderColor"
+                borderRadius={BORDER_RADIUS.sm}
+                backgroundColor="$background"
+                flex={2}
+              >
+                <Text 
+                  fontSize={TYPOGRAPHY.sizes.sm}
+                  textAlign="center"
+                >
+                  {contact.lastcontact}
+                </Text>
+              </View>
+            </XStack>
+            
+            <XStack justifyContent="space-between" alignItems="center">
+              <Text 
+                fontSize={TYPOGRAPHY.sizes.sm}
+                fontWeight={TYPOGRAPHY.weights.medium}
+                color="$gray10"
+                flex={1}
+              >
+                Frequency:
+              </Text>
+              <View 
+                padding={SPACING.sm}
+                borderWidth={1}
+                borderColor="$borderColor"
+                borderRadius={BORDER_RADIUS.sm}
+                backgroundColor="$background"
+                flex={2}
+              >
+                <Text 
+                  fontSize={TYPOGRAPHY.sizes.sm}
+                  textAlign="center"
+                >
+                  {(contact.remind_in_months !== 0) && `${contact.remind_in_months} months`}
+                  {(contact.remind_in_weeks !== 0) && `${contact.remind_in_weeks} weeks`}
+                </Text>
+              </View>
+            </XStack>
+            
+            <XStack justifyContent="space-between" alignItems="center">
+              <Text 
+                fontSize={TYPOGRAPHY.sizes.sm}
+                fontWeight={TYPOGRAPHY.weights.medium}
+                color="$gray10"
+                flex={1}
+              >
+                Next Contact:
+              </Text>
+              <View 
+                padding={SPACING.sm}
+                borderWidth={1}
+                borderColor="$borderColor"
+                borderRadius={BORDER_RADIUS.sm}
+                backgroundColor="$blue2"
+                flex={2}
+              >
+                <Text 
+                  fontSize={TYPOGRAPHY.sizes.sm}
+                  textAlign="center"
+                  color="$blue11"
+                  fontWeight={TYPOGRAPHY.weights.medium}
+                >
+                  {contact.nextcontact}
+                </Text>
+              </View>
+            </XStack>
           </YStack>
-          <YStack space="$1">
-            <Paragraph className="font-bold" size="$4" color="gray">Frequency:</Paragraph>
-            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} paddingLeft={10} paddingRight={10}>
-              {(contact.remind_in_months !== 0) && `${contact.remind_in_months} months`}
-              {(contact.remind_in_weeks !== 0) && `${contact.remind_in_weeks} weeks`}
-            </Paragraph>
-          </YStack>
-          <YStack space="$1">
-            <Paragraph className="font-bold" size="$4" color="gray">Next:</Paragraph>
-            <Paragraph borderStyle="solid" borderColor="lightgray" borderWidth={1} borderRadius={4} paddingLeft={10} paddingRight={10}>
-              {contact.nextcontact}
-            </Paragraph>
-          </YStack>
-        </XStack>
+        </YStack>
         
-        {/* Tags Stack */}
-        <Paragraph className="font-bold" size="$6" color="gray">
-          Tags
-        </Paragraph>
-        {/* Dynamically Render Contact's Tags */}
-        {contact.tags && 
-        <XStack className="border rounded-md border-slate-200 flex-wrap items-start justify-start  mt-2 p-1" space="$2" rowGap="$2">  
-        {contact.tags.map((tag, index) => (
-          <Button key={`tag-${index}`} size="$2" backgroundColor="lightgray" borderWidth={2} borderColor="gray">{tag}</Button>
-        ))}
-        </XStack>
-        }
+        {/* Tags */}
+        <YStack 
+          space={SPACING.sm}
+          padding={SPACING.md}
+          marginVertical={SPACING.sm}
+          borderWidth={1}
+          borderColor="$borderColor"
+          borderRadius={BORDER_RADIUS.md}
+          backgroundColor="$gray1"
+        >
+          <Text 
+            fontSize={TYPOGRAPHY.sizes.md}
+            fontWeight={TYPOGRAPHY.weights.medium}
+            color="$gray11"
+            marginBottom={SPACING.xs}
+          >
+            Tags
+          </Text>
+          
+          {contact.tags && contact.tags.length > 0 ? (
+            <XStack 
+              flexWrap="wrap" 
+              gap={SPACING.xs}
+              padding={SPACING.sm}
+              borderRadius={BORDER_RADIUS.sm}
+              backgroundColor="$gray2"
+            >
+              {contact.tags.map((tag, index) => (
+                <View
+                  key={`tag-${index}`}
+                  backgroundColor="$blue4"
+                  borderRadius={BORDER_RADIUS.xs}
+                  paddingHorizontal={SPACING.xs}
+                  paddingVertical={2}
+                >
+                  <Text 
+                    fontSize={TYPOGRAPHY.sizes.xs}
+                    color="$blue11"
+                  >
+                    {tag}
+                  </Text>
+                </View>
+              ))}
+            </XStack>
+          ) : (
+            <Text 
+              fontSize={TYPOGRAPHY.sizes.sm}
+              color="$gray9"
+              fontStyle="italic"
+            >
+              No tags added
+            </Text>
+          )}
+        </YStack>
+
+        {/* Social Media */}
+        <YStack 
+          space={SPACING.md}
+          padding={SPACING.md}
+          marginVertical={SPACING.sm}
+          borderWidth={1}
+          borderColor="$borderColor"
+          borderRadius={BORDER_RADIUS.md}
+          backgroundColor="$gray1"
+        >
+          <Text 
+            fontSize={TYPOGRAPHY.sizes.md}
+            fontWeight={TYPOGRAPHY.weights.medium}
+            color="$gray11"
+            marginBottom={SPACING.xs}
+          >
+            Social Media
+          </Text>
+          
+          {console.log("contact", contact)}
+          {contact.socials && contact.socials.length > 0 ? (
+            contact.socials.map((social, index) => (
+              <XStack 
+                key={`social-${index}`}
+                space={SPACING.xs}
+                padding={SPACING.sm}
+                borderWidth={1}
+                borderColor="$borderColor"
+                borderRadius={BORDER_RADIUS.sm}
+                backgroundColor="$background"
+                alignItems="center"
+              >
+                <Text 
+                  fontSize={TYPOGRAPHY.sizes.sm}
+                  fontWeight={TYPOGRAPHY.weights.medium}
+                  color="$gray10"
+                  minWidth={80}
+                >
+                  {social.label}:
+                </Text>
+                <Text 
+                  fontSize={TYPOGRAPHY.sizes.sm}
+                  flex={1}
+                >
+                  {social.address}
+                </Text>
+              </XStack>
+            ))
+          ) : (
+            <Text 
+              fontSize={TYPOGRAPHY.sizes.sm}
+              color="$gray9"
+              fontStyle="italic"
+            >
+              No social media added
+            </Text>
+          )}
+        </YStack>
         </Loader>
       </YStack>
       </ScrollView>        
       
-      {/* Bottom buttons Stack */}
+      {/* Bottom Action Buttons */}
       <XStack 
         position="absolute"
-        bottom={0} // Anchors to the bottom of the screen
+        bottom={0}
         left={0}
         right={0}
-        backgroundColor="rgba(255, 255, 255, 0.8)" // Translucent background
-        padding={16}
+        backgroundColor="$background"
+        borderTopWidth={1}
+        borderTopColor="$borderColor"
+        padding={SPACING.md}
         justifyContent="space-between"
-        alignItems="center">
-        <Button onPress={removeContact}>Delete</Button>
-        <Button>Share</Button>
-        <Button onPress={editContact}>Edit</Button>
+        alignItems="center"
+        shadowColor="$shadowColor"
+        shadowOffset={{ width: 0, height: -2 }}
+        shadowOpacity={0.1}
+        shadowRadius={4}
+        elevation={4}
+      >
+        <Button 
+          onPress={removeContact}
+          size="$3"
+          backgroundColor="$red9"
+          color="white"
+        >
+          Delete
+        </Button>
+        <Button 
+          size="$3"
+          variant="outlined"
+        >
+          Share
+        </Button>
+        <Button 
+          onPress={editContact}
+          size="$3"
+          backgroundColor="$blue9"
+          color="white"
+        >
+          Edit
+        </Button>
       </XStack>
       </YStack>
     </View>
