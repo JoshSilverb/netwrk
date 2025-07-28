@@ -8,6 +8,7 @@ import axios from 'axios';
 import { searchContactsURL } from '@/constants/Apis';
 import { Loader } from '@/components/Loader';
 import { useAuth } from '@/components/AuthContext';
+import { SPACING, TYPOGRAPHY, CONTAINER_STYLES } from '@/constants/Styles';
 
 import { getCurrentLocation } from '@/utils/locationutil';
 
@@ -108,30 +109,62 @@ export default function DashboardScreen() {
     };
 
     return (
-        <View className="flex-1 bg-white">
+        <View style={CONTAINER_STYLES.screen}>
         <ScrollView
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={getContacts} />}>
         {/* Scrolling Stack */}
-        <YStack space="$5" marginBottom="$5">
+        <YStack space={SPACING.xl} paddingBottom={SPACING.xl}>
             {/* Featured Contacts Stack */}
-            <YStack marginLeft={20} marginRight={20}>
-                <Text className="block mb-2 mx-2 text-base font-medium text-gray-900 dark:text-white 	">
+            <YStack style={CONTAINER_STYLES.section}>
+                <Text style={{
+                    fontSize: TYPOGRAPHY.sizes.sm,
+                    fontWeight: TYPOGRAPHY.weights.bold,
+                    color: '#6c757d',
+                    marginBottom: SPACING.sm,
+                    letterSpacing: 0.5,
+                    textTransform: 'uppercase'
+                }}>
                     FEATURED CONTACTS
                 </Text>
                 <Loader loading={featLoading} >
                     <ContactsList contacts={contacts.slice(0,3)} prefix="featured" />
                 </Loader>
-                <Link href='/(tabs)/contacts' asChild><Button>See All</Button></Link>
+                <Link href='/(tabs)/contacts' asChild>
+                    <Button 
+                        size="$3" 
+                        backgroundColor="$blue9" 
+                        color="white"
+                        marginTop={SPACING.md}
+                    >
+                        See All
+                    </Button>
+                </Link>
             </YStack>
             {/* Nearby Contacts Stack */}
-            <YStack marginLeft={20} marginRight={20}>
-                <Text className="block mb-2 mx-2 text-base font-medium text-gray-900 dark:text-white 	">
+            <YStack style={CONTAINER_STYLES.section}>
+                <Text style={{
+                    fontSize: TYPOGRAPHY.sizes.sm,
+                    fontWeight: TYPOGRAPHY.weights.bold,
+                    color: '#6c757d',
+                    marginBottom: SPACING.sm,
+                    letterSpacing: 0.5,
+                    textTransform: 'uppercase'
+                }}>
                     NEARBY CONTACTS
                 </Text>
                 <Loader loading={nearbyLoading} >
                     {<ContactsList contacts={nearbyContacts.slice(0,3)} prefix="nearby" />}
                 </Loader>
-                <Link href='/(tabs)/contacts' asChild><Button>See All</Button></Link>
+                <Link href='/(tabs)/contacts' asChild>
+                    <Button 
+                        size="$3" 
+                        backgroundColor="$blue9" 
+                        color="white"
+                        marginTop={SPACING.md}
+                    >
+                        See All
+                    </Button>
+                </Link>
             </YStack>
         </YStack>
         </ScrollView>

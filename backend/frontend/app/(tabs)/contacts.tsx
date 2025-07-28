@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Months } from '@/constants/Definitions';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { getCurrentLocation } from '@/utils/locationutil';
+import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 
 import axios from 'axios';
 
@@ -136,26 +137,40 @@ export default function contactsScreen() {
     };
     
     return (
-        <View className="flex-1 justify-start bg-white">
+        <View style={CONTAINER_STYLES.screen}>
             <ScrollView
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAll} />}>
-                <YStack >
+                <YStack>
                     {/* Search Bar and Tag Selector */}
-                    <XStack alignItems="center" space="$2" width="100%" paddingLeft="$2" paddingRight="$2">
+                    <XStack 
+                        alignItems="center" 
+                        space={SPACING.sm} 
+                        width="100%" 
+                        padding={SPACING.md}
+                    >
                     {/* Dropdown Menu */}
                     <Button
-                        size="$4"
+                        size="$3"
                         onPress={() => setFilterDropdownOpen(true)}
                         iconAfter={<Ionicons name={filterDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />}
+                        variant="outlined"
                         width={120}
+                        fontSize={TYPOGRAPHY.sizes.sm}
                     >
                         Filter by...
                     </Button>
 
                     {/* Search Bar */}
-                    <XStack flex={1} alignItems="center" borderWidth={1} borderColor="$borderColor" borderRadius="$4">
+                    <XStack 
+                        flex={1} 
+                        alignItems="center" 
+                        borderWidth={1} 
+                        borderColor="$borderColor" 
+                        borderRadius={BORDER_RADIUS.md}
+                        backgroundColor="$background"
+                    >
                         <Input
-                        size="$4"
+                        size="$3"
                         flex={1}
                         placeholder="Search contacts..."
                         value={searchQuery}
@@ -165,6 +180,8 @@ export default function contactsScreen() {
                             fetchContacts();
                         }}
                         returnKeyType="search"
+                        borderWidth={0}
+                        backgroundColor="transparent"
                         />
                     </XStack>
                     </XStack>
@@ -357,9 +374,11 @@ export default function contactsScreen() {
                     </Sheet>
                     )}
 
-                    <Loader loading={loading}>
-                        <ContactsList contacts={contacts} prefix="searchlist"/>
-                    </Loader>
+                    <View style={CONTAINER_STYLES.section}>
+                        <Loader loading={loading}>
+                            <ContactsList contacts={contacts} prefix="searchlist"/>
+                        </Loader>
+                    </View>
                 </YStack>
             </ScrollView>
         </View>

@@ -406,7 +406,7 @@ export default function AddContactPage() {
                         <CommunicationFrequencySelector 
                             items={FrequencyOption}
                             onChange={onChangeRemindPeriod}/>
-                        <Text>Remind period: wks={remindPeriodWks} mos={remindPeriodMos}</Text>
+                        {/* <Text>Remind period: wks={remindPeriodWks} mos={remindPeriodMos}</Text> */}
                     </View>
                 </View>
 

@@ -39,7 +39,7 @@ export default function TabLayout() {
                     name="user"
                     size={25}
                     color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
+                    style={{ marginRight: 16, opacity: pressed ? 0.5 : 1 }}
                   />
                 )}
 
@@ -67,7 +67,7 @@ export default function TabLayout() {
                     name="user"
                     size={25}
                     color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
+                    style={{ marginRight: 16, opacity: pressed ? 0.5 : 1 }}
                   />
                 )}
 
@@ -89,7 +89,7 @@ export default function TabLayout() {
                     name="user"
                     size={25}
                     color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
+                    style={{ marginRight: 16, opacity: pressed ? 0.5 : 1 }}
                   />
                 )}
 
@@ -111,7 +111,7 @@ export default function TabLayout() {
                     name="user"
                     size={25}
                     color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
+                    style={{ marginRight: 16, opacity: pressed ? 0.5 : 1 }}
                   />
                 )}
               </Pressable>
