@@ -51,12 +51,12 @@ export default function TabLayout() {
       <Tabs.Screen
         name="add"
         options={{
-          href: {
-            pathname: '/add',
-            params: {
-              'id': 0
-            }
-          },
+          // href: {
+          //   pathname: '/(tabs)/add',
+          //   params: {
+          //     'id': 0
+          //   }
+          // },
           title: 'Add Contact',
           tabBarIcon: ({ color }) => <TabBarIcon name="plus" color={color} />,
           headerRight: () => (

@@ -1,6 +1,6 @@
 // This file contains URLs for APIs used in this app
 
-const baseURL = 'https://netwrk-env.eba-megsk2ie.us-east-2.elasticbeanstalk.com';
+const baseURL = 'https://mynetwrk.com';
 const tier = '';
 export const addContactForUserURL       = baseURL + tier + '/addContactForUser';
 export const getContactByIdURL          = baseURL + tier + '/getContactById';

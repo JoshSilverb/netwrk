@@ -1,7 +1,6 @@
-import { View } from '@/components/Themed';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Contact } from '@/constants/Definitions';
-import { Text, Group, Button, Paragraph, XStack, YStack, Avatar, ScrollView, Accordion, Square } from 'tamagui';
+import { View, Text, Group, Button, Paragraph, XStack, YStack, Avatar, ScrollView, Accordion, Square } from 'tamagui';
 import { ChevronUp, ChevronDown } from '@tamagui/lucide-icons'
 import { removeContactForUserURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
@@ -74,7 +73,7 @@ export default function ContactPage() {
   }
   
   const editContact = async () => {
-    router.push({ pathname: '/add', params: { id: id } });
+    router.push({ pathname: '/(tabs)/add', params: { id: id } });
   }
 
   function getDateString(date: Date) {

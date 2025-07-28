@@ -1,10 +1,9 @@
 import React from 'react';
 
-import { Text, View } from '@/components/Themed';
 import { TextInput, ScrollView, Pressable } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Months } from '@/constants/Definitions';
-import { Group, Separator, XStack, YStack, Button, Paragraph } from 'tamagui';
+import { Text, View, Group, Separator, XStack, YStack, Button, Paragraph } from 'tamagui';
 import { addContactForUserURL, getContactByIdURL, updateContactForUserURL } from '@/constants/Apis';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -15,7 +14,9 @@ import { Plus as PlusIcon, X as XIcon } from '@tamagui/lucide-icons';
 import { CommunicationFrequencySelector } from '@/components/CommunicationFrequencySelector'
 
 export default function AddContactPage() {
-    const { id } = useLocalSearchParams();
+    const params = useLocalSearchParams<{ id?: string }>();
+    const id = params.id ?? "0";
+
     console.log("Rendering add page with ID param =", id);
 
     const [loading,       setLoading]       = React.useState(true);
@@ -270,6 +271,9 @@ export default function AddContactPage() {
 
                 <View className="flex mt-4 mx-12 border rounded-md border-slate-200">
                 <GooglePlacesAutocomplete
+                    predefinedPlaces={[]}
+                    textInputProps={{}}
+                    styles={{}}
                     placeholder='Location'
                     onPress={(data, details = null) => {
                         onChangeLocation(data.description);

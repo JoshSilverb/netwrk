@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Text } from '@/components/Themed';
 import MapView, { Marker } from 'react-native-maps';
 import { Sheet } from '@tamagui/sheet';
-import { YStack, Button, XStack, ScrollView, View, Image } from 'tamagui'; 
+import { Text, YStack, Button, XStack, ScrollView, View, Image } from 'tamagui'; 
 import ContactsList from '@/components/ContactsList';
 import { Loader } from '@/components/Loader';
 import { searchContactsURL } from '@/constants/Apis';
