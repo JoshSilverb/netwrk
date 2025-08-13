@@ -189,86 +189,203 @@ export default function contactsScreen() {
                     {/* Filter Selection Modal */}
                     {filterDropdownOpen && (
                     <Sheet modal open={filterDropdownOpen} onOpenChange={setFilterDropdownOpen} dismissOnOverlayPress>
-                        <Sheet.Frame>
-                        <Sheet.Handle />
+                        <Sheet.Frame 
+                            backgroundColor="$background"
+                            borderTopLeftRadius={BORDER_RADIUS.lg}
+                            borderTopRightRadius={BORDER_RADIUS.lg}
+                        >
+                        <Sheet.Handle backgroundColor="$gray8" />
                         <ScrollView>
-                            <YStack space="$4" padding="$4">
-                            <Text fontWeight="700" fontSize="$5">Sort by:</Text>
-                            {/* Sort by filter button */}
-                            <Button
-                                size="$4"
-                                onPress={() => setSortDropdownOpen(true)}
-                                iconAfter={<Ionicons name={sortDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />}
+                            <YStack 
+                                space={SPACING.lg} 
+                                padding={SPACING.lg}
                             >
-                                {selectedSortOption}
-                            </Button>
+                            {/* Sort by section */}
+                            <YStack 
+                                space={SPACING.sm}
+                                padding={SPACING.md}
+                                borderWidth={1}
+                                borderColor="$borderColor"
+                                borderRadius={BORDER_RADIUS.md}
+                                backgroundColor="$gray1"
+                            >
+                                <Text 
+                                    fontSize={TYPOGRAPHY.sizes.md}
+                                    fontWeight={TYPOGRAPHY.weights.medium}
+                                    color="$gray11"
+                                    marginBottom={SPACING.xs}
+                                >
+                                    Sort by
+                                </Text>
+                                <Button
+                                    size="$3"
+                                    onPress={() => setSortDropdownOpen(true)}
+                                    iconAfter={<Ionicons name={sortDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />}
+                                    variant="outlined"
+                                    backgroundColor="$background"
+                                    borderColor="$borderColor"
+                                    borderRadius={BORDER_RADIUS.md}
+                                    justifyContent="space-between"
+                                >
+                                    {selectedSortOption}
+                                </Button>
+                            </YStack>
 
-                            <Text fontWeight="700" fontSize="$5">Filter by:</Text>
-                            {/* Tags filter button */}
-                            <Button
-                                size="$4"
-                                onPress={() => setTagsDropdownOpen(true)}
-                                iconAfter={<Ionicons name={tagsDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />}
+                            {/* Filter by tags section */}
+                            <YStack 
+                                space={SPACING.sm}
+                                padding={SPACING.md}
+                                borderWidth={1}
+                                borderColor="$borderColor"
+                                borderRadius={BORDER_RADIUS.md}
+                                backgroundColor="$gray1"
                             >
-                                {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : 'Select Tags'}
-                            </Button>
-                            {/* Last contact filter buttons */}
-                            <XStack space="$4">
-                            <YStack space="$2">
-                                <Text fontSize="$3">Last contacted after</Text>
-                                <View className="flex border mt-1 rounded-md border-slate-200 ">
-                                    <Pressable onPress={showDateLowerBoundPicker} className="my-1">
-                                        <Text className='pl-1'>{isDateUnset(dateLowerBound) ? 'No lower bound' : `${dateLowerBound.getDate()} ${Months[dateLowerBound.getMonth()]} ${dateLowerBound.getFullYear()}`}</Text>
-                                        {showDateLowerBound && (
-                                            <DateTimePicker
-                                            className="p-1"
-                                            testID="dateTimePicker"
-                                            value={isDateUnset(dateLowerBound) ? dateUpperBound : dateLowerBound}
-                                            mode="date"
-                                            onChange={onChangeDateLowerBound}
-                                            />
-                                        )}
-                                    </Pressable>
-                                </View>
-                                <Button 
-                                    size="$2"
-                                    onPress={() => setDateLowerBound(new Date(0))}
+                                <Text 
+                                    fontSize={TYPOGRAPHY.sizes.md}
+                                    fontWeight={TYPOGRAPHY.weights.medium}
+                                    color="$gray11"
+                                    marginBottom={SPACING.xs}
                                 >
-                                    Reset
+                                    Filter by tags
+                                </Text>
+                                <Button
+                                    size="$3"
+                                    onPress={() => setTagsDropdownOpen(true)}
+                                    iconAfter={<Ionicons name={tagsDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />}
+                                    variant="outlined"
+                                    backgroundColor="$background"
+                                    borderColor="$borderColor"
+                                    borderRadius={BORDER_RADIUS.md}
+                                    justifyContent="space-between"
+                                >
+                                    {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : 'Select Tags'}
                                 </Button>
                             </YStack>
-                            <YStack space="$2" >
-                                <Text fontSize="$3">Last contacted before</Text>
-                                <View className="flex border mt-1 rounded-md border-slate-200 ">
-                                    <Pressable onPress={showDateUpperBoundPicker} className="my-1">
-                                        <Text className='pl-1'>{dateUpperBound.getDate()} {Months[dateUpperBound.getMonth()]} {dateUpperBound.getFullYear()}</Text>
-                                        {showDateUpperBound && (
-                                            <DateTimePicker
-                                            className="p-1"
-                                            testID="dateTimePicker"
-                                            value={dateUpperBound}
-                                            mode="date"
-                                            onChange={onChangeDateUpperBound}
-                                            />
-                                        )}
-                                    </Pressable>
-                                </View>
-                                <Button 
-                                    size="$2"
-                                    onPress={() => setDateUpperBound(new Date(Date.now()))}
+
+                            {/* Date range section */}
+                            <YStack 
+                                space={SPACING.md}
+                                padding={SPACING.md}
+                                borderWidth={1}
+                                borderColor="$borderColor"
+                                borderRadius={BORDER_RADIUS.md}
+                                backgroundColor="$gray1"
+                            >
+                                <Text 
+                                    fontSize={TYPOGRAPHY.sizes.md}
+                                    fontWeight={TYPOGRAPHY.weights.medium}
+                                    color="$gray11"
+                                    marginBottom={SPACING.xs}
                                 >
-                                    Reset
-                                </Button>
+                                    Last contact date range
+                                </Text>
+                                <XStack space={SPACING.md}>
+                                <YStack space={SPACING.xs} flex={1}>
+                                    <Text 
+                                        fontSize={TYPOGRAPHY.sizes.sm}
+                                        fontWeight={TYPOGRAPHY.weights.medium}
+                                        color="$gray10"
+                                    >
+                                        After
+                                    </Text>
+                                    <Pressable onPress={showDateLowerBoundPicker}>
+                                        <View
+                                            padding={SPACING.sm}
+                                            borderWidth={1}
+                                            borderColor="$borderColor"
+                                            borderRadius={BORDER_RADIUS.sm}
+                                            backgroundColor="$background"
+                                            minHeight={44}
+                                            justifyContent="center"
+                                        >
+                                            <Text 
+                                                fontSize={TYPOGRAPHY.sizes.sm}
+                                                textAlign="center"
+                                                color={isDateUnset(dateLowerBound) ? "$gray9" : "$color"}
+                                            >
+                                                {isDateUnset(dateLowerBound) ? 'No lower bound' : `${dateLowerBound.getDate()} ${Months[dateLowerBound.getMonth()]} ${dateLowerBound.getFullYear()}`}
+                                            </Text>
+                                            {showDateLowerBound && (
+                                                <DateTimePicker
+                                                testID="dateTimePicker"
+                                                value={isDateUnset(dateLowerBound) ? dateUpperBound : dateLowerBound}
+                                                mode="date"
+                                                onChange={onChangeDateLowerBound}
+                                                />
+                                            )}
+                                        </View>
+                                    </Pressable>
+                                    <Button 
+                                        size="$2"
+                                        variant="outlined"
+                                        disabled={isDateUnset(dateLowerBound)}
+                                        onPress={() => setDateLowerBound(new Date(0))}
+                                        fontSize={TYPOGRAPHY.sizes.xs}
+                                    >
+                                        Reset
+                                    </Button>
+                                </YStack>
+                                <YStack space={SPACING.xs} flex={1}>
+                                    <Text 
+                                        fontSize={TYPOGRAPHY.sizes.sm}
+                                        fontWeight={TYPOGRAPHY.weights.medium}
+                                        color="$gray10"
+                                    >
+                                        Before
+                                    </Text>
+                                    <Pressable onPress={showDateUpperBoundPicker}>
+                                        <View
+                                            padding={SPACING.sm}
+                                            borderWidth={1}
+                                            borderColor="$borderColor"
+                                            borderRadius={BORDER_RADIUS.sm}
+                                            backgroundColor="$background"
+                                            minHeight={44}
+                                            justifyContent="center"
+                                        >
+                                            <Text 
+                                                fontSize={TYPOGRAPHY.sizes.sm}
+                                                textAlign="center"
+                                            >
+                                                {dateUpperBound.getDate()} {Months[dateUpperBound.getMonth()]} {dateUpperBound.getFullYear()}
+                                            </Text>
+                                            {showDateUpperBound && (
+                                                <DateTimePicker
+                                                testID="dateTimePicker"
+                                                value={dateUpperBound}
+                                                mode="date"
+                                                onChange={onChangeDateUpperBound}
+                                                />
+                                            )}
+                                        </View>
+                                    </Pressable>
+                                    <Button 
+                                        size="$2"
+                                        variant="outlined"
+                                        disabled={isDateUnset(dateLowerBound)}
+                                        onPress={() => setDateUpperBound(new Date(Date.now()))}
+                                        fontSize={TYPOGRAPHY.sizes.xs}
+                                    >
+                                        Reset
+                                    </Button>
+                                </YStack>
+                                </XStack>
                             </YStack>
-                            
-                            </XStack>
                             </YStack>
                         </ScrollView>
-                        <XStack padding="$4" justifyContent="flex-end" space="$2">
+                        <XStack 
+                            padding={SPACING.md} 
+                            justifyContent="flex-end" 
+                            space={SPACING.sm}
+                            borderTopWidth={1}
+                            borderTopColor="$borderColor"
+                            backgroundColor="$background"
+                        >
                             <Button
                             size="$3"
-                            theme="alt2"
+                            variant="outlined"
                             onPress={() => setFilterDropdownOpen(false)}
+                            borderRadius={BORDER_RADIUS.md}
                             >
                             Cancel
                             </Button>
@@ -278,6 +395,9 @@ export default function contactsScreen() {
                                 setFilterDropdownOpen(false);
                                 fetchContacts();
                             }}
+                            backgroundColor="$blue9"
+                            color="white"
+                            borderRadius={BORDER_RADIUS.md}
                             >
                             Apply
                             </Button>
@@ -289,27 +409,74 @@ export default function contactsScreen() {
                     {/* Tag Selection Modal */}
                     {tagsDropdownOpen && (
                     <Sheet modal open={tagsDropdownOpen} onOpenChange={setTagsDropdownOpen} dismissOnOverlayPress>
-                        <Sheet.Frame>
-                        <Sheet.Handle />
+                        <Sheet.Frame 
+                            backgroundColor="$background"
+                            borderTopLeftRadius={BORDER_RADIUS.lg}
+                            borderTopRightRadius={BORDER_RADIUS.lg}
+                        >
+                        <Sheet.Handle backgroundColor="$gray8" />
                         <ScrollView>
-                            <YStack space="$4" padding="$4">
-                            <Text fontWeight="700" fontSize="$5">Select Tags</Text>
-                            {tags.map((tag) => (
-                                <XStack key={tag} alignItems="center" space="$2">
-                                <Switch
-                                    checked={selectedTags.includes(tag)}
-                                    onCheckedChange={() => toggleTag(tag)}
-                                />
-                                <Label>{tag}</Label>
-                                </XStack>
-                            ))}
+                            <YStack 
+                                space={SPACING.lg} 
+                                padding={SPACING.lg}
+                            >
+                            <YStack 
+                                space={SPACING.md}
+                                padding={SPACING.md}
+                                borderWidth={1}
+                                borderColor="$borderColor"
+                                borderRadius={BORDER_RADIUS.md}
+                                backgroundColor="$gray1"
+                            >
+                                <Text 
+                                    fontSize={TYPOGRAPHY.sizes.md}
+                                    fontWeight={TYPOGRAPHY.weights.medium}
+                                    color="$gray11"
+                                    marginBottom={SPACING.xs}
+                                >
+                                    Select Tags
+                                </Text>
+                                {tags.map((tag) => (
+                                    <XStack 
+                                        key={tag} 
+                                        alignItems="center" 
+                                        space={SPACING.sm}
+                                        padding={SPACING.xs}
+                                        borderRadius={BORDER_RADIUS.sm}
+                                        backgroundColor="$background"
+                                        borderWidth={selectedTags.includes(tag) ? 1 : 0}
+                                        borderColor={selectedTags.includes(tag) ? "$blue6" : "transparent"}
+                                    >
+                                    <Switch
+                                        checked={selectedTags.includes(tag)}
+                                        onCheckedChange={() => toggleTag(tag)}
+                                        size="$2"
+                                    />
+                                    <Label 
+                                        fontSize={TYPOGRAPHY.sizes.sm}
+                                        color="$color"
+                                        flex={1}
+                                    >
+                                        {tag}
+                                    </Label>
+                                    </XStack>
+                                ))}
+                            </YStack>
                             </YStack>
                         </ScrollView>
-                        <XStack padding="$4" justifyContent="flex-end" space="$2">
+                        <XStack 
+                            padding={SPACING.md} 
+                            justifyContent="flex-end" 
+                            space={SPACING.sm}
+                            borderTopWidth={1}
+                            borderTopColor="$borderColor"
+                            backgroundColor="$background"
+                        >
                             <Button
                             size="$3"
-                            theme="alt2"
+                            variant="outlined"
                             onPress={() => setTagsDropdownOpen(false)}
+                            borderRadius={BORDER_RADIUS.md}
                             >
                             Cancel
                             </Button>
@@ -318,6 +485,9 @@ export default function contactsScreen() {
                             onPress={() => {
                                 setTagsDropdownOpen(false);
                             }}
+                            backgroundColor="$blue9"
+                            color="white"
+                            borderRadius={BORDER_RADIUS.md}
                             >
                             Apply
                             </Button>
@@ -329,35 +499,80 @@ export default function contactsScreen() {
                     {/* Sort Option Selection Modal */}
                     {sortDropdownOpen && (
                     <Sheet modal open={sortDropdownOpen} onOpenChange={setSortDropdownOpen} dismissOnOverlayPress>
-                        <Sheet.Frame>
-                        <Sheet.Handle />
+                        <Sheet.Frame 
+                            backgroundColor="$background"
+                            borderTopLeftRadius={BORDER_RADIUS.lg}
+                            borderTopRightRadius={BORDER_RADIUS.lg}
+                        >
+                        <Sheet.Handle backgroundColor="$gray8" />
                         <ScrollView>
-                            <YStack space="$4" padding="$4">
-                            <Text fontWeight="700" fontSize="$5">Sort by:</Text>
-                            <RadioGroup 
-                                defaultValue={selectedSortOption}
-                                onValueChange={(value) => setSelectedSortOption(value)}
+                            <YStack 
+                                space={SPACING.lg} 
+                                padding={SPACING.lg}
                             >
-                            {sortOptions.map((sortOption, index) => (
-                                <XStack width={300} alignItems="center" space="$4" key={`sortoptions-${index}`}>
-                                <RadioGroup.Item value={`${sortOption}`} id={`radiogroup-${index}`}>
-                                  <RadioGroup.Indicator />
-                                </RadioGroup.Item>
-                          
-                                <Label htmlFor={`radiogroup-${index}`}>
-                                  {sortOption}
-                                </Label>
-                              </XStack>
-                            ))}
-
-                            </RadioGroup>
+                            <YStack 
+                                space={SPACING.md}
+                                padding={SPACING.md}
+                                borderWidth={1}
+                                borderColor="$borderColor"
+                                borderRadius={BORDER_RADIUS.md}
+                                backgroundColor="$gray1"
+                            >
+                                <Text 
+                                    fontSize={TYPOGRAPHY.sizes.md}
+                                    fontWeight={TYPOGRAPHY.weights.medium}
+                                    color="$gray11"
+                                    marginBottom={SPACING.xs}
+                                >
+                                    Sort by
+                                </Text>
+                                <RadioGroup 
+                                    defaultValue={selectedSortOption}
+                                    onValueChange={(value) => setSelectedSortOption(value)}
+                                    space={SPACING.xs}
+                                >
+                                {sortOptions.map((sortOption, index) => (
+                                    <XStack 
+                                        alignItems="center" 
+                                        space={SPACING.sm} 
+                                        key={`sortoptions-${index}`}
+                                        padding={SPACING.xs}
+                                        borderRadius={BORDER_RADIUS.sm}
+                                        backgroundColor="$background"
+                                        borderWidth={selectedSortOption === sortOption ? 1 : 0}
+                                        borderColor={selectedSortOption === sortOption ? "$blue6" : "transparent"}
+                                    >
+                                    <RadioGroup.Item value={`${sortOption}`} id={`radiogroup-${index}`} size="$2">
+                                      <RadioGroup.Indicator />
+                                    </RadioGroup.Item>
+                              
+                                    <Label 
+                                        htmlFor={`radiogroup-${index}`}
+                                        fontSize={TYPOGRAPHY.sizes.sm}
+                                        color="$color"
+                                        flex={1}
+                                    >
+                                      {sortOption}
+                                    </Label>
+                                  </XStack>
+                                ))}
+                                </RadioGroup>
+                            </YStack>
                             </YStack>
                         </ScrollView>
-                        <XStack padding="$4" justifyContent="flex-end" space="$2">
+                        <XStack 
+                            padding={SPACING.md} 
+                            justifyContent="flex-end" 
+                            space={SPACING.sm}
+                            borderTopWidth={1}
+                            borderTopColor="$borderColor"
+                            backgroundColor="$background"
+                        >
                             <Button
                             size="$3"
-                            theme="alt2"
+                            variant="outlined"
                             onPress={() => setSortDropdownOpen(false)}
+                            borderRadius={BORDER_RADIUS.md}
                             >
                             Cancel
                             </Button>
@@ -366,6 +581,9 @@ export default function contactsScreen() {
                             onPress={() => {
                                 setSortDropdownOpen(false);
                             }}
+                            backgroundColor="$blue9"
+                            color="white"
+                            borderRadius={BORDER_RADIUS.md}
                             >
                             Apply
                             </Button>
