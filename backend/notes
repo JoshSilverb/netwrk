@@ -1,0 +1,5 @@
+Run psql database queries on netwrk database:
+sudo -u postgres psql netwrk
+
+Add company and position fields to contact cards
+Adding people needs to be as easy as possible - fewest pieces of entered data possible
