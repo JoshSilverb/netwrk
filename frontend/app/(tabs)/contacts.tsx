@@ -437,29 +437,49 @@ export default function contactsScreen() {
                                     Select Tags
                                 </Text>
                                 {tags.map((tag) => (
-                                    <XStack 
-                                        key={tag} 
-                                        alignItems="center" 
-                                        space={SPACING.sm}
-                                        padding={SPACING.xs}
-                                        borderRadius={BORDER_RADIUS.sm}
-                                        backgroundColor="$background"
-                                        borderWidth={selectedTags.includes(tag) ? 1 : 0}
-                                        borderColor={selectedTags.includes(tag) ? "$blue6" : "transparent"}
+                                    <Pressable 
+                                        key={tag}
+                                        onPress={() => toggleTag(tag)}
                                     >
-                                    <Switch
-                                        checked={selectedTags.includes(tag)}
-                                        onCheckedChange={() => toggleTag(tag)}
-                                        size="$2"
-                                    />
-                                    <Label 
-                                        fontSize={TYPOGRAPHY.sizes.sm}
-                                        color="$color"
-                                        flex={1}
-                                    >
-                                        {tag}
-                                    </Label>
-                                    </XStack>
+                                        <XStack 
+                                            alignItems="center" 
+                                            space={SPACING.sm}
+                                            padding={SPACING.sm}
+                                            borderRadius={BORDER_RADIUS.md}
+                                            backgroundColor={selectedTags.includes(tag) ? "$blue2" : "$background"}
+                                            borderWidth={1}
+                                            borderColor={selectedTags.includes(tag) ? "$blue6" : "$borderColor"}
+                                        >
+                                            <View
+                                                width={20}
+                                                height={20}
+                                                borderRadius={4}
+                                                borderWidth={2}
+                                                borderColor={selectedTags.includes(tag) ? "$blue9" : "$gray8"}
+                                                backgroundColor={selectedTags.includes(tag) ? "$blue9" : "transparent"}
+                                                alignItems="center"
+                                                justifyContent="center"
+                                            >
+                                                {selectedTags.includes(tag) && (
+                                                    <Text 
+                                                        color="white"
+                                                        fontSize={12}
+                                                        fontWeight="bold"
+                                                    >
+                                                        ✓
+                                                    </Text>
+                                                )}
+                                            </View>
+                                            <Text 
+                                                fontSize={TYPOGRAPHY.sizes.sm}
+                                                fontWeight={selectedTags.includes(tag) ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}
+                                                color={selectedTags.includes(tag) ? "$blue11" : "$color"}
+                                                flex={1}
+                                            >
+                                                {tag}
+                                            </Text>
+                                        </XStack>
+                                    </Pressable>
                                 ))}
                             </YStack>
                             </YStack>
@@ -526,37 +546,53 @@ export default function contactsScreen() {
                                 >
                                     Sort by
                                 </Text>
-                                <RadioGroup 
-                                    defaultValue={selectedSortOption}
-                                    onValueChange={(value) => setSelectedSortOption(value)}
-                                    space={SPACING.xs}
-                                >
+                                <YStack space={SPACING.xs}>
                                 {sortOptions.map((sortOption, index) => (
-                                    <XStack 
-                                        alignItems="center" 
-                                        space={SPACING.sm} 
+                                    <Pressable 
                                         key={`sortoptions-${index}`}
-                                        padding={SPACING.xs}
-                                        borderRadius={BORDER_RADIUS.sm}
-                                        backgroundColor="$background"
-                                        borderWidth={selectedSortOption === sortOption ? 1 : 0}
-                                        borderColor={selectedSortOption === sortOption ? "$blue6" : "transparent"}
+                                        onPress={() => setSelectedSortOption(sortOption)}
                                     >
-                                    <RadioGroup.Item value={`${sortOption}`} id={`radiogroup-${index}`} size="$2">
-                                      <RadioGroup.Indicator />
-                                    </RadioGroup.Item>
-                              
-                                    <Label 
-                                        htmlFor={`radiogroup-${index}`}
-                                        fontSize={TYPOGRAPHY.sizes.sm}
-                                        color="$color"
-                                        flex={1}
-                                    >
-                                      {sortOption}
-                                    </Label>
-                                  </XStack>
+                                        <XStack 
+                                            alignItems="center" 
+                                            space={SPACING.sm}
+                                            padding={SPACING.sm}
+                                            borderRadius={BORDER_RADIUS.md}
+                                            backgroundColor={selectedSortOption === sortOption ? "$blue2" : "$background"}
+                                            borderWidth={1}
+                                            borderColor={selectedSortOption === sortOption ? "$blue6" : "$borderColor"}
+                                        >
+                                            <View
+                                                width={20}
+                                                height={20}
+                                                borderRadius={10}
+                                                borderWidth={2}
+                                                borderColor={selectedSortOption === sortOption ? "$blue9" : "$gray8"}
+                                                backgroundColor={selectedSortOption === sortOption ? "$blue9" : "transparent"}
+                                                alignItems="center"
+                                                justifyContent="center"
+                                            >
+                                                {selectedSortOption === sortOption && (
+                                                    <View
+                                                        width={8}
+                                                        height={8}
+                                                        borderRadius={4}
+                                                        backgroundColor="white"
+                                                    />
+                                                )}
+                                            </View>
+                                      
+                                            <Text 
+                                                fontSize={TYPOGRAPHY.sizes.sm}
+                                                fontWeight={selectedSortOption === sortOption ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}
+                                                color={selectedSortOption === sortOption ? "$blue11" : "$color"}
+                                                flex={1}
+                                            >
+                                              {sortOption}
+                                            </Text>
+                                        </XStack>
+                                    </Pressable>
                                 ))}
-                                </RadioGroup>
+                                </YStack>
                             </YStack>
                             </YStack>
                         </ScrollView>

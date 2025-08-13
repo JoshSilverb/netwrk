@@ -1,40 +1,38 @@
 import { Link, Stack } from 'expo-router';
-import { StyleSheet } from 'react-native';
-
-import { Text, View } from '@/components/Themed';
+import { Text, View, Button } from 'tamagui';
+import { SPACING, TYPOGRAPHY, CONTAINER_STYLES } from '@/constants/Styles';
 
 export default function NotFoundScreen() {
   return (
     <>
       <Stack.Screen options={{ title: 'Oops!' }} />
-      <View style={styles.container}>
-        <Text style={styles.title}>This screen doesn't exist.</Text>
+      <View style={CONTAINER_STYLES.screen}>
+        <View 
+          flex={1}
+          alignItems="center"
+          justifyContent="center"
+          padding={SPACING.lg}
+        >
+          <Text 
+            fontSize={TYPOGRAPHY.sizes.lg}
+            fontWeight={TYPOGRAPHY.weights.bold}
+            marginBottom={SPACING.lg}
+            textAlign="center"
+          >
+            This screen doesn't exist.
+          </Text>
 
-        <Link href="/" style={styles.link}>
-          <Text style={styles.linkText}>Go to home screen!</Text>
-        </Link>
+          <Link href="/" asChild>
+            <Button 
+              size="$3"
+              backgroundColor="$blue9"
+              color="white"
+            >
+              Go to home screen!
+            </Button>
+          </Link>
+        </View>
       </View>
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
-  },
-  linkText: {
-    fontSize: 14,
-    color: '#2e78b7',
-  },
-});

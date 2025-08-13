@@ -1,6 +1,5 @@
-import { View } from '@/components/Themed';
 import { Stack, useLocalSearchParams, Link, router } from 'expo-router';
-import { Button, Paragraph, XStack, YStack, Avatar, ScrollView, Text } from 'tamagui';
+import { View, Button, Paragraph, XStack, YStack, Avatar, ScrollView, Text } from 'tamagui';
 import { getUserDetailsURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
@@ -79,7 +78,9 @@ export default function AccountPage() {
               color="white"
               marginVertical={SPACING.xs}
             >
-              {numContacts} contacts
+              <Text color="white">
+                {numContacts || '0'} contacts
+              </Text>
             </Button>
           </Link>
           
