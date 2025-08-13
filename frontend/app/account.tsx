@@ -1,5 +1,5 @@
 import { Stack, Link, router } from 'expo-router';
-import { View, Button, XStack, YStack, Avatar, ScrollView, Text, Sheet } from 'tamagui';
+import { View, Button, XStack, YStack, Avatar, ScrollView, Text, Sheet, Label, Switch, Separator } from 'tamagui';
 import { getUserDetailsURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
@@ -14,6 +14,9 @@ export default function AccountPage() {
   const [numContacts, setNumContacts] = useState('');
 
   const [logoutSheetActive, setLogoutSheetActive] = useState(false);
+  const [settingsSheetActive, setSettingsSheetActive] = useState(false);
+
+  const [isLightMode, setIsLightMode] = useState(true);
 
   const userId = "#1234567890";
   const socials = [
@@ -58,6 +61,12 @@ export default function AccountPage() {
   const handleEditProfile = async () => {
 
   };
+
+  const handleSaveSettings = async () => {
+
+  };
+
+  
 
 
   return (
@@ -184,7 +193,7 @@ export default function AccountPage() {
           <XStack space={SPACING.md} marginTop={SPACING.lg}>
             <Button onPress={() => {setLogoutSheetActive(true)}} backgroundColor="$red9" color="white">Log Out</Button>
             <Button onPress={handleEditProfile} variant="outlined">Edit Profile</Button>
-            <Button variant="outlined">Settings</Button>
+            <Button onPress={() => {setSettingsSheetActive(true)}} variant="outlined">Settings</Button>
           </XStack>
         </YStack>
       </YStack>
@@ -261,6 +270,96 @@ export default function AccountPage() {
                   flex={1}
               >
                   Log Out
+              </Button>
+          </XStack>
+          </Sheet.Frame>
+      </Sheet>
+      )}
+
+          
+      {/* Settings Modal */}
+      {settingsSheetActive && (
+      <Sheet modal open={settingsSheetActive} onOpenChange={setSettingsSheetActive} dismissOnOverlayPress>
+          <Sheet.Frame 
+              backgroundColor="$background"
+              borderTopLeftRadius={BORDER_RADIUS.lg}
+              borderTopRightRadius={BORDER_RADIUS.lg}
+          >
+          <Sheet.Handle backgroundColor="$gray8" />
+          <YStack 
+              space={SPACING.lg} 
+              padding={SPACING.lg}
+          >
+              {/* Content Section */}
+              <YStack 
+                  space={SPACING.md}
+                  padding={SPACING.md}
+                  borderWidth={1}
+                  borderColor="$borderColor"
+                  borderRadius={BORDER_RADIUS.md}
+                  backgroundColor="$gray1"
+                  alignItems="center"
+              >
+                  <Text 
+                      fontSize={TYPOGRAPHY.sizes.lg}
+                      fontWeight={TYPOGRAPHY.weights.bold}
+                      color="$gray11"
+                      textAlign="center"
+                  >
+                      Style
+                  </Text>
+                  <XStack>
+                    <Label
+                      color="$gray10"
+                      textAlign="center"
+                      lineHeight={20}
+                      paddingRight="$0"
+                      minWidth={90}
+                      justifyContent="flex-end"
+                      size={TYPOGRAPHY.sizes.md}
+                      htmlFor="lightModeToggle"
+                    >
+                      {isLightMode ? "Light mode" : "Dark mode"}
+                    </Label>
+                    <Separator minHeight={20} vertical />
+                    <Switch id="lightModeToggle" size="$2" defaultChecked={false}>
+                      <Switch.Thumb animation="quicker" />
+                    </Switch>
+
+                  </XStack>
+              </YStack>
+          </YStack>
+          
+          {/* Action Buttons */}
+          <XStack 
+              padding={SPACING.md} 
+              justifyContent="flex-end" 
+              space={SPACING.sm}
+              borderTopWidth={1}
+              borderTopColor="$borderColor"
+              backgroundColor="$background"
+          >
+              <Button
+                  size="$3"
+                  variant="outlined"
+                  onPress={() => setSettingsSheetActive(false)}
+                  borderRadius={BORDER_RADIUS.md}
+                  flex={1}
+              >
+                  Cancel
+              </Button>
+              <Button
+                  size="$3"
+                  onPress={() => {
+                      setSettingsSheetActive(false);
+                      handleSaveSettings();
+                  }}
+                  backgroundColor="$blue9"
+                  color="white"
+                  borderRadius={BORDER_RADIUS.md}
+                  flex={1}
+              >
+                  Save
               </Button>
           </XStack>
           </Sheet.Frame>
