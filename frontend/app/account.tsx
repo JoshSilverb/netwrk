@@ -1,10 +1,10 @@
-import { Stack, useLocalSearchParams, Link, router } from 'expo-router';
-import { View, Button, Paragraph, XStack, YStack, Avatar, ScrollView, Text } from 'tamagui';
+import { Stack, Link, router } from 'expo-router';
+import { View, Button, XStack, YStack, Avatar, ScrollView, Text, Sheet } from 'tamagui';
 import { getUserDetailsURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import { removeToken } from '@/utils/tokenstore';
-import { SPACING, TYPOGRAPHY, CONTAINER_STYLES } from '@/constants/Styles';
+import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import axios from 'axios';
 
 export default function AccountPage() {
@@ -12,6 +12,21 @@ export default function AccountPage() {
 
   const [username, setUsername] = useState('');
   const [numContacts, setNumContacts] = useState('');
+
+  const [logoutSheetActive, setLogoutSheetActive] = useState(false);
+
+  const userId = "#1234567890";
+  const socials = [
+      {
+          label: "Email Address",
+          address: "josh@gmail.com"
+      },
+      {
+        label: "Phone Number",
+        address: "2222222222"
+      }
+  ];
+  const userbio = "Software engineer at Bloomberg.";
   
   useEffect(() => {
       fetchUserDetails();
@@ -38,6 +53,10 @@ export default function AccountPage() {
     setToken('');
     await removeToken();
     router.replace('/');
+  };
+
+  const handleEditProfile = async () => {
+
   };
 
 
@@ -88,7 +107,7 @@ export default function AccountPage() {
             fontSize={TYPOGRAPHY.sizes.sm}
             color="$gray10"
           >
-            #1234567890
+            {userId}
           </Text>
           
         </YStack>
@@ -102,10 +121,44 @@ export default function AccountPage() {
           >
             Contact info
           </Text>
-          <XStack space={SPACING.sm} flexWrap="wrap">
-            <Button size="$3" variant="outlined">josh@gmail.com</Button>
-            <Button size="$3" variant="outlined">2222222222</Button>
-          </XStack>
+
+          {socials && socials.length > 0 ? (
+            socials.map((social, index) => (
+              <XStack 
+                key={`social-${index}`}
+                space={SPACING.xs}
+                padding={SPACING.sm}
+                borderWidth={1}
+                borderColor="$borderColor"
+                borderRadius={BORDER_RADIUS.sm}
+                backgroundColor="$background"
+                alignItems="center"
+              >
+                <Text 
+                  fontSize={TYPOGRAPHY.sizes.sm}
+                  fontWeight={TYPOGRAPHY.weights.medium}
+                  color="$gray10"
+                  minWidth={80}
+                >
+                  {social.label}:
+                </Text>
+                <Text 
+                  fontSize={TYPOGRAPHY.sizes.sm}
+                  flex={1}
+                >
+                  {social.address}
+                </Text>
+              </XStack>
+            ))
+          ) : (
+            <Text 
+              fontSize={TYPOGRAPHY.sizes.sm}
+              color="$gray9"
+              fontStyle="italic"
+            >
+              No social media added
+            </Text>
+          )}
           
           <YStack space={SPACING.sm}>
             <Text 
@@ -116,26 +169,104 @@ export default function AccountPage() {
               About
             </Text>
             <View 
-              borderStyle="solid" 
-              borderColor="$borderColor" 
-              borderWidth={1} 
-              borderRadius={SPACING.sm} 
               padding={SPACING.md}
+              borderWidth={1}
+              borderColor="$borderColor"
+              borderRadius={BORDER_RADIUS.sm}
               backgroundColor="$background"
             >
-              <Text fontSize={TYPOGRAPHY.sizes.md}>
-                userbio
+              <Text fontSize={TYPOGRAPHY.sizes.sm}>
+                {userbio || "No notes added"}
               </Text>
             </View>
           </YStack>
 
           <XStack space={SPACING.md} marginTop={SPACING.lg}>
-            <Button onPress={handleLogOut} backgroundColor="$red9" color="white">Log Out</Button>
-            <Button variant="outlined">Preferences</Button>
+            <Button onPress={() => {setLogoutSheetActive(true)}} backgroundColor="$red9" color="white">Log Out</Button>
+            <Button onPress={handleEditProfile} variant="outlined">Edit Profile</Button>
+            <Button variant="outlined">Settings</Button>
           </XStack>
         </YStack>
       </YStack>
-      </ScrollView>        
+      </ScrollView>       
+      {/* Logout Confirmation Modal */}
+      {logoutSheetActive && (
+      <Sheet modal open={logoutSheetActive} onOpenChange={setLogoutSheetActive} dismissOnOverlayPress>
+          <Sheet.Frame 
+              backgroundColor="$background"
+              borderTopLeftRadius={BORDER_RADIUS.lg}
+              borderTopRightRadius={BORDER_RADIUS.lg}
+          >
+          <Sheet.Handle backgroundColor="$gray8" />
+          <YStack 
+              space={SPACING.lg} 
+              padding={SPACING.lg}
+          >
+              {/* Content Section */}
+              <YStack 
+                  space={SPACING.md}
+                  padding={SPACING.md}
+                  borderWidth={1}
+                  borderColor="$borderColor"
+                  borderRadius={BORDER_RADIUS.md}
+                  backgroundColor="$gray1"
+                  alignItems="center"
+              >
+                  <Text 
+                      fontSize={TYPOGRAPHY.sizes.lg}
+                      fontWeight={TYPOGRAPHY.weights.bold}
+                      color="$gray11"
+                      textAlign="center"
+                  >
+                      Log Out
+                  </Text>
+                  <Text 
+                      fontSize={TYPOGRAPHY.sizes.md}
+                      color="$gray10"
+                      textAlign="center"
+                      lineHeight={20}
+                  >
+                      Are you sure you want to log out? You'll need to sign in again to access your contacts.
+                  </Text>
+              </YStack>
+          </YStack>
+          
+          {/* Action Buttons */}
+          <XStack 
+              padding={SPACING.md} 
+              justifyContent="flex-end" 
+              space={SPACING.sm}
+              borderTopWidth={1}
+              borderTopColor="$borderColor"
+              backgroundColor="$background"
+          >
+              <Button
+                  size="$3"
+                  variant="outlined"
+                  onPress={() => setLogoutSheetActive(false)}
+                  borderRadius={BORDER_RADIUS.md}
+                  flex={1}
+              >
+                  Cancel
+              </Button>
+              <Button
+                  size="$3"
+                  onPress={() => {
+                      setLogoutSheetActive(false);
+                      handleLogOut();
+                  }}
+                  backgroundColor="$red9"
+                  color="white"
+                  borderRadius={BORDER_RADIUS.md}
+                  flex={1}
+              >
+                  Log Out
+              </Button>
+          </XStack>
+          </Sheet.Frame>
+      </Sheet>
+      )}
+ 
     </View>
   );
 }
