@@ -1,5 +1,8 @@
 import { Stack, Link, router } from 'expo-router';
-import { View, Button, XStack, YStack, Avatar, ScrollView, Text, Sheet, Label, Switch, Separator } from 'tamagui';
+import { View, Button, XStack, YStack, Avatar, ScrollView, Text, Sheet, Label, Switch, Separator, Input } from 'tamagui';
+import { Pressable, Alert } from 'react-native';
+import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon } from '@tamagui/lucide-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { getUserDetailsURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
@@ -15,8 +18,16 @@ export default function AccountPage() {
 
   const [logoutSheetActive, setLogoutSheetActive] = useState(false);
   const [settingsSheetActive, setSettingsSheetActive] = useState(false);
+  const [editProfileSheetActive, setEditProfileSheetActive] = useState(false);
 
   const [isLightMode, setIsLightMode] = useState(true);
+
+  // Edit profile form state
+  const [editSocials, setEditSocials] = useState([]);
+  const [editBio, setEditBio] = useState('');
+  const [newSocial, setNewSocial] = useState({ label: '', address: ''});
+  const [openNewSocial, setOpenNewSocial] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const userId = "#1234567890";
   const socials = [
@@ -58,8 +69,37 @@ export default function AccountPage() {
     router.replace('/');
   };
 
-  const handleEditProfile = async () => {
+  // Social media editing functions
+  const addSocial = () => {
+    if (newSocial.label && newSocial.address) {
+      setEditSocials([...editSocials, newSocial]);
+      setNewSocial({ label: '', address: '' });
+      setOpenNewSocial(false);
+    }
+  };
+  
+  const editSocial = (index, key, value) => {
+    const updatedSocials = [...editSocials];
+    updatedSocials[index][key] = value;
+    setEditSocials(updatedSocials);
+  };
 
+  const removeSocial = (index) => {
+    setEditSocials(editSocials.filter((_, i) => i !== index));
+  };
+
+  const handleEditProfile = () => {
+    // Initialize edit state with current data
+    setEditSocials([...socials]);
+    setEditBio(userbio);
+    setEditProfileSheetActive(true);
+  };
+
+  const handleSaveProfile = async () => {
+    // Here you would typically make an API call to save the profile
+    // For now, we'll just close the modal
+    console.log('Saving profile:', { socials: editSocials, bio: editBio });
+    setEditProfileSheetActive(false);
   };
 
   const handleSaveSettings = async () => {
@@ -360,6 +400,210 @@ export default function AccountPage() {
                   flex={1}
               >
                   Save
+              </Button>
+          </XStack>
+          </Sheet.Frame>
+      </Sheet>
+      )}
+
+      {/* Edit Profile Modal */}
+      {editProfileSheetActive && (
+      <Sheet modal open={editProfileSheetActive} onOpenChange={setEditProfileSheetActive} dismissOnOverlayPress>
+          <Sheet.Frame 
+              backgroundColor="$background"
+              borderTopLeftRadius={BORDER_RADIUS.lg}
+              borderTopRightRadius={BORDER_RADIUS.lg}
+          >
+          <Sheet.Handle backgroundColor="$gray8" />
+          <ScrollView>
+            <YStack 
+                space={SPACING.lg} 
+                padding={SPACING.lg}
+            >
+                {/* Contact Information Section */}
+                <YStack 
+                    space={SPACING.md}
+                    padding={SPACING.md}
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius={BORDER_RADIUS.md}
+                    backgroundColor="$gray1"
+                >
+                    <Text 
+                        fontSize={TYPOGRAPHY.sizes.md}
+                        fontWeight={TYPOGRAPHY.weights.medium}
+                        color="$gray11"
+                        marginBottom={SPACING.xs}
+                    >
+                        Contact Information
+                    </Text>
+
+                    {/* Existing Socials */}
+                    {editSocials.map((social, index) => (
+                        <XStack 
+                            key={index} 
+                            space={SPACING.xs}
+                            padding={SPACING.sm}
+                            borderWidth={1}
+                            borderColor="$borderColor"
+                            borderRadius={BORDER_RADIUS.sm}
+                            backgroundColor="$background"
+                            alignItems="center"
+                        >
+                            <YStack flex={1} space={SPACING.xs}>
+                                <Input
+                                    value={social.label}
+                                    onChangeText={(text) => editSocial(index, 'label', text)}
+                                    placeholder="Platform"
+                                    size="$3"
+                                    fontSize={TYPOGRAPHY.sizes.sm}
+                                    height={38}
+                                />
+                                <Input
+                                    value={social.address}
+                                    onChangeText={(text) => editSocial(index, 'address', text)}
+                                    placeholder="Contact info"
+                                    size="$3"
+                                    fontSize={TYPOGRAPHY.sizes.sm}
+                                    height={38}
+                                />
+                            </YStack>
+                            <Button
+                                size="$2"
+                                variant="ghost"
+                                onPress={() => removeSocial(index)}
+                                padding={SPACING.xs}
+                                minWidth={32}
+                                minHeight={32}
+                            >
+                                <XIcon size={16} color="$red10" />
+                            </Button>
+                        </XStack>
+                    ))}
+
+                    {/* Add New Social */}
+                    {openNewSocial && 
+                        <YStack 
+                            space={SPACING.xs}
+                            padding={SPACING.sm}
+                            borderWidth={1}
+                            borderColor="$blue6"
+                            borderRadius={BORDER_RADIUS.sm}
+                            backgroundColor="$blue1"
+                        >
+                            <XStack space={SPACING.xs} alignItems="flex-end">
+                                <YStack flex={1} space={SPACING.xs}>
+                                    <Input
+                                        placeholder="Platform"
+                                        value={newSocial.label}
+                                        onChangeText={(text) => setNewSocial({ ...newSocial, label: text })}
+                                        size="$3"
+                                        fontSize={TYPOGRAPHY.sizes.sm}
+                                        height={38}
+                                    />
+                                    <Input
+                                        placeholder="Contact info"
+                                        value={newSocial.address}
+                                        onChangeText={(text) => setNewSocial({ ...newSocial, address: text })}
+                                        size="$3"
+                                        fontSize={TYPOGRAPHY.sizes.sm}
+                                        height={38}
+                                    />
+                                </YStack>
+                                
+                                <XStack space={SPACING.xs}>
+                                    <Button
+                                        size="$2"
+                                        variant="outlined"
+                                        onPress={() => setOpenNewSocial(false)}
+                                        minWidth={60}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        size="$2"
+                                        onPress={addSocial}
+                                        backgroundColor="$green9"
+                                        color="white"
+                                        minWidth={50}
+                                    >
+                                        <PlusIcon size={14} />
+                                    </Button>
+                                </XStack>
+                            </XStack>
+                        </YStack>
+                    }
+                    
+                    {!openNewSocial && (
+                        <XStack justifyContent="center">
+                            <Button 
+                                onPress={() => setOpenNewSocial(true)} 
+                                variant="outlined"
+                                size="$3"
+                            >
+                                + Add Contact Method
+                            </Button>
+                        </XStack>
+                    )}
+                </YStack>
+
+                {/* Bio Section */}
+                <YStack 
+                    space={SPACING.sm}
+                    padding={SPACING.md}
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius={BORDER_RADIUS.md}
+                    backgroundColor="$gray1"
+                >
+                    <Text 
+                        fontSize={TYPOGRAPHY.sizes.md}
+                        fontWeight={TYPOGRAPHY.weights.medium}
+                        color="$gray11"
+                        marginBottom={SPACING.xs}
+                    >
+                        About
+                    </Text>
+                    <Input
+                        value={editBio}
+                        onChangeText={setEditBio}
+                        placeholder="Add your bio"
+                        multiline
+                        numberOfLines={4}
+                        size="$4"
+                        textAlignVertical="top"
+                    />
+                </YStack>
+            </YStack>
+          </ScrollView>
+          
+          {/* Action Buttons */}
+          <XStack 
+              padding={SPACING.md} 
+              justifyContent="flex-end" 
+              space={SPACING.sm}
+              borderTopWidth={1}
+              borderTopColor="$borderColor"
+              backgroundColor="$background"
+          >
+              <Button
+                  size="$3"
+                  variant="outlined"
+                  onPress={() => setEditProfileSheetActive(false)}
+                  borderRadius={BORDER_RADIUS.md}
+                  flex={1}
+              >
+                  Cancel
+              </Button>
+              <Button
+                  size="$3"
+                  onPress={handleSaveProfile}
+                  backgroundColor="$blue9"
+                  color="white"
+                  borderRadius={BORDER_RADIUS.md}
+                  flex={1}
+              >
+                  Save Changes
               </Button>
           </XStack>
           </Sheet.Frame>
