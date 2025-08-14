@@ -88,17 +88,43 @@ export default function AccountPage() {
     setEditSocials(editSocials.filter((_, i) => i !== index));
   };
 
+  const selectImage = async () => {
+    // Request permission
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert("Permission Required", "You need to enable camera roll access to select a profile picture.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0]);
+    }
+  };
+
   const handleEditProfile = () => {
     // Initialize edit state with current data
     setEditSocials([...socials]);
     setEditBio(userbio);
+    setSelectedImage(null); // Reset selected image
     setEditProfileSheetActive(true);
   };
 
   const handleSaveProfile = async () => {
     // Here you would typically make an API call to save the profile
     // For now, we'll just close the modal
-    console.log('Saving profile:', { socials: editSocials, bio: editBio });
+    console.log('Saving profile:', { 
+      socials: editSocials, 
+      bio: editBio, 
+      profileImage: selectedImage 
+    });
     setEditProfileSheetActive(false);
   };
 
@@ -420,6 +446,63 @@ export default function AccountPage() {
                 space={SPACING.lg} 
                 padding={SPACING.lg}
             >
+                {/* Profile Picture Section */}
+                <YStack 
+                    space={SPACING.md}
+                    padding={SPACING.md}
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius={BORDER_RADIUS.md}
+                    backgroundColor="$gray1"
+                    alignItems="center"
+                >
+                    <Text 
+                        fontSize={TYPOGRAPHY.sizes.md}
+                        fontWeight={TYPOGRAPHY.weights.medium}
+                        color="$gray11"
+                        marginBottom={SPACING.xs}
+                    >
+                        Profile Picture
+                    </Text>
+                    
+                    <Pressable onPress={selectImage}>
+                        <View position="relative">
+                            <Avatar circular size="$10">
+                                <Avatar.Image
+                                    accessibilityLabel={username}
+                                    src={selectedImage?.uri || "https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"}
+                                />
+                            </Avatar>
+                            
+                            {/* Camera overlay */}
+                            <View
+                                position="absolute"
+                                bottom={0}
+                                right={0}
+                                backgroundColor="$blue9"
+                                borderRadius={20}
+                                width={32}
+                                height={32}
+                                alignItems="center"
+                                justifyContent="center"
+                                borderWidth={2}
+                                borderColor="$background"
+                            >
+                                <CameraIcon size={16} color="white" />
+                            </View>
+                        </View>
+                    </Pressable>
+                    
+                    <Text 
+                        fontSize={TYPOGRAPHY.sizes.sm}
+                        color="$gray10"
+                        textAlign="center"
+                        marginTop={SPACING.xs}
+                    >
+                        Tap to change profile picture
+                    </Text>
+                </YStack>
+
                 {/* Contact Information Section */}
                 <YStack 
                     space={SPACING.md}
