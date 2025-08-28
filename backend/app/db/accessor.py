@@ -3,7 +3,7 @@ from app.models.user import User
 from app.models.socials import Social, SocialLabel
 from app.models.tags import Tag, TagLabel
 
-from sqlalchemy import insert, func, select, and_, or_, text
+from sqlalchemy import insert, func, select, and_, or_, text, update
 from sqlalchemy.orm import joinedload
 from app.db.session import db
 from geoalchemy2 import Geography
@@ -395,7 +395,7 @@ def create_user(username: str, password: str):
         username=username,
         password=hashed_password.decode('utf-8'),
         user_token=user_token,
-        num_contacts=0  # assuming this should start at 0
+        num_contacts=0
     )
 
     db.session.add(new_user)
@@ -474,6 +474,24 @@ def get_user_details(user_token: str):
     }
 
     return user_dict
+
+
+def update_user(user_token: str, bio: str, profile_pic_url: str):
+    
+    """
+    Add the specified 'bio' and 'profile_pic_url' to the database entry
+    for the user with the specified 'user_token'.
+    """
+
+    stmt = (update(User)
+            .where(User.user_token == user_token)
+            .values(bio = bio,
+                    profile_pic_url = profile_pic_url))
+    
+    result = db.session.execute(stmt)
+
+    if result.rowcount == 0:
+        raise ValueError("Invalid user_token — user not found.")
 
 
 def search_contacts_and_sort(

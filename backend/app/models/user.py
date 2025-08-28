@@ -8,6 +8,8 @@ class User(db.Model):
     username = db.Column(db.String(128), nullable=False)
     password = db.Column(db.Text, nullable=False)
     num_contacts = db.Column(db.Integer, default=0)
+    bio = db.Column(db.Text)
+    profile_pic_url = db.Column(db.String(128))
 
     contacts = db.relationship("Contact", 
                                back_populates="user", 

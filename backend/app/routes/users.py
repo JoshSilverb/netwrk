@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from app.db import accessor as db_accessor
+from app.aws import awsutils
 
 
 users_bp = Blueprint("users", __name__)
@@ -39,6 +40,24 @@ def create_user():
     user_token = db_accessor.create_user(username=username, password=password)
 
     return jsonify({'user_token': user_token})
+
+
+@users_bp.route("/updateUser", methods=["POST"])
+def update_user():
+
+    data = request.get_json()
+    user_token: int = data['user_token']
+    bio: str = data['bio']
+    profile_pic_file = request.files.get('profile_pic', '')
+
+    profile_pic_url = awsutils.uploadFileToS3(profile_pic_file, f'/profiles/{user_id}', 'netwrkbucket')
+
+    if not profile_pic_url:
+        return jsonify({"message": "failed to upload profile picture"}), 500
+
+    db_accessor.update_user(user_token, bio, profile_pic_url)
+
+    return jsonify({})
 
 
 @users_bp.route("/getTagsForUser", methods=["POST"])
