@@ -485,17 +485,16 @@ def update_user(user_token: str, bio: str, profile_pic_url: str):
     for the user with the specified 'user_token'.
     """
 
-    stmt = (update(User)
-            .where(User.user_token == user_token)
-            .values(bio = bio,
-                    profile_pic_url = profile_pic_url))
-    
-    print(f"about to run sql")
-    
-    result = db.session.execute(stmt)
+    user = db.session.query(User).filter_by(user_token == user_token).first()
+    if not user:
+        raise Exception(f"No user with token {user_token} found")
 
-    if result.rowcount == 0:
-        raise ValueError("Invalid user_token — user not found.")
+    user.bio = bio
+    user.profile_pic_url = profile_pic_url
+    
+    print(f"about to commit update")
+    
+    db.session.commit()
 
 
 def search_contacts_and_sort(
