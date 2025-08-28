@@ -488,21 +488,21 @@ def update_user(user_token: str, bio: str, profile_pic_url: str):
     for the user with the specified 'user_token'.
     """
 
-    logger.debug(f"About to update user with token: '{user_token}' " + \
+    logger.info(f"About to update user with token: '{user_token}' " + \
                  f"to have bio: '{bio}' and profPicUrl: '{profile_pic_url}'")
 
     user = db.session.query(User).filter_by(user_token=user_token).first()
     if not user:
         raise Exception(f"No user with token {user_token} found")
     
-    logger.debug(f"Got user: '{user}'")
+    logger.info(f"Got user: '{user}'")
 
     user.bio = bio
     user.profile_pic_url = profile_pic_url
 
-    logger.debug(f"Set user fields, now looks like: '{user}'")
+    logger.info(f"Set user fields, now looks like: '{user}'")
     
-    logger.debug("Committing user profile update")
+    logger.info("Committing user profile update")
     
     db.session.commit()
 
