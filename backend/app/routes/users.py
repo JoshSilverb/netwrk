@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+import json
 
 from app.db import accessor as db_accessor
 from app.aws import awsutils
@@ -45,7 +46,7 @@ def create_user():
 @users_bp.route("/updateUser", methods=["POST"])
 def update_user():
 
-    data = request.get_json()
+    data = json.loads(request.form.get("data"))
     user_token: int = data['user_token']
     bio: str = data['bio']
     profile_pic_file = request.files.get('profile_pic', '')
