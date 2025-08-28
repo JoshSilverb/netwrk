@@ -14,6 +14,9 @@ from enum import Enum
 
 import bcrypt
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SortOptions(Enum):
@@ -157,7 +160,7 @@ def add_contact(
     result = db.session.execute(stmt)
     new_contact_id = result.scalar_one()
     
-    print("Inserted into contacts")
+    logger.info("Successfully inserted new contact")
 
     # Insert socials
 
@@ -405,7 +408,7 @@ def create_user(username: str, password: str):
         db.session.rollback()
         raise Exception("Failed to store user credentials due to DB integrity error.")
 
-    print(f"Successfully created user profile for username={username}")
+    logger.info(f"Successfully created user profile for username={username}")
     return user_token
 
 
@@ -418,12 +421,12 @@ def validate_user_credentials(username: str, password: str):
     # Fetch the user by username
     user = db.session.query(User).filter_by(username=username).first()
     if not user:
-        print(f"Found no user profile matching username={username}")
+        logger.warning(f"Authentication failed: No user profile found for username={username}")
         raise NameError("Invalid credentials")
 
     # Check password
     if not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-        print(f"Password is wrong for username={username}")
+        logger.warning(f"Authentication failed: Incorrect password for username={username}")
         raise NameError("Invalid credentials")
 
     # Generate new token
@@ -433,7 +436,7 @@ def validate_user_credentials(username: str, password: str):
     # Commit the update
     db.session.commit()
 
-    print(f"Successfully validated user credentials for username={username}")
+    logger.info(f"Successfully authenticated user: {username}")
     return new_user_token
 
 
@@ -446,13 +449,13 @@ def delete_user(user_token: str):
     user = db.session.query(User).filter_by(user_token=user_token).first()
 
     if not user:
-        print(f"No profiles matching the specified user token: {user_token}")
+        logger.warning(f"No profile found for user token: {user_token}")
         raise NameError("No profiles matching the specified user token")
 
-    print(f"Found user to delete with username={user.username} user_token={user_token}")
+    logger.info(f"Found user to delete: username={user.username}, user_token={user_token}")
     db.session.delete(user)
     db.session.commit()
-    print(f"Successfully deleted user with username={user.username} user_token={user_token}")
+    logger.info(f"Successfully deleted user: username={user.username}, user_token={user_token}")
 
 
 def get_user_details(user_token: str):
@@ -465,7 +468,7 @@ def get_user_details(user_token: str):
     user = db.session.query(User).filter_by(user_token=user_token).first()
 
     if not user:
-        print(f"No profiles matching the specified user token: {user_token}")
+        logger.warning(f"No profile found for user token: {user_token}")
         raise NameError("No profiles matching the specified user token")
 
     user_dict = {
@@ -492,7 +495,7 @@ def update_user(user_token: str, bio: str, profile_pic_url: str):
     user.bio = bio
     user.profile_pic_url = profile_pic_url
     
-    print(f"about to commit update")
+    logger.debug("Committing user profile update")
     
     db.session.commit()
 
@@ -517,11 +520,11 @@ def search_contacts_and_sort(
 
     # Fallbacks for invalid sorting
     if sort_option == SortOptions.RELEVANCE and not query_string:
-        print("Can't search by relevance without a query.")
+        logger.error("Search failed: Cannot search by relevance without a query")
         sort_option = SortOptions.DATE_ADDED
 
     if sort_option == SortOptions.DISTANCE and (not user_latitude or not user_longitude):
-        print("Can't sort by distance without coordinates.")
+        logger.error("Search failed: Cannot sort by distance without coordinates")
         sort_option = SortOptions.DATE_ADDED
 
     # Base query
@@ -572,11 +575,11 @@ def search_contacts_and_sort(
     elif sort_option == SortOptions.NEXT_CONTACT_DATE:
         query = query.order_by(Contact.next_contact.asc())
 
-    print(f"Sorting by {sort_option}, searching with query '{query_string}'")
-    print(f"Final SQL:\n{str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+    logger.info(f"Executing contact search - Sort: {sort_option}, Query: '{query_string}'")
+    logger.debug(f"Generated SQL query:\n{str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
 
     contacts_raw = query.all()
-    print(f"Fetched {len(contacts_raw)} contacts")
+    logger.info(f"Search completed: Found {len(contacts_raw)} contacts")
 
     contact_dicts = [dict(row._mapping) for row in contacts_raw]
     contact_ids = [c['contact_id'] for c in contact_dicts]

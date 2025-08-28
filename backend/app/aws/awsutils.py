@@ -1,8 +1,11 @@
 import boto3
 import uuid
 import io
+import logging
 
 from app.config import Config
+
+logger = logging.getLogger(__name__)
 
 
 def uploadFileToS3(file) -> str:
@@ -11,7 +14,7 @@ def uploadFileToS3(file) -> str:
         object_name = uuid.uuid4().hex.strip()
         response = s3_client.upload_fileobj(io.BytesIO(file), Config.S3_BUCKET_NAME, object_name)
     except Exception as e:
-        print(f"Failed to upload file to s3 with error: {e}")
+        logger.error(f"Failed to upload file to S3: {e}")
         return ''
     return object_name
 

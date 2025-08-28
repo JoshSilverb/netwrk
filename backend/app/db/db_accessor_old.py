@@ -3,12 +3,15 @@ import bcrypt
 import psycopg2
 import psycopg2.extras
 import uuid
+import logging
 
 from app.aws import method_args
 from app.database.db_config import Db_config
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -33,16 +36,16 @@ def sort_option_from_string(option: str) -> SortOptions:
         ValueError: If the given string is not a valid sort option.
     """
 
-    print(f"option: {option}")
+    logger.debug(f"Processing sort option: {option}")
     option = option.strip("'")
-    print(f"stripped option: {option}")
+    logger.debug(f"Stripped sort option: {option}")
 
     for sortOpt in SortOptions:
-        print(f"comparing to sortOpt: {sortOpt.value}")
+        logger.debug(f"Comparing to sort option: {sortOpt.value}")
         if sortOpt.value == option:
             return sortOpt
     
-    print("not found")
+    logger.debug("Sort option not found")
     raise ValueError(f"'{option}' is not a valid sort option")
 
 

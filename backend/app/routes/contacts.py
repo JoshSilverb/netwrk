@@ -2,9 +2,12 @@ import requests
 from flask import Blueprint, jsonify, request
 from datetime import datetime
 from openai import OpenAI
+import logging
 
 from app.db import accessor as db_accessor
 from app.config import Config
+
+logger = logging.getLogger(__name__)
 
 
 contacts_bp = Blueprint("contacts", __name__)
@@ -21,7 +24,7 @@ def _location_to_coords(location: str) -> dict[str, str] | None:
             othewise return 'None'
     """
 
-    print(f"Getting coordinates for location {location}")
+    logger.debug(f"Getting coordinates for location: {location}")
 
     if len(location) == 0:
         return None
@@ -32,7 +35,7 @@ def _location_to_coords(location: str) -> dict[str, str] | None:
     
     geocode_response.raise_for_status()
     location_coords = geocode_response.json()["results"][0]["geometry"]["location"]
-    print(f"Parsed location coords: {location_coords}")
+    logger.debug(f"Parsed location coordinates: {location_coords}")
 
     return location_coords
 
@@ -79,22 +82,22 @@ def _get_query_string_embedding(query_string: str,) -> list[float]:
 
 @contacts_bp.route("/getContactById", methods=["POST"])
 def get_contact_by_id():
-    print("got get contact by ID request")
+    logger.debug("Received get contact by ID request")
 
     data = request.get_json()
     user_token = data["user_token"]
     contact_id = int(data["contact_id"])
 
-    print(f"Got token '{user_token}' and contact ID '{contact_id}'")
+    logger.debug(f"Processing request - user_token: {user_token}, contact_id: {contact_id}")
 
     contact = db_accessor.get_contact_by_id(user_token, contact_id)
-    print("Retrieved contact:", contact)
+    logger.debug(f"Retrieved contact: {contact}")
     return jsonify(contact)
 
 
 @contacts_bp.route("/addContactForUser", methods=["POST"])
 def add_new_contact():
-    print("Got add contact request")
+    logger.debug("Received add contact request")
     data = request.get_json()
     newcontact = data["newContact"]
 
@@ -138,13 +141,13 @@ def add_new_contact():
 
 @contacts_bp.route("/removeContactForUser", methods=["POST"])
 def remove_contact():
-    print("Got remove contact request")
+    logger.debug("Received remove contact request")
 
     data = request.get_json()
     user_token = data["user_token"]
     contact_id = int(data["contact_id"])
 
-    print(f"Got token '{user_token}' and contact ID '{contact_id}'")
+    logger.debug(f"Processing remove request - user_token: {user_token}, contact_id: {contact_id}")
 
     db_accessor.delete_contact(user_token, contact_id)
 
@@ -153,7 +156,7 @@ def remove_contact():
 
 @contacts_bp.route("/updateContactForUser", methods=["POST"])
 def update_contact():
-    print("Got add contact request")
+    logger.debug("Received update contact request")
 
     data = request.get_json()
     newcontact = data["newContact"]
@@ -201,7 +204,7 @@ def update_contact():
 
 @contacts_bp.route("/searchContacts", methods=["POST"])
 def search_contacts():
-    print("Got search contact request")
+    logger.debug("Received search contacts request")
 
     data = request.get_json()
     user_token: str = data['user_token']
@@ -222,10 +225,10 @@ def search_contacts():
 
     if order_by == 'Relevance' and len(query_string) > 0:
         embedding_vector = _get_query_string_embedding(query_string)
-        print(f"[SearchContacts] Got embedding vector")
+        logger.debug("Generated embedding vector for search query")
     else:
         embedding_vector = None
-        print(f"[SearchContacts] No embedding vector")
+        logger.debug("No embedding vector generated for search query")
 
     contacts = db_accessor.search_contacts_and_sort(
         user_token=user_token,

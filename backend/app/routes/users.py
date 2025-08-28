@@ -1,8 +1,11 @@
 from flask import Blueprint, jsonify, request
 import json
+import logging
 
 from app.db import accessor as db_accessor
 from app.aws import awsutils
+
+logger = logging.getLogger(__name__)
 
 
 users_bp = Blueprint("users", __name__)
@@ -47,10 +50,10 @@ def create_user():
 def update_user():
 
     data = json.loads(request.form.get("data"))
-    print(f"Got json from update user rq: {data}")
+    logger.debug(f"Received update user request data: {data}")
     user_token: int = data['user_token']
     bio: str = data['bio']
-    print(f"is 'profile_pic' in files? {'profile_pic' in request.files}")
+    logger.debug(f"Profile picture in request files: {'profile_pic' in request.files}")
 
     if 'profile_pic' in request.files:
         profile_pic_file = request.files['profile_pic']
@@ -68,7 +71,7 @@ def update_user():
     else:
         profile_pic_url = ''
 
-    print("calling db update user")
+    logger.debug("Calling database update user function")
     db_accessor.update_user(user_token, bio, profile_pic_url)
 
     return jsonify({})
