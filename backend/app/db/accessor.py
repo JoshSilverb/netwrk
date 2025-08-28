@@ -490,6 +490,8 @@ def update_user(user_token: str, bio: str, profile_pic_url: str):
             .values(bio = bio,
                     profile_pic_url = profile_pic_url))
     
+    print(f"about to run sql")
+    
     result = db.session.execute(stmt)
 
     if result.rowcount == 0:

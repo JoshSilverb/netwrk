@@ -51,18 +51,24 @@ def update_user():
     user_token: int = data['user_token']
     bio: str = data['bio']
     print(f"is 'profile_pic' in files? {'profile_pic' in request.files}")
-    profile_pic_file = request.files['profile_pic']
 
-    s3_object_name = awsutils.uploadFileToS3(profile_pic_file)
+    if 'profile_pic' in request.files:
+        profile_pic_file = request.files['profile_pic']
+       
+        s3_object_name = awsutils.uploadFileToS3(profile_pic_file)
 
-    if not s3_object_name:
-        return jsonify({"message": "failed to upload profile picture"}), 500
-    
-    profile_pic_url = awsutils.getSignedS3ObjectURL(s3_object_name)
+        if not s3_object_name:
+            return jsonify({"message": "failed to upload profile picture"}), 500
+        
+        profile_pic_url = awsutils.getSignedS3ObjectURL(s3_object_name)
 
-    if not profile_pic_url:
-        return jsonify({"message": "failed to get signed url for profile picture"}), 500
+        if not profile_pic_url:
+            return jsonify({"message": "failed to get signed url for profile picture"}), 500
 
+    else:
+        profile_pic_url = ''
+
+    print("calling db update user")
     db_accessor.update_user(user_token, bio, profile_pic_url)
 
     return jsonify({})
