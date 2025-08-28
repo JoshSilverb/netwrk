@@ -50,10 +50,15 @@ def update_user():
     bio: str = data['bio']
     profile_pic_file = request.files.get('profile_pic', '')
 
-    profile_pic_url = awsutils.uploadFileToS3(profile_pic_file, f'/profiles/{user_id}', 'netwrkbucket')
+    s3_object_name = awsutils.uploadFileToS3(profile_pic_file)
+
+    if not s3_object_name:
+        return jsonify({"message": "failed to upload profile picture"}), 500
+    
+    profile_pic_url = awsutils.getSignedS3ObjectURL(s3_object_name)
 
     if not profile_pic_url:
-        return jsonify({"message": "failed to upload profile picture"}), 500
+        return jsonify({"message": "failed to get signed url for profile picture"}), 500
 
     db_accessor.update_user(user_token, bio, profile_pic_url)
 
