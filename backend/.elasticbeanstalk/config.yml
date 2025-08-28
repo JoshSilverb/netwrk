@@ -2,6 +2,8 @@ branch-defaults:
   main:
     environment: netwrk-env
     group_suffix: null
+  master:
+    environment: netwrk-env
 global:
   application_name: netwrk-backend
   branch: null

@@ -470,7 +470,9 @@ def get_user_details(user_token: str):
 
     user_dict = {
         "username": user.username,
-        "num_contacts": user.num_contacts
+        "num_contacts": user.num_contacts,
+        "bio": user.bio,
+        "profile_pic_url": user.profile_pic_url
     }
 
     return user_dict
