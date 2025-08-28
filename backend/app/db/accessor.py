@@ -488,7 +488,7 @@ def update_user(user_token: str, bio: str, profile_pic_url: str):
     for the user with the specified 'user_token'.
     """
 
-    user = db.session.query(User).filter_by(user_token == user_token).first()
+    user = db.session.query(User).filter_by(user_token=user_token).first()
     if not user:
         raise Exception(f"No user with token {user_token} found")
 
