@@ -47,9 +47,11 @@ def create_user():
 def update_user():
 
     data = json.loads(request.form.get("data"))
+    print(f"Got json from update user rq: {data}")
     user_token: int = data['user_token']
     bio: str = data['bio']
-    profile_pic_file = request.files.get('profile_pic', '')
+    print(f"is 'profile_pic' in files? {'profile_pic' in request.files}")
+    profile_pic_file = request.files['profile_pic']
 
     s3_object_name = awsutils.uploadFileToS3(profile_pic_file)
 
