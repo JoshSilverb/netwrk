@@ -12,6 +12,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy entrypoint
+COPY application.py .
+
 # Copy source (for build completeness; live updates come from mounted volumes)
 # COPY lambda/app               ./app
 # COPY sql                      ./sql
@@ -19,7 +22,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY sql ./sql
-COPY run.py ./run.py
-COPY run.sh ./run.sh
+# COPY run.py ./run.py
+# COPY run.sh ./run.sh
+
+# RUN python3 application.py
 
 CMD ["/bin/bash"]

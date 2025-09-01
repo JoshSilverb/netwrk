@@ -1,0 +1,2 @@
+curl https://x8bhwx3sva.execute-api.us-east-2.amazonaws.com/default/getUserDetails -X POST --header "Content-Type: application/json" -d '{ "user_token": "8de97312b3a346e7b209a28e8cdfdb55 " }'
+curl 0.0.0.0:5000/getUserDetails -X POST --header "Content-Type: application/json" -d '{ "user_token": "8de97312b3a346e7b209a28e8cdfdb55 " }'

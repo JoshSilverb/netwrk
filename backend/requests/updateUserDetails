@@ -1,0 +1,1 @@
+curl 0.0.0.0:5000/updateUserDetails -X POST --header "Content-Type: application/json" -d '{ "user_token": "42d77b76feae4c1f94d67ccd656f90e4", "bio": "working on this" }'

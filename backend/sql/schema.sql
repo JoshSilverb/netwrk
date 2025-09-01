@@ -8,7 +8,7 @@ CREATE TABLE users(
     password TEXT NOT NULL,  -- hash of the password plaintext
     num_contacts INTEGER DEFAULT 0,  -- number of contacts user has
     bio TEXT,
-    profile_pic_url VARCHAR(128)
+    profile_pic_object_name VARCHAR(128)
 );
 -- TEST PASSWORD: "Pwd"
 

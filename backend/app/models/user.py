@@ -9,7 +9,7 @@ class User(db.Model):
     password = db.Column(db.Text, nullable=False)
     num_contacts = db.Column(db.Integer, default=0)
     bio = db.Column(db.Text)
-    profile_pic_url = db.Column(db.String(128))
+    profile_pic_object_name = db.Column(db.String(128))
 
     contacts = db.relationship("Contact", 
                                back_populates="user", 

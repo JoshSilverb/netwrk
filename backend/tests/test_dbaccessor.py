@@ -1,11 +1,14 @@
 from lambda.database_accessor import get_contacts_for_user
+import logging
 # import pytest
+
+logger = logging.getLogger(__name__)
 
 
 
 def test_get_contacts(populate_database, db_accessor_fake_embedder):
     contacts = db_accessor_fake_embedder.get_contacts(1, '')
-    print(contacts)
+    logger.debug(f"Retrieved contacts for test: {contacts}")
     assert len(contacts) == 2
     assert contacts[0]['fullname'] == 'Alice A'
     assert contacts[1]['fullname'] == 'Bob B'
