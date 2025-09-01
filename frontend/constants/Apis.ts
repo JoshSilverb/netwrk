@@ -12,3 +12,5 @@ export const deleteUserURL              = baseURL + tier + '/deleteUser';
 export const searchContactsURL          = baseURL + tier + '/searchContacts';
 export const getUserDetailsURL          = baseURL + tier + '/getUserDetails';
 export const getTagsForUserURL          = baseURL + tier + '/getTagsForUser';
+export const updateUserDetailsURL       = baseURL + tier + '/updateUserDetails';
+export const updateUserPictureURL       = baseURL + tier + '/updateUserPicture';

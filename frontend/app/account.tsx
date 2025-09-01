@@ -3,7 +3,7 @@ import { View, Button, XStack, YStack, Avatar, ScrollView, Text, Sheet, Label, S
 import { Pressable, Alert } from 'react-native';
 import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon } from '@tamagui/lucide-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { getUserDetailsURL } from '@/constants/Apis';
+import { getUserDetailsURL, updateUserDetailsURL, updateUserPictureURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import { removeToken } from '@/utils/tokenstore';
@@ -13,8 +13,10 @@ import axios from 'axios';
 export default function AccountPage() {
   const { token, setToken } = useAuth();
 
+  const [profilePicUrl, setProfilePicUrl] = useState('');
   const [username, setUsername] = useState('');
   const [numContacts, setNumContacts] = useState('');
+  const [userBio, setUserBio] = useState('');
 
   const [logoutSheetActive, setLogoutSheetActive] = useState(false);
   const [settingsSheetActive, setSettingsSheetActive] = useState(false);
@@ -40,7 +42,6 @@ export default function AccountPage() {
         address: "2222222222"
       }
   ];
-  const userbio = "Software engineer at Bloomberg.";
   
   useEffect(() => {
       fetchUserDetails();
@@ -55,12 +56,62 @@ export default function AccountPage() {
       try {
           const response = await axios.post(getUserDetailsURL, requestBody);
           console.log(response.data);
+          setProfilePicUrl(response.data["profile_pic_url"])
           setUsername(response.data["username"]);
           setNumContacts(response.data["num_contacts"]);
+          setUserBio(response.data["bio"])
           // setLoading(false);
       } catch (error) {
           console.error('Error fetching data:', error);
       }
+  };
+  
+  const sendUpdateUserPictureRequest = async () => {
+    // Send updated profile picture
+
+    // Build URL with the user token
+    const updateUserPictureURLWithToken = updateUserPictureURL + token;
+
+    if (!selectedImage) {
+      console.log("No image selected");
+      return;
+    }
+
+    // Details to update
+    const formData = new FormData();
+    formData.append('image', selectedImage);
+
+    axios.post(updateUserPictureURLWithToken, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    })
+    .then(response => {
+      console.log(`Got UpdateUserDetails response: ${response.data}`);
+    })
+    .then(() => { fetchUserDetails() })
+    .catch(error => {
+        console.error('Error uploading image:', error);
+    });
+  }
+
+  const sendUpdateUserDetailsRequest = async () => {
+    // Send updated bio and socials
+
+    // Details to update
+    const requestBody = {
+        user_token: token,
+        bio: userBio
+    }
+
+    axios.post(updateUserDetailsURL, requestBody)
+    .then(response => {
+      console.log(`Got UpdateUserDetails response: ${response.data}`);
+    })
+    .then(() => { fetchUserDetails() })
+    .catch(error => {
+      console.error("Error sending update user request:", error);
+    });
   };
   
   const handleLogOut = async () => {
@@ -112,7 +163,7 @@ export default function AccountPage() {
   const handleEditProfile = () => {
     // Initialize edit state with current data
     setEditSocials([...socials]);
-    setEditBio(userbio);
+    setEditBio(userBio);
     setSelectedImage(null); // Reset selected image
     setEditProfileSheetActive(true);
   };
@@ -125,6 +176,9 @@ export default function AccountPage() {
       bio: editBio, 
       profileImage: selectedImage 
     });
+
+    sendUpdateUserRequest();
+
     setEditProfileSheetActive(false);
   };
 
@@ -147,7 +201,7 @@ export default function AccountPage() {
           <Avatar circular size="$10">
               <Avatar.Image
               accessibilityLabel={username}
-              src="https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"
+              src={profilePicUrl || "https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"}
               />
           </Avatar>
 
@@ -251,7 +305,7 @@ export default function AccountPage() {
               backgroundColor="$background"
             >
               <Text fontSize={TYPOGRAPHY.sizes.sm}>
-                {userbio || "No notes added"}
+                {userBio}
               </Text>
             </View>
           </YStack>
