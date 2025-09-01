@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import { removeToken } from '@/utils/tokenstore';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
+import mime from 'mime';
 import axios from 'axios';
 
 export default function AccountPage() {
@@ -70,16 +71,25 @@ export default function AccountPage() {
     // Send updated profile picture
 
     // Build URL with the user token
-    const updateUserPictureURLWithToken = updateUserPictureURL + token;
+    const updateUserPictureURLWithToken = updateUserPictureURL + '/' + token;
+
+    console.log(`sending updateUserPicRq to url: ${updateUserPictureURLWithToken}`);
 
     if (!selectedImage) {
       console.log("No image selected");
       return;
     }
 
-    // Details to update
+    // Prepare image for upload
     const formData = new FormData();
-    formData.append('image', selectedImage);
+
+    const newImageUri =  "file:///" + selectedImage.uri.split("file:/").join("");
+
+    formData.append('image', {
+      uri : newImageUri,
+      type: mime.getType(newImageUri),
+      name: newImageUri.split("/").pop()
+    });
 
     axios.post(updateUserPictureURLWithToken, formData, {
         headers: {
@@ -87,9 +97,8 @@ export default function AccountPage() {
         }
     })
     .then(response => {
-      console.log(`Got UpdateUserDetails response: ${response.data}`);
+      console.log(`Got UpdateUserPicture response: ${JSON.stringify(response.data)}`);
     })
-    .then(() => { fetchUserDetails() })
     .catch(error => {
         console.error('Error uploading image:', error);
     });
@@ -169,17 +178,15 @@ export default function AccountPage() {
   };
 
   const handleSaveProfile = async () => {
-    // Here you would typically make an API call to save the profile
-    // For now, we'll just close the modal
     console.log('Saving profile:', { 
       socials: editSocials, 
       bio: editBio, 
       profileImage: selectedImage 
     });
 
-    sendUpdateUserRequest();
-
-    setEditProfileSheetActive(false);
+    sendUpdateUserPictureRequest()
+    .then(() => { sendUpdateUserDetailsRequest(); })
+    .then(() => { setEditProfileSheetActive(false); });
   };
 
   const handleSaveSettings = async () => {
