@@ -14,3 +14,4 @@ export const getUserDetailsURL          = baseURL + tier + '/getUserDetails';
 export const getTagsForUserURL          = baseURL + tier + '/getTagsForUser';
 export const updateUserDetailsURL       = baseURL + tier + '/updateUserDetails';
 export const updateUserPictureURL       = baseURL + tier + '/updateUserPicture';
+export const getS3UploadURL             = baseURL + tier + '/generate_upload_url';

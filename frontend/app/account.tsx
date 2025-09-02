@@ -3,11 +3,15 @@ import { View, Button, XStack, YStack, Avatar, ScrollView, Text, Sheet, Label, S
 import { Pressable, Alert } from 'react-native';
 import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon } from '@tamagui/lucide-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { getUserDetailsURL, updateUserDetailsURL, updateUserPictureURL } from '@/constants/Apis';
+import { getUserDetailsURL, updateUserDetailsURL, getS3UploadURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import { removeToken } from '@/utils/tokenstore';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
+// import RNBlobUtil from 'react-native-blob-util'
+
+import * as FileSystem from 'expo-file-system';
+
 import mime from 'mime';
 import axios from 'axios';
 
@@ -67,9 +71,98 @@ export default function AccountPage() {
       }
   };
   
-  const sendUpdateUserPictureRequest = async () => {
+  const uploadUserPicture = async () => {
     // Send updated profile picture
 
+    if (!selectedImage) {
+      console.log("No image selected");
+      return;
+    }
+
+    // Get signed s3 url for this picture from backend.
+    const newImageUri = "file:///" + selectedImage.uri.split("file:/").join("");
+
+    const requestBody = {
+        user_token: token,
+        filetype: mime.getType(newImageUri)
+    }
+
+    console.log("sending request to get s3 upload url with body: " + JSON.stringify(requestBody))
+
+    const response = await axios.post(getS3UploadURL, requestBody);
+    
+    if (response.status != 200) {
+      console.log(`Failed to get signed S3 upload url - ${JSON.stringify(response.data)}`)
+      return;
+    }
+
+    const upload_url = response.data["upload_url"]
+    const new_filename = response.data["filename"]
+
+    console.log("got upload url: " + upload_url)
+    console.log("got new filename: " + new_filename)
+    
+    console.log("Getting file handle");
+
+    // Step 2: Read the local file as base64
+    const base64 = await FileSystem.readAsStringAsync(newImageUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    // Step 3: Convert to binary
+    const binary = Buffer.from(base64, "base64");
+
+    // Step 4: Upload using XMLHttpRequest
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", upload_url);
+      xhr.setRequestHeader("Content-Type", "image/jpeg"); // must match backend
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          console.log("Uploaded successfully to S3!");
+          resolve();
+        } else {
+          console.error("Upload failed", xhr.status, xhr.responseText);
+          reject(new Error(xhr.responseText));
+        }
+      };
+      xhr.onerror = () => {
+        console.error("XHR error during upload");
+        reject(new Error("XHR upload error"));
+      };
+      xhr.send(binary);
+    });
+
+    return new_filename;
+    /*
+
+    // Step 2: Read file into a blob (React Native fetch doesn’t accept local URIs directly)
+    const localFileRes = await fetch(newImageUri);
+    console.log("Getting file blob");
+    const blob = await localFileRes.blob();
+
+    console.log("About to upload image to s3");
+    // Step 3: Upload with PUT to S3
+    const uploadRes = await fetch(upload_url, {
+      method: "PUT",
+      headers: { "Content-Type": mime.getType(newImageUri) },
+      body: blob,
+    });
+
+    console.log("Got response");
+
+    // });
+
+    if (uploadRes.ok) {
+      console.log("Uploaded successfully to S3!");
+    } else {
+      console.error("Upload failed", uploadRes.status, JSON.stringify(uploadRes.json));
+    }
+
+    return new_filename
+    */
+
+    /*
     // Build URL with the user token
     const updateUserPictureURLWithToken = updateUserPictureURL + '/' + token;
 
@@ -82,8 +175,6 @@ export default function AccountPage() {
 
     // Prepare image for upload
     const formData = new FormData();
-
-    const newImageUri =  "file:///" + selectedImage.uri.split("file:/").join("");
 
     formData.append('image', {
       uri : newImageUri,
@@ -102,15 +193,17 @@ export default function AccountPage() {
     .catch(error => {
         console.error('Error uploading image:', error);
     });
+    */
   }
 
-  const sendUpdateUserDetailsRequest = async () => {
+  const sendUpdateUserDetailsRequest = async (new_filename) => {
     // Send updated bio and socials
 
     // Details to update
     const requestBody = {
         user_token: token,
-        bio: userBio
+        bio: userBio,
+        image_object_key: new_filename || ""
     }
 
     axios.post(updateUserDetailsURL, requestBody)
@@ -184,8 +277,8 @@ export default function AccountPage() {
       profileImage: selectedImage 
     });
 
-    sendUpdateUserPictureRequest()
-    .then(() => { sendUpdateUserDetailsRequest(); })
+    uploadUserPicture()
+    .then((new_filename) => { sendUpdateUserDetailsRequest(new_filename); })
     .then(() => { setEditProfileSheetActive(false); });
   };
 
