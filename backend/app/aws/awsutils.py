@@ -3,9 +3,16 @@ import uuid
 import io
 import logging
 
+from enum import Enum
+
 from app.config import Config
 
 logger = logging.getLogger(__name__)
+
+
+class S3ObjectMethods(Enum):
+    UPLOAD = "put_object"
+    DOWNLOAD = "get_object"
 
 
 def uploadFileToS3(file) -> str:
@@ -20,12 +27,17 @@ def uploadFileToS3(file) -> str:
     return object_key
 
 
-def getSignedS3ObjectURL(object_key):
+def getSignedS3ObjectURL(object_key, method: S3ObjectMethods, filetype=None):
+    params = {"Bucket": Config.S3_BUCKET_NAME, "Key": object_key}
+    if filetype:
+        logging.info(f"Adding content type: {filetype}")
+        params["ContentType"] = filetype
+
     s3_client = boto3.client('s3')
     url = s3_client.generate_presigned_url(
-        "get_object",
-        Params={"Bucket": Config.S3_BUCKET_NAME, "Key": object_key},
-        ExpiresIn=30
+        method.value,
+        Params=params,
+        ExpiresIn=60
     )
 
     return url

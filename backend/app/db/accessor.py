@@ -412,7 +412,7 @@ def create_user(username: str, password: str):
     return user_token
 
 
-def validate_user_credentials(username: str, password: str):
+def validate_user_credentials_and_regenerate_token(username: str, password: str):
     """
     Validate the user credentials defined in the given args against the stored credentials in the database, and generate and store a new user token.
     Returns:
@@ -438,6 +438,23 @@ def validate_user_credentials(username: str, password: str):
 
     logger.info(f"Successfully authenticated user: {username}")
     return new_user_token
+
+
+def validate_token(user_token: str):
+    """
+    Validate that the specified 'user_token' corresponds to a user in the database.
+    Returns:
+        A bool reflecting if the username/pwd are valid.
+    """
+    # Fetch the user by username
+    user = db.session.query(User).filter_by(user_token=user_token).first()
+    if not user:
+        logger.warning(f"Authentication failed: No user profile found for username={username}")
+        return False
+
+    logger.info(f"Successfully authenticated user with token: {user_token}")
+    return True
+
 
 
 def delete_user(user_token: str):
@@ -481,35 +498,35 @@ def get_user_details(user_token: str):
     return user_dict
 
 
-def update_user_picture(user_token: str, s3_object_name: str):
+# def update_user_picture(user_token: str, s3_object_name: str):
+    
+#     """
+#     Add the specified 's3_object_name' to the database entry for the user with  
+#     the specified 'user_token'.
+#     """
+
+#     logger.info(f"About to update user with token: '{user_token}' " + \
+#                  f"to have profile_pic_object_name: '{s3_object_name}'")
+
+#     user = db.session.query(User).filter_by(user_token=user_token).first()
+#     if not user:
+#         raise Exception(f"No user with token {user_token} found")
+    
+#     logger.info(f"Got user with profile_pic_object_name: '{user.profile_pic_object_name}'")
+
+#     user.profile_pic_object_name = s3_object_name
+
+#     logger.info(f"Set user fields, now profile_pic_object_name: '{user.profile_pic_object_name}'")
+    
+#     logger.info("Committing user profile update")
+    
+#     db.session.commit()
+
+def update_user_details(user_token: str, bio: str, profile_pic_object_name: str):
     
     """
-    Add the specified 's3_object_name' to the database entry for the user with  
-    the specified 'user_token'.
-    """
-
-    logger.info(f"About to update user with token: '{user_token}' " + \
-                 f"to have profile_pic_object_name: '{s3_object_name}'")
-
-    user = db.session.query(User).filter_by(user_token=user_token).first()
-    if not user:
-        raise Exception(f"No user with token {user_token} found")
-    
-    logger.info(f"Got user with profile_pic_object_name: '{user.profile_pic_object_name}'")
-
-    user.profile_pic_object_name = s3_object_name
-
-    logger.info(f"Set user fields, now profile_pic_object_name: '{user.profile_pic_object_name}'")
-    
-    logger.info("Committing user profile update")
-    
-    db.session.commit()
-
-def update_user_details(user_token: str, bio: str):
-    
-    """
-    Add the specified 'bio' to the database entry for the user with the 
-    specified 'user_token'.
+    Add the specified 'bio' and 'profile_pic_object_name' to the database entry 
+    for the user with the specified 'user_token'.
     """
 
     logger.info(f"About to update user with token: '{user_token}' " + \
@@ -522,6 +539,11 @@ def update_user_details(user_token: str, bio: str):
     logger.info(f"Got user with bio: '{user.bio}'")
 
     user.bio = bio
+
+    # Only set new profile pic object name if one is given.
+
+    if profile_pic_object_name:
+        user.profile_pic_object_name = profile_pic_object_name
 
     logger.info(f"Set user fields, now bio: '{user.bio}'")
     
