@@ -16,7 +16,7 @@ class S3ObjectMethods(Enum):
 
 
 def uploadFileToS3(file) -> str:
-    s3_client = boto3.client('s3')
+    s3_client = boto3.client('s3', region_name='us-east-2')
     try:
         object_key = uuid.uuid4().hex.strip()
         object_bytes = file.read()
@@ -33,7 +33,7 @@ def getSignedS3ObjectURL(object_key, method: S3ObjectMethods, filetype=None):
         logging.info(f"Adding content type: {filetype}")
         params["ContentType"] = filetype
 
-    s3_client = boto3.client('s3')
+    s3_client = boto3.client('s3', region_name='us-east-2', config=boto3.session.Config(signature_version='s3v4'))
     url = s3_client.generate_presigned_url(
         method.value,
         Params=params,
