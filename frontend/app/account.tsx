@@ -8,7 +8,6 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import { removeToken } from '@/utils/tokenstore';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
-// import RNBlobUtil from 'react-native-blob-util'
 
 import * as FileSystem from 'expo-file-system';
 
@@ -79,12 +78,14 @@ export default function AccountPage() {
       return;
     }
 
+    const newImageUri =  "file:///" + selectedImage.uri.split("file:/").join("");
+    const contentType = mime.getType(newImageUri);
+    
     // Get signed s3 url for this picture from backend.
-    const newImageUri = "file:///" + selectedImage.uri.split("file:/").join("");
 
     const requestBody = {
         user_token: token,
-        filetype: mime.getType(newImageUri)
+        filetype: contentType
     }
 
     console.log("sending request to get s3 upload url with body: " + JSON.stringify(requestBody))
@@ -101,66 +102,31 @@ export default function AccountPage() {
 
     console.log("got upload url: " + upload_url)
     console.log("got new filename: " + new_filename)
-    
+
     console.log("Getting file handle");
 
-    // Step 2: Read the local file as base64
-    const base64 = await FileSystem.readAsStringAsync(newImageUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-
-    // Step 3: Convert to binary
-    const binary = Buffer.from(base64, "base64");
-
-    // Step 4: Upload using XMLHttpRequest
-    await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", upload_url);
-      xhr.setRequestHeader("Content-Type", "image/jpeg"); // must match backend
-      xhr.onload = () => {
-        if (xhr.status === 200) {
-          console.log("Uploaded successfully to S3!");
-          resolve();
-        } else {
-          console.error("Upload failed", xhr.status, xhr.responseText);
-          reject(new Error(xhr.responseText));
-        }
-      };
-      xhr.onerror = () => {
-        console.error("XHR error during upload");
-        reject(new Error("XHR upload error"));
-      };
-      xhr.send(binary);
-    });
-
-    return new_filename;
-    /*
-
-    // Step 2: Read file into a blob (React Native fetch doesn’t accept local URIs directly)
+    // Step 2: Read file into a blob (React Native fetch doesn't accept local URIs directly)
     const localFileRes = await fetch(newImageUri);
     console.log("Getting file blob");
     const blob = await localFileRes.blob();
 
     console.log("About to upload image to s3");
-    // Step 3: Upload with PUT to S3
+    // Step 3: Upload with PUT to S3 - use the same content type as sent to backend
     const uploadRes = await fetch(upload_url, {
       method: "PUT",
-      headers: { "Content-Type": mime.getType(newImageUri) },
+      headers: { "Content-Type": contentType },
       body: blob,
     });
 
     console.log("Got response");
 
-    // });
-
     if (uploadRes.ok) {
       console.log("Uploaded successfully to S3!");
     } else {
-      console.error("Upload failed", uploadRes.status, JSON.stringify(uploadRes.json));
+      console.error("Upload failed", uploadRes.status, await uploadRes.text());
     }
 
     return new_filename
-    */
 
     /*
     // Build URL with the user token
