@@ -127,39 +127,6 @@ export default function AccountPage() {
     }
 
     return new_filename
-
-    /*
-    // Build URL with the user token
-    const updateUserPictureURLWithToken = updateUserPictureURL + '/' + token;
-
-    console.log(`sending updateUserPicRq to url: ${updateUserPictureURLWithToken}`);
-
-    if (!selectedImage) {
-      console.log("No image selected");
-      return;
-    }
-
-    // Prepare image for upload
-    const formData = new FormData();
-
-    formData.append('image', {
-      uri : newImageUri,
-      type: mime.getType(newImageUri),
-      name: newImageUri.split("/").pop()
-    });
-
-    axios.post(updateUserPictureURLWithToken, formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data'
-        }
-    })
-    .then(response => {
-      console.log(`Got UpdateUserPicture response: ${JSON.stringify(response.data)}`);
-    })
-    .catch(error => {
-        console.error('Error uploading image:', error);
-    });
-    */
   }
 
   const sendUpdateUserDetailsRequest = async (new_filename) => {
@@ -251,8 +218,6 @@ export default function AccountPage() {
   const handleSaveSettings = async () => {
 
   };
-
-  
 
 
   return (
@@ -590,7 +555,7 @@ export default function AccountPage() {
                             <Avatar circular size="$10">
                                 <Avatar.Image
                                     accessibilityLabel={username}
-                                    src={selectedImage?.uri || "https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"}
+                                    src={profilePicUrl || "https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"}
                                 />
                             </Avatar>
                             
