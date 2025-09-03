@@ -2,7 +2,7 @@ import React from "react";
 
 import { Contact } from '@/constants/Definitions';
 import { Link } from 'expo-router';
-import { ChevronDown } from '@tamagui/lucide-icons'
+import { ChevronDown, User as UserIcon } from '@tamagui/lucide-icons'
 import { Accordion, Paragraph, Square, Avatar, XStack, YStack, SizableText, View, Button } from 'tamagui'
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES } from '@/constants/Styles';
 
@@ -33,11 +33,18 @@ const ProfileCard = ({ contact, keyNum } : { contact : Contact, keyNum : number}
                     <>
                         <XStack alignItems="center" gap={SPACING.md} flex={1}>
                             <Avatar circular size="$4">
+                                {contact.profile_pic_url ? (
                                 <Avatar.Image
-                                accessibilityLabel={contact.fullname}
-                                src={contact.profile_pic_url || "https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"}
+                                    accessibilityLabel={username}
+                                    src={contact.profile_pic_url}
                                 />
+                                ) : (
+                                <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">
+                                    <UserIcon size={24} color="gray" />
+                                </Avatar.Fallback>
+                                )}
                             </Avatar>
+                            
                             <YStack flex={1} alignItems="flex-start">
                                 <SizableText 
                                     fontSize={TYPOGRAPHY.sizes.md}

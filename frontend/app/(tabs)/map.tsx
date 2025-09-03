@@ -9,6 +9,7 @@ import { useAuth } from '@/components/AuthContext';
 import { RotateCw } from '@tamagui/lucide-icons';
 import { RefreshControl } from 'react-native';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
+import { getCurrentLocation } from '@/utils/locationutil';
 
 import axios from 'axios';
 
@@ -110,6 +111,12 @@ export default function mapScreen() {
 
     return {latitude: lat, longitude: lon};
   } 
+
+  // const location = await getCurrentLocation();
+  // if (!location) {
+  //     console.log("Location not retrieved, not searching for nearby contacts");
+  //     return; // Exit if location is null
+  // }
 
   return (
     <View style={CONTAINER_STYLES.screen}>

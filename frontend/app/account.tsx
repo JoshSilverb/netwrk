@@ -1,7 +1,7 @@
 import { Stack, Link, router } from 'expo-router';
 import { View, Button, XStack, YStack, Avatar, ScrollView, Text, Sheet, Label, Switch, Separator, Input } from 'tamagui';
 import { Pressable, Alert } from 'react-native';
-import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon } from '@tamagui/lucide-icons';
+import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon, User as UserIcon } from '@tamagui/lucide-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { getUserDetailsURL, updateUserDetailsURL, getS3UploadURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
@@ -230,10 +230,16 @@ export default function AccountPage() {
         {/* Header Stack */}
         <YStack alignSelf="center" alignItems='center' gap={SPACING.md}>
           <Avatar circular size="$10">
+            {profilePicUrl ? (
               <Avatar.Image
-              accessibilityLabel={username}
-              src={profilePicUrl || "https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"}
+                accessibilityLabel={username}
+                src={profilePicUrl}
               />
+            ) : (
+              <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">
+                <UserIcon size={24} color="gray" />
+              </Avatar.Fallback>
+            )}
           </Avatar>
 
           <Text 
@@ -553,10 +559,16 @@ export default function AccountPage() {
                     <Pressable onPress={selectImage}>
                         <View position="relative">
                             <Avatar circular size="$10">
+                              {profilePicUrl ? (
                                 <Avatar.Image
-                                    accessibilityLabel={username}
-                                    src={profilePicUrl || "https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"}
+                                  accessibilityLabel={username}
+                                  src={profilePicUrl}
                                 />
+                              ) : (
+                                <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">
+                                  <UserIcon size={24} color="gray" />
+                                </Avatar.Fallback>
+                              )}
                             </Avatar>
                             
                             {/* Camera overlay */}

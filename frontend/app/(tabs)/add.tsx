@@ -10,7 +10,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/components/AuthContext';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { placesApiKey } from '@/constants/Secrets';
-import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon } from '@tamagui/lucide-icons';
+import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon, User as UserIcon } from '@tamagui/lucide-icons';
 import { CommunicationFrequencySelector } from '@/components/CommunicationFrequencySelector';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import * as ImagePicker from 'expo-image-picker';
@@ -417,10 +417,16 @@ export default function AddContactPage() {
                     <Pressable onPress={selectImage}>
                         <View position="relative">
                             <Avatar circular size="$10">
+                                {selectedImage ? (
                                 <Avatar.Image
                                     accessibilityLabel={fullname}
-                                    src={selectedImage?.uri || "https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"}
+                                    src={selectedImage.uri}
                                 />
+                                ) : (
+                                <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">
+                                    <UserIcon size={24} color="gray" />
+                                </Avatar.Fallback>
+                                )}
                             </Avatar>
                             
                             {/* Camera overlay */}

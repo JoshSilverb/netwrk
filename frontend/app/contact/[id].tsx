@@ -1,7 +1,7 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { Contact } from '@/constants/Definitions';
 import { View, Text, Group, Button, Paragraph, XStack, YStack, Avatar, ScrollView, Accordion, Square } from 'tamagui';
-import { ChevronUp, ChevronDown } from '@tamagui/lucide-icons'
+import { ChevronUp, ChevronDown, User as UserIcon } from '@tamagui/lucide-icons'
 import { removeContactForUserURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
 import { Loader } from '@/components/Loader';
@@ -119,10 +119,16 @@ export default function ContactPage() {
           paddingVertical={SPACING.lg}
         >
           <Avatar circular size="$10">
+              {contact.profile_pic_url ? (
               <Avatar.Image
-              accessibilityLabel={contact.fullname}
-              src="https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"
+                  accessibilityLabel={contact.fullname}
+                  src={contact.profile_pic_url}
               />
+              ) : (
+              <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">
+                  <UserIcon size={24} color="gray" />
+              </Avatar.Fallback>
+              )}
           </Avatar>
 
           <Text 
