@@ -357,18 +357,6 @@ export default function AddContactPage() {
                     presentation: id === '0' ? 'modal' : 'card',
                     gestureEnabled: true,
                     headerBackButtonMenuEnabled: false,
-                    headerLeft: id !== '0' ? () => (
-                        <Button
-                            size="$2"
-                            variant="ghost"
-                            onPress={() => {
-                                const contactViewLink = "/contact/" + id;
-                                router.replace(contactViewLink);
-                            }}
-                        >
-                            Cancel
-                        </Button>
-                    ) : undefined,
                 }} 
             />
             <ScrollView 
@@ -856,7 +844,7 @@ export default function AddContactPage() {
             </YStack>
             </ScrollView>
             
-            {/* Floating Submit Button */}
+            {/* Floating Action Buttons */}
             <View
                 position="absolute"
                 bottom={0}
@@ -872,17 +860,50 @@ export default function AddContactPage() {
                 shadowRadius={4}
                 elevation={4}
             >
-                <Button
-                    size="$4"
-                    onPress={id === '0' ? postNewContact : updateContact}
-                    backgroundColor="$blue9"
-                    color="white"
-                    fontSize={TYPOGRAPHY.sizes.md}
-                    fontWeight={TYPOGRAPHY.weights.bold}
-                    borderRadius={BORDER_RADIUS.md}
-                >
-                    {id === '0' ? 'Add Contact' : 'Update Contact'}
-                </Button>
+                {id !== '0' ? (
+                    // Edit mode: show both Cancel and Update buttons
+                    <XStack space={SPACING.sm}>
+                        <Button
+                            size="$4"
+                            variant="outlined"
+                            onPress={() => {
+                                const contactViewLink = "/contact/" + id;
+                                router.replace(contactViewLink);
+                            }}
+                            fontSize={TYPOGRAPHY.sizes.md}
+                            fontWeight={TYPOGRAPHY.weights.bold}
+                            borderRadius={BORDER_RADIUS.md}
+                            flex={1}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            size="$4"
+                            onPress={updateContact}
+                            backgroundColor="$blue9"
+                            color="white"
+                            fontSize={TYPOGRAPHY.sizes.md}
+                            fontWeight={TYPOGRAPHY.weights.bold}
+                            borderRadius={BORDER_RADIUS.md}
+                            flex={1}
+                        >
+                            Update Contact
+                        </Button>
+                    </XStack>
+                ) : (
+                    // Add mode: show only Add Contact button
+                    <Button
+                        size="$4"
+                        onPress={postNewContact}
+                        backgroundColor="$blue9"
+                        color="white"
+                        fontSize={TYPOGRAPHY.sizes.md}
+                        fontWeight={TYPOGRAPHY.weights.bold}
+                        borderRadius={BORDER_RADIUS.md}
+                    >
+                        Add Contact
+                    </Button>
+                )}
             </View>
         </View>
     );
