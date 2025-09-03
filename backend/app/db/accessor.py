@@ -69,6 +69,7 @@ def get_contact_by_id(
         "lastcontact": contact.lastcontact.strftime('%d %b, %Y') if contact.lastcontact else None,
         "remind_in_weeks": contact.remind_in_weeks,
         "remind_in_months": contact.remind_in_months,
+        "profile_pic_object_name": contact.profile_pic_object_name if contact.profile_pic_object_name else "",
     }
 
     # Step 3: Handle nextcontact
@@ -111,7 +112,8 @@ def add_contact(
     reminder_period_months: int | None,
     embedding_vector: list[float],
     socials: list[dict] | None,
-    tags: list[str] | None
+    tags: list[str] | None,
+    image_object_key: str | None = None
 ) -> int:
     """
     Add the contact defined by the given args to the database
@@ -153,6 +155,7 @@ def add_contact(
             remind_in_months=reminder_period_months,
             nextcontact=next_contact,
             embedding=embedding_vector,
+            profile_pic_object_name=image_object_key,
         )
         .returning(Contact.contact_id)
     )
@@ -284,7 +287,8 @@ def update_contact(
     reminder_period_months: int | None,
     embedding_vector: list[float],
     socials: list[dict] | None,
-    tags: list[str] | None
+    tags: list[str] | None,
+    image_object_key: str | None = None
 ):
     """
     Add the contact defined by the given args to the database
@@ -310,6 +314,10 @@ def update_contact(
     contact.reminder_period_weeks = reminder_period_weeks
     contact.reminder_period_months = reminder_period_months
     contact.embedding_vector = embedding_vector
+    
+    # Only update profile picture if a new one is provided
+    if image_object_key:
+        contact.profile_pic_object_name = image_object_key
 
     # Coordinate update (assuming PostGIS or JSON field)
     if coordinate:
@@ -498,30 +506,6 @@ def get_user_details(user_token: str):
     return user_dict
 
 
-# def update_user_picture(user_token: str, s3_object_name: str):
-    
-#     """
-#     Add the specified 's3_object_name' to the database entry for the user with  
-#     the specified 'user_token'.
-#     """
-
-#     logger.info(f"About to update user with token: '{user_token}' " + \
-#                  f"to have profile_pic_object_name: '{s3_object_name}'")
-
-#     user = db.session.query(User).filter_by(user_token=user_token).first()
-#     if not user:
-#         raise Exception(f"No user with token {user_token} found")
-    
-#     logger.info(f"Got user with profile_pic_object_name: '{user.profile_pic_object_name}'")
-
-#     user.profile_pic_object_name = s3_object_name
-
-#     logger.info(f"Set user fields, now profile_pic_object_name: '{user.profile_pic_object_name}'")
-    
-#     logger.info("Committing user profile update")
-    
-#     db.session.commit()
-
 def update_user_details(user_token: str, bio: str, profile_pic_object_name: str):
     
     """
@@ -586,7 +570,8 @@ def search_contacts_and_sort(
             Contact.fullname,
             Contact.location,
             func.ST_AsText(Contact.coordinates).label("coordinate"),
-            Contact.userbio
+            Contact.userbio,
+            Contact.profile_pic_object_name
         )
         .join(User, Contact.user_id == User.user_id)
         .filter(User.user_token == user_token)

@@ -18,6 +18,7 @@ class Contact(db.Model):
     remind_in_months = db.Column(db.Integer, default=0)
     nextcontact = db.Column(db.Date)
     embedding = db.Column(Vector(1536))  # pgvector extension
+    profile_pic_object_name = db.Column(db.String(128))
 
     user = db.relationship("User", back_populates="contacts")
     socials = db.relationship("Social", backref="contact", cascade="all, delete-orphan")

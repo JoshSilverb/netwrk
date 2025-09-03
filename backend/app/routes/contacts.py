@@ -6,6 +6,7 @@ import logging
 
 from app.db import accessor as db_accessor
 from app.config import Config
+from app.aws import awsutils
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,28 @@ def _get_query_string_embedding(query_string: str,) -> list[float]:
     return embedding_object.data[0].embedding
 
 
+def _generate_contact_profile_pic_url(profile_pic_object_name: str) -> str:
+    """
+    Generate a signed S3 URL for a contact's profile picture.
+    Args:
+        profile_pic_object_name: S3 object key for the profile picture
+    Returns:
+        Signed S3 URL string, or empty string if generation fails
+    """
+    if not profile_pic_object_name:
+        return ""
+    
+    try:
+        profile_pic_url = awsutils.getSignedS3ObjectURL(
+            profile_pic_object_name, 
+            awsutils.S3ObjectMethods.DOWNLOAD
+        )
+        return profile_pic_url or ""
+    except Exception as e:
+        logger.error(f"Failed to get signed URL for contact profile picture {profile_pic_object_name}: {e}")
+        return ""
+
+
 @contacts_bp.route("/getContactById", methods=["POST"])
 def get_contact_by_id():
     logger.debug("Received get contact by ID request")
@@ -92,6 +115,11 @@ def get_contact_by_id():
 
     contact = db_accessor.get_contact_by_id(user_token, contact_id)
     logger.debug(f"Retrieved contact: {contact}")
+    
+    # Add profile picture URL if available
+    if contact and contact.get("profile_pic_object_name"):
+        contact["profile_pic_url"] = _generate_contact_profile_pic_url(contact["profile_pic_object_name"])
+    
     return jsonify(contact)
 
 
@@ -245,5 +273,10 @@ def search_contacts():
         user_latitude=user_lat,
         user_longitude=user_lon
     )
+
+    # Add profile picture URLs to all contacts
+    for contact in contacts:
+        if contact.get("profile_pic_object_name"):
+            contact["profile_pic_url"] = _generate_contact_profile_pic_url(contact["profile_pic_object_name"])
 
     return jsonify(contacts)
