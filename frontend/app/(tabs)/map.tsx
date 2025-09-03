@@ -21,6 +21,12 @@ export default function mapScreen() {
 
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading]   = useState(true);
+  const [mapRegion, setMapRegion] = useState({
+    latitude: 40.7128,      // Default to NYC
+    longitude: -74.0060,    // Fixed longitude (was missing negative sign)
+    latitudeDelta: 50,
+    longitudeDelta: 50,
+  });
   const { token, setToken }     = useAuth();
 
   const [contactsByLocation, _]   = useState(new Map<string, string[]>());
@@ -39,7 +45,26 @@ export default function mapScreen() {
 
   useEffect(() => {
       fetchContacts();
+      setInitialMapRegion();
   }, []);
+
+  const setInitialMapRegion = async () => {
+    try {
+      const location = await getCurrentLocation();
+      if (location) {
+        console.log("Setting initial map region to:", location);
+        setMapRegion({
+          latitude: location.latitude,
+          longitude: location.longitude,
+          latitudeDelta: 50,
+          longitudeDelta: 50,
+        });
+      }
+    } catch (error) {
+      console.error('Error getting current location for map:', error);
+      // Keep default region if location fails
+    }
+  };
 
   function fillContactLocationMap(contacts) {
     contactsByLocation.clear();
@@ -167,6 +192,8 @@ export default function mapScreen() {
                 height: 400,
                 borderRadius: BORDER_RADIUS.md
               }}
+              region={mapRegion}
+              onRegionChangeComplete={setMapRegion}
             >
               {contacts.map((contact, index) => (
                 <View key={index}>

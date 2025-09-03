@@ -9,6 +9,7 @@ async function updateLocation() {
 
     let location = await Location.getCurrentPositionAsync({});
     saveLocation(location.coords);
+    return location.coords;  // Return the coordinates
 }
 
 export const getCurrentLocation = async () => {
