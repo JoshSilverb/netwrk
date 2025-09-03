@@ -114,6 +114,7 @@ def add_new_contact():
     tags: list[str] = newcontact['tags']
     reminder_period_weeks: int = int(newcontact['reminderPeriod']['weeks'])
     reminder_period_months: int = int(newcontact['reminderPeriod']['months'])
+    image_object_key: str = newcontact.get('image_object_key', '')
 
     coordinate = None
     if location:
@@ -133,7 +134,8 @@ def add_new_contact():
         reminder_period_months=reminder_period_months,
         embedding_vector=embedding_vector,
         socials=socials,
-        tags=tags
+        tags=tags,
+        image_object_key=image_object_key
     )
 
     return jsonify(new_contact_id)
@@ -176,6 +178,7 @@ def update_contact():
     tags: list[str] = newcontact['tags']
     reminder_period_weeks: int = int(newcontact['reminderPeriod']['weeks'])
     reminder_period_months: int = int(newcontact['reminderPeriod']['months'])
+    image_object_key: str = newcontact.get('image_object_key', '')
 
     coordinate = None
     if location:
@@ -196,7 +199,8 @@ def update_contact():
         reminder_period_months=reminder_period_months,
         embedding_vector=embedding_vector,
         socials=socials,
-        tags=tags
+        tags=tags,
+        image_object_key=image_object_key
     )
 
     return jsonify(new_contact_id)

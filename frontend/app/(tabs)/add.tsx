@@ -1,18 +1,20 @@
 import React from 'react';
 
-import { TextInput, ScrollView, Pressable } from 'react-native';
+import { TextInput, ScrollView, Pressable, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Months } from '@/constants/Definitions';
-import { Text, View, Group, Separator, XStack, YStack, Button, Paragraph, Input } from 'tamagui';
-import { addContactForUserURL, getContactByIdURL, updateContactForUserURL } from '@/constants/Apis';
+import { Text, View, Group, Separator, XStack, YStack, Button, Paragraph, Input, Avatar } from 'tamagui';
+import { addContactForUserURL, getContactByIdURL, updateContactForUserURL, getS3UploadURL } from '@/constants/Apis';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/components/AuthContext';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { placesApiKey } from '@/constants/Secrets';
-import { Plus as PlusIcon, X as XIcon } from '@tamagui/lucide-icons';
+import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon } from '@tamagui/lucide-icons';
 import { CommunicationFrequencySelector } from '@/components/CommunicationFrequencySelector';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
+import * as ImagePicker from 'expo-image-picker';
+import mime from 'mime';
 
 export default function AddContactPage() {
     const params = useLocalSearchParams<{ id?: string }>();
@@ -34,6 +36,7 @@ export default function AddContactPage() {
     const [remindPeriodMos, setRemindPeriodMos]  = React.useState(1);
     const [tags,       setTags]       = React.useState([]);
     const [newTag,     setNewTag]          = React.useState('');
+    const [selectedImage, setSelectedImage] = React.useState(null);
 
     // Extra location var
     const ref = React.useRef();
@@ -80,6 +83,78 @@ export default function AddContactPage() {
 
     const removeTag = (index) => {
         setTags(tags.filter((_, i) => i !== index));
+    };
+
+    const selectImage = async () => {
+        // Request permission
+        const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        
+        if (permissionResult.granted === false) {
+            Alert.alert("Permission Required", "You need to enable camera roll access to select a profile picture.");
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [1, 1],
+            quality: 0.8,
+        });
+
+        if (!result.canceled) {
+            setSelectedImage(result.assets[0]);
+        }
+    };
+
+    const uploadContactPicture = async () => {
+        if (!selectedImage) {
+            console.log("No image selected for contact");
+            return "";
+        }
+
+        const newImageUri = "file:///" + selectedImage.uri.split("file:/").join("");
+        const contentType = mime.getType(newImageUri);
+        
+        // Get signed s3 url for this picture from backend
+        const requestBody = {
+            user_token: token,
+            filetype: contentType
+        }
+
+        console.log("sending request to get s3 upload url for contact image with body: " + JSON.stringify(requestBody))
+
+        const response = await axios.post(getS3UploadURL, requestBody);
+        
+        if (response.status != 200) {
+            console.log(`Failed to get signed S3 upload url for contact - ${JSON.stringify(response.data)}`)
+            return "";
+        }
+
+        const upload_url = response.data["upload_url"]
+        const new_filename = response.data["filename"]
+
+        console.log("got upload url for contact: " + upload_url)
+        console.log("got new filename for contact: " + new_filename)
+
+        // Read file into a blob
+        const localFileRes = await fetch(newImageUri);
+        const blob = await localFileRes.blob();
+
+        console.log("About to upload contact image to s3");
+        // Upload with PUT to S3 - use the same content type as sent to backend
+        const uploadRes = await fetch(upload_url, {
+            method: "PUT",
+            headers: { "Content-Type": contentType },
+            body: blob,
+        });
+
+        if (uploadRes.ok) {
+            console.log("Uploaded contact image successfully to S3!");
+            return new_filename;
+        } else {
+            console.error("Contact image upload failed", uploadRes.status, await uploadRes.text());
+            return "";
+        }
     };
     
     // Reminder periods
@@ -151,6 +226,7 @@ export default function AddContactPage() {
         setRemindPeriodMos(0);
         setTags([]);
         setDate(new Date());
+        setSelectedImage(null);
     }
 
     const setDataFromContact = (contact) => {
@@ -176,6 +252,7 @@ export default function AddContactPage() {
             setDate(new Date());
         }
         console.log(`Set last contact date to value=${date}`)
+        setSelectedImage(null); // Reset selected image when editing existing contact
     }
 
     //================================
@@ -185,27 +262,31 @@ export default function AddContactPage() {
     // Send data to backend and redirect to contact page
 
     const postNewContact = async () => {
-        // Contact data to be sent
-        const requestBody = {
-            user_token: token,
-            newContact: {
-                "fullname": fullname,
-                "location": location,
-                "userbio": bio,
-                "metthrough": metThrough,
-                "socials": socials,
-                "lastcontact": date,
-                "reminderPeriod": {
-                    "weeks": remindPeriodWks,
-                    "months": remindPeriodMos
-                },
-                "tags": tags
-            }
-        }
-
-        console.log("Adding new user with details:", requestBody.newContact);
-
         try {
+            // First upload the contact image if one is selected
+            const imageObjectKey = await uploadContactPicture();
+            
+            // Contact data to be sent
+            const requestBody = {
+                user_token: token,
+                newContact: {
+                    "fullname": fullname,
+                    "location": location,
+                    "userbio": bio,
+                    "metthrough": metThrough,
+                    "socials": socials,
+                    "lastcontact": date,
+                    "reminderPeriod": {
+                        "weeks": remindPeriodWks,
+                        "months": remindPeriodMos
+                    },
+                    "tags": tags,
+                    "image_object_key": imageObjectKey
+                }
+            }
+
+            console.log("Adding new user with details:", requestBody.newContact);
+
             const response = await axios.post(addContactForUserURL, requestBody)
             console.log(response.data)
             if (response.status == 200) {
@@ -223,28 +304,32 @@ export default function AddContactPage() {
     // Update contact API call
 
     const updateContact = async () => {
-        // Contact data to be sent
-        const requestBody = {
-            user_token: token,
-            newContact: {
-                "contact_id": id as string,
-                "fullname": fullname,
-                "location": location,
-                "userbio": bio,
-                "metthrough": metThrough,
-                "socials": socials,
-                "lastcontact": date,
-                "reminderPeriod": {
-                    "weeks": remindPeriodWks,
-                    "months": remindPeriodMos
-                },
-                "tags": tags
-            }
-        }
-        
-        console.log("Updating user to new details:", requestBody.newContact);
-
         try {
+            // First upload the contact image if one is selected
+            const imageObjectKey = await uploadContactPicture();
+            
+            // Contact data to be sent
+            const requestBody = {
+                user_token: token,
+                newContact: {
+                    "contact_id": id as string,
+                    "fullname": fullname,
+                    "location": location,
+                    "userbio": bio,
+                    "metthrough": metThrough,
+                    "socials": socials,
+                    "lastcontact": date,
+                    "reminderPeriod": {
+                        "weeks": remindPeriodWks,
+                        "months": remindPeriodMos
+                    },
+                    "tags": tags,
+                    "image_object_key": imageObjectKey
+                }
+            }
+            
+            console.log("Updating user to new details:", requestBody.newContact);
+
             const response = await axios.post(updateContactForUserURL, requestBody)
             console.log(response.data)
             if (response.status == 200) {
@@ -320,6 +405,63 @@ export default function AddContactPage() {
                         textAlign='center'
                         borderRadius={BORDER_RADIUS.md}
                     />
+                </YStack>
+
+                {/* Profile Picture Section */}
+                <YStack 
+                    space={SPACING.md}
+                    padding={SPACING.md}
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius={BORDER_RADIUS.md}
+                    backgroundColor="$gray1"
+                    alignItems="center"
+                >
+                    <Text 
+                        fontSize={TYPOGRAPHY.sizes.md}
+                        fontWeight={TYPOGRAPHY.weights.medium}
+                        color="$gray11"
+                        marginBottom={SPACING.xs}
+                    >
+                        Profile Picture
+                    </Text>
+                    
+                    <Pressable onPress={selectImage}>
+                        <View position="relative">
+                            <Avatar circular size="$10">
+                                <Avatar.Image
+                                    accessibilityLabel={fullname}
+                                    src={selectedImage?.uri || "https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"}
+                                />
+                            </Avatar>
+                            
+                            {/* Camera overlay */}
+                            <View
+                                position="absolute"
+                                bottom={0}
+                                right={0}
+                                backgroundColor="$blue9"
+                                borderRadius={20}
+                                width={32}
+                                height={32}
+                                alignItems="center"
+                                justifyContent="center"
+                                borderWidth={2}
+                                borderColor="$background"
+                            >
+                                <CameraIcon size={16} color="white" />
+                            </View>
+                        </View>
+                    </Pressable>
+                    
+                    <Text 
+                        fontSize={TYPOGRAPHY.sizes.sm}
+                        color="$gray10"
+                        textAlign="center"
+                        marginTop={SPACING.xs}
+                    >
+                        Tap to {selectedImage ? 'change' : 'add'} profile picture
+                    </Text>
                 </YStack>
 
                 {/* Location Input */}

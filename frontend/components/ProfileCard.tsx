@@ -35,7 +35,7 @@ const ProfileCard = ({ contact, keyNum } : { contact : Contact, keyNum : number}
                             <Avatar circular size="$4">
                                 <Avatar.Image
                                 accessibilityLabel={contact.fullname}
-                                src="https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"
+                                src={contact.profile_pic_url || "https://images.unsplash.com/photo-1548142813-c348350df52b?&w=150&h=150&dpr=2&q=80"}
                                 />
                             </Avatar>
                             <YStack flex={1} alignItems="flex-start">

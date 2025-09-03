@@ -1,1 +1,2 @@
 curl -v 0.0.0.0:5000/updateUserPicture/42d77b76feae4c1f94d67ccd656f90e4 -X POST -F "profile_pic=@/app/app/room.png"
+curl -v https://mynetwrk.com/updateUserPicture/42d77b76feae4c1f94d67ccd656f90e4 -X POST -F "profile_pic=@/app/app/room.png"

@@ -12,6 +12,8 @@ export type Contact = {
   emailaddress: string;
   phonenumber: string;
   userbio: string;
+  profile_pic_url?: string;
+  contact_id?: number;
 }
 
 export type User = {
