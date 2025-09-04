@@ -357,7 +357,7 @@ export default function AccountPage() {
       </ScrollView>       
       {/* Logout Confirmation Modal */}
       {logoutSheetActive && (
-      <Sheet modal open={logoutSheetActive} onOpenChange={setLogoutSheetActive} dismissOnOverlayPress>
+      <Sheet native open={logoutSheetActive} onOpenChange={setLogoutSheetActive} dismissOnOverlayPress>
           <Sheet.Frame 
               backgroundColor="$background"
               borderTopLeftRadius={BORDER_RADIUS.lg}
@@ -436,7 +436,7 @@ export default function AccountPage() {
           
       {/* Settings Modal */}
       {settingsSheetActive && (
-      <Sheet modal open={settingsSheetActive} onOpenChange={setSettingsSheetActive} dismissOnOverlayPress>
+      <Sheet native open={settingsSheetActive} onOpenChange={setSettingsSheetActive} dismissOnOverlayPress>
           <Sheet.Frame 
               backgroundColor="$background"
               borderTopLeftRadius={BORDER_RADIUS.lg}
@@ -525,7 +525,7 @@ export default function AccountPage() {
 
       {/* Edit Profile Modal */}
       {editProfileSheetActive && (
-      <Sheet modal open={editProfileSheetActive} onOpenChange={setEditProfileSheetActive} dismissOnOverlayPress>
+      <Sheet native open={editProfileSheetActive} onOpenChange={setEditProfileSheetActive} dismissOnOverlayPress>
           <Sheet.Frame 
               backgroundColor="$background"
               borderTopLeftRadius={BORDER_RADIUS.lg}

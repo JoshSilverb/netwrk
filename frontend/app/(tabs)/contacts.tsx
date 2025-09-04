@@ -188,7 +188,7 @@ export default function contactsScreen() {
 
                     {/* Filter Selection Modal */}
                     {filterDropdownOpen && (
-                    <Sheet modal open={filterDropdownOpen} onOpenChange={setFilterDropdownOpen} dismissOnOverlayPress>
+                    <Sheet native open={filterDropdownOpen} onOpenChange={setFilterDropdownOpen} dismissOnOverlayPress>
                         <Sheet.Frame 
                             backgroundColor="$background"
                             borderTopLeftRadius={BORDER_RADIUS.lg}
@@ -408,7 +408,7 @@ export default function contactsScreen() {
 
                     {/* Tag Selection Modal */}
                     {tagsDropdownOpen && (
-                    <Sheet modal open={tagsDropdownOpen} onOpenChange={setTagsDropdownOpen} dismissOnOverlayPress>
+                    <Sheet native open={tagsDropdownOpen} onOpenChange={setTagsDropdownOpen} dismissOnOverlayPress>
                         <Sheet.Frame 
                             backgroundColor="$background"
                             borderTopLeftRadius={BORDER_RADIUS.lg}
@@ -518,7 +518,7 @@ export default function contactsScreen() {
 
                     {/* Sort Option Selection Modal */}
                     {sortDropdownOpen && (
-                    <Sheet modal open={sortDropdownOpen} onOpenChange={setSortDropdownOpen} dismissOnOverlayPress>
+                    <Sheet native open={sortDropdownOpen} onOpenChange={setSortDropdownOpen} dismissOnOverlayPress>
                         <Sheet.Frame 
                             backgroundColor="$background"
                             borderTopLeftRadius={BORDER_RADIUS.lg}

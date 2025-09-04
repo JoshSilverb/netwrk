@@ -57,7 +57,7 @@ export function CommunicationFrequencySelector({ items, onChange, ...props }: Se
         </Select.Trigger>
 
         <Adapt when="sm" platform="touch">
-            <Sheet native={true} modal dismissOnSnapToBottom animation="medium">
+            <Sheet native={true} native dismissOnSnapToBottom animation="medium">
             <Sheet.Frame>
                 <Sheet.ScrollView>
                 <Adapt.Contents />
