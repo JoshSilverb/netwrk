@@ -35,7 +35,7 @@ const ProfileCard = ({ contact, keyNum } : { contact : Contact, keyNum : number}
                             <Avatar circular size="$4">
                                 {contact.profile_pic_url ? (
                                 <Avatar.Image
-                                    accessibilityLabel={username}
+                                    accessibilityLabel={contact.fullname}
                                     src={contact.profile_pic_url}
                                 />
                                 ) : (
