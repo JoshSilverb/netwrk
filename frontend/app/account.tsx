@@ -135,7 +135,7 @@ export default function AccountPage() {
     // Details to update
     const requestBody = {
         user_token: token,
-        bio: userBio,
+        bio: editBio,
         image_object_key: new_filename || ""
     }
 
