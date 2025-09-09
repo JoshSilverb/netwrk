@@ -20,6 +20,12 @@ class Config:
     OPENAI_API_KEY = OPENAI_API_KEY_temp
     S3_BUCKET_NAME = S3_BUCKET_NAME_temp
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_recycle': 270,       # Recycle connections after 4.5min (times out at 5min)
+        'pool_pre_ping': True,     # Ping connections before use
+        'pool_size': 1,            # Keep 1 connection in the pool by default
+        'max_overflow': 10,        # Allow up to 10 overflow connections
+    }
     
     # Logging configuration for AWS EB
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
