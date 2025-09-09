@@ -4,7 +4,7 @@ import { RadioGroup, ScrollView, YStack, Paragraph, Input, Button, XStack, Sheet
 import { Loader } from '@/components/Loader';
 import { searchContactsURL, getTagsForUserURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
-import { Keyboard, Pressable, RefreshControl } from 'react-native';
+import { Keyboard, Pressable, RefreshControl, Modal, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Months } from '@/constants/Definitions';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -187,15 +187,34 @@ export default function contactsScreen() {
                     </XStack>
 
                     {/* Filter Selection Modal */}
-                    {filterDropdownOpen && (
-                    <Sheet native open={filterDropdownOpen} onOpenChange={setFilterDropdownOpen} dismissOnOverlayPress>
-                        <Sheet.Frame 
-                            backgroundColor="$background"
-                            borderTopLeftRadius={BORDER_RADIUS.lg}
-                            borderTopRightRadius={BORDER_RADIUS.lg}
-                        >
-                        <Sheet.Handle backgroundColor="$gray8" />
-                        <ScrollView>
+                    <Modal 
+                        visible={filterDropdownOpen}
+                        transparent={true}
+                        animationType="slide"
+                        onRequestClose={() => setFilterDropdownOpen(false)}
+                    >
+                        <View style={{
+                            flex: 1,
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            justifyContent: 'flex-end'
+                        }}>
+                            <View style={{
+                                backgroundColor: 'white',
+                                borderTopLeftRadius: 20,
+                                borderTopRightRadius: 20,
+                                maxHeight: '80%',
+                                minHeight: '70%'
+                            }}>
+                                <View style={{
+                                    height: 4,
+                                    width: 40,
+                                    backgroundColor: '#ccc',
+                                    borderRadius: 2,
+                                    alignSelf: 'center',
+                                    marginTop: 8,
+                                    marginBottom: 16
+                                }} />
+                                <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
                             <YStack 
                                 space={SPACING.lg} 
                                 padding={SPACING.lg}
@@ -217,18 +236,25 @@ export default function contactsScreen() {
                                 >
                                     Sort by
                                 </Text>
-                                <Button
-                                    size="$3"
-                                    onPress={() => setSortDropdownOpen(true)}
-                                    iconAfter={<Ionicons name={sortDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />}
-                                    variant="outlined"
-                                    backgroundColor="$background"
-                                    borderColor="$borderColor"
-                                    borderRadius={BORDER_RADIUS.md}
-                                    justifyContent="space-between"
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setFilterDropdownOpen(false);
+                                        setTimeout(() => setSortDropdownOpen(true), 100);
+                                    }}
+                                    style={{
+                                        borderWidth: 1,
+                                        borderColor: '#ddd',
+                                        borderRadius: 8,
+                                        padding: 12,
+                                        backgroundColor: 'white',
+                                        flexDirection: 'row',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
                                 >
-                                    {selectedSortOption}
-                                </Button>
+                                    <Text style={{ fontSize: 14 }}>{selectedSortOption}</Text>
+                                    <Ionicons name={sortDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />
+                                </TouchableOpacity>
                             </YStack>
 
                             {/* Filter by tags section */}
@@ -248,18 +274,27 @@ export default function contactsScreen() {
                                 >
                                     Filter by tags
                                 </Text>
-                                <Button
-                                    size="$3"
-                                    onPress={() => setTagsDropdownOpen(true)}
-                                    iconAfter={<Ionicons name={tagsDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />}
-                                    variant="outlined"
-                                    backgroundColor="$background"
-                                    borderColor="$borderColor"
-                                    borderRadius={BORDER_RADIUS.md}
-                                    justifyContent="space-between"
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        setFilterDropdownOpen(false);
+                                        setTimeout(() => setTagsDropdownOpen(true), 100);
+                                    }}
+                                    style={{
+                                        borderWidth: 1,
+                                        borderColor: '#ddd',
+                                        borderRadius: 8,
+                                        padding: 12,
+                                        backgroundColor: 'white',
+                                        flexDirection: 'row',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
                                 >
-                                    {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : 'Select Tags'}
-                                </Button>
+                                    <Text style={{ fontSize: 14 }}>
+                                        {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : 'Select Tags'}
+                                    </Text>
+                                    <Ionicons name={tagsDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />
+                                </TouchableOpacity>
                             </YStack>
 
                             {/* Date range section */}
@@ -372,50 +407,74 @@ export default function contactsScreen() {
                                 </XStack>
                             </YStack>
                             </YStack>
-                        </ScrollView>
-                        <XStack 
-                            padding={SPACING.md} 
-                            justifyContent="flex-end" 
-                            space={SPACING.sm}
-                            borderTopWidth={1}
-                            borderTopColor="$borderColor"
-                            backgroundColor="$background"
-                        >
-                            <Button
-                            size="$3"
-                            variant="outlined"
-                            onPress={() => setFilterDropdownOpen(false)}
-                            borderRadius={BORDER_RADIUS.md}
-                            >
-                            Cancel
-                            </Button>
-                            <Button
-                            size="$3"
-                            onPress={() => {
-                                setFilterDropdownOpen(false);
-                                fetchContacts();
-                            }}
-                            backgroundColor="$blue9"
-                            color="white"
-                            borderRadius={BORDER_RADIUS.md}
-                            >
-                            Apply
-                            </Button>
-                        </XStack>
-                        </Sheet.Frame>
-                    </Sheet>
-                    )}
+                                </ScrollView>
+                                <XStack 
+                                    padding={SPACING.md} 
+                                    justifyContent="flex-end" 
+                                    space={SPACING.sm}
+                                    borderTopWidth={1}
+                                    borderTopColor="$borderColor"
+                                    backgroundColor="$background"
+                                >
+                                    <Button
+                                    size="$3"
+                                    variant="outlined"
+                                    onPress={() => setFilterDropdownOpen(false)}
+                                    borderRadius={BORDER_RADIUS.md}
+                                    flex={1}
+                                    >
+                                    Cancel
+                                    </Button>
+                                    <Button
+                                    size="$3"
+                                    onPress={() => {
+                                        setFilterDropdownOpen(false);
+                                        fetchContacts();
+                                    }}
+                                    backgroundColor="$blue9"
+                                    color="white"
+                                    borderRadius={BORDER_RADIUS.md}
+                                    flex={1}
+                                    >
+                                    Apply
+                                    </Button>
+                                </XStack>
+                            </View>
+                        </View>
+                    </Modal>
 
                     {/* Tag Selection Modal */}
-                    {tagsDropdownOpen && (
-                    <Sheet native open={tagsDropdownOpen} onOpenChange={setTagsDropdownOpen} dismissOnOverlayPress>
-                        <Sheet.Frame 
-                            backgroundColor="$background"
-                            borderTopLeftRadius={BORDER_RADIUS.lg}
-                            borderTopRightRadius={BORDER_RADIUS.lg}
-                        >
-                        <Sheet.Handle backgroundColor="$gray8" />
-                        <ScrollView>
+                    <Modal 
+                        visible={tagsDropdownOpen}
+                        transparent={true}
+                        animationType="slide"
+                        onRequestClose={() => {
+                            setTagsDropdownOpen(false);
+                            setTimeout(() => setFilterDropdownOpen(true), 100);
+                        }}
+                    >
+                        <View style={{
+                            flex: 1,
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            justifyContent: 'flex-end'
+                        }}>
+                            <View style={{
+                                backgroundColor: 'white',
+                                borderTopLeftRadius: 20,
+                                borderTopRightRadius: 20,
+                                maxHeight: '80%',
+                                minHeight: '70%'
+                            }}>
+                                <View style={{
+                                    height: 4,
+                                    width: 40,
+                                    backgroundColor: '#ccc',
+                                    borderRadius: 2,
+                                    alignSelf: 'center',
+                                    marginTop: 8,
+                                    marginBottom: 16
+                                }} />
+                                <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
                             <YStack 
                                 space={SPACING.lg} 
                                 padding={SPACING.lg}
@@ -483,49 +542,77 @@ export default function contactsScreen() {
                                 ))}
                             </YStack>
                             </YStack>
-                        </ScrollView>
-                        <XStack 
-                            padding={SPACING.md} 
-                            justifyContent="flex-end" 
-                            space={SPACING.sm}
-                            borderTopWidth={1}
-                            borderTopColor="$borderColor"
-                            backgroundColor="$background"
-                        >
-                            <Button
-                            size="$3"
-                            variant="outlined"
-                            onPress={() => setTagsDropdownOpen(false)}
-                            borderRadius={BORDER_RADIUS.md}
-                            >
-                            Cancel
-                            </Button>
-                            <Button
-                            size="$3"
-                            onPress={() => {
-                                setTagsDropdownOpen(false);
-                            }}
-                            backgroundColor="$blue9"
-                            color="white"
-                            borderRadius={BORDER_RADIUS.md}
-                            >
-                            Apply
-                            </Button>
-                        </XStack>
-                        </Sheet.Frame>
-                    </Sheet>
-                    )}
+                                </ScrollView>
+                                <XStack 
+                                    padding={SPACING.md} 
+                                    justifyContent="flex-end" 
+                                    space={SPACING.sm}
+                                    borderTopWidth={1}
+                                    borderTopColor="$borderColor"
+                                    backgroundColor="$background"
+                                >
+                                    <Button
+                                    size="$3"
+                                    variant="outlined"
+                                    onPress={() => {
+                                        setTagsDropdownOpen(false);
+                                        setTimeout(() => setFilterDropdownOpen(true), 100);
+                                    }}
+                                    borderRadius={BORDER_RADIUS.md}
+                                    flex={1}
+                                    >
+                                    Cancel
+                                    </Button>
+                                    <Button
+                                    size="$3"
+                                    onPress={() => {
+                                        setTagsDropdownOpen(false);
+                                        setTimeout(() => setFilterDropdownOpen(true), 100);
+                                    }}
+                                    backgroundColor="$blue9"
+                                    color="white"
+                                    borderRadius={BORDER_RADIUS.md}
+                                    flex={1}
+                                    >
+                                    Apply
+                                    </Button>
+                                </XStack>
+                            </View>
+                        </View>
+                    </Modal>
 
                     {/* Sort Option Selection Modal */}
-                    {sortDropdownOpen && (
-                    <Sheet native open={sortDropdownOpen} onOpenChange={setSortDropdownOpen} dismissOnOverlayPress>
-                        <Sheet.Frame 
-                            backgroundColor="$background"
-                            borderTopLeftRadius={BORDER_RADIUS.lg}
-                            borderTopRightRadius={BORDER_RADIUS.lg}
-                        >
-                        <Sheet.Handle backgroundColor="$gray8" />
-                        <ScrollView>
+                    <Modal 
+                        visible={sortDropdownOpen}
+                        transparent={true}
+                        animationType="slide"
+                        onRequestClose={() => {
+                            setSortDropdownOpen(false);
+                            setTimeout(() => setFilterDropdownOpen(true), 100);
+                        }}
+                    >
+                        <View style={{
+                            flex: 1,
+                            backgroundColor: 'rgba(0,0,0,0.5)',
+                            justifyContent: 'flex-end'
+                        }}>
+                            <View style={{
+                                backgroundColor: 'white',
+                                borderTopLeftRadius: 20,
+                                borderTopRightRadius: 20,
+                                maxHeight: '80%',
+                                minHeight: '70%'
+                            }}>
+                                <View style={{
+                                    height: 4,
+                                    width: 40,
+                                    backgroundColor: '#ccc',
+                                    borderRadius: 2,
+                                    alignSelf: 'center',
+                                    marginTop: 8,
+                                    marginBottom: 16
+                                }} />
+                                <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
                             <YStack 
                                 space={SPACING.lg} 
                                 padding={SPACING.lg}
@@ -595,38 +682,44 @@ export default function contactsScreen() {
                                 </YStack>
                             </YStack>
                             </YStack>
-                        </ScrollView>
-                        <XStack 
-                            padding={SPACING.md} 
-                            justifyContent="flex-end" 
-                            space={SPACING.sm}
-                            borderTopWidth={1}
-                            borderTopColor="$borderColor"
-                            backgroundColor="$background"
-                        >
-                            <Button
-                            size="$3"
-                            variant="outlined"
-                            onPress={() => setSortDropdownOpen(false)}
-                            borderRadius={BORDER_RADIUS.md}
-                            >
-                            Cancel
-                            </Button>
-                            <Button
-                            size="$3"
-                            onPress={() => {
-                                setSortDropdownOpen(false);
-                            }}
-                            backgroundColor="$blue9"
-                            color="white"
-                            borderRadius={BORDER_RADIUS.md}
-                            >
-                            Apply
-                            </Button>
-                        </XStack>
-                        </Sheet.Frame>
-                    </Sheet>
-                    )}
+                                </ScrollView>
+                                <XStack 
+                                    padding={SPACING.md} 
+                                    justifyContent="flex-end" 
+                                    space={SPACING.sm}
+                                    borderTopWidth={1}
+                                    borderTopColor="$borderColor"
+                                    backgroundColor="$background"
+                                >
+                                    <Button
+                                    size="$3"
+                                    variant="outlined"
+                                    onPress={() => {
+                                        setSortDropdownOpen(false);
+                                        setTimeout(() => setFilterDropdownOpen(true), 100);
+                                    }}
+                                    borderRadius={BORDER_RADIUS.md}
+                                    flex={1}
+                                    >
+                                    Cancel
+                                    </Button>
+                                    <Button
+                                    size="$3"
+                                    onPress={() => {
+                                        setSortDropdownOpen(false);
+                                        setTimeout(() => setFilterDropdownOpen(true), 100);
+                                    }}
+                                    backgroundColor="$blue9"
+                                    color="white"
+                                    borderRadius={BORDER_RADIUS.md}
+                                    flex={1}
+                                    >
+                                    Apply
+                                    </Button>
+                                </XStack>
+                            </View>
+                        </View>
+                    </Modal>
 
                     <View style={CONTAINER_STYLES.section}>
                         <Loader loading={loading}>
