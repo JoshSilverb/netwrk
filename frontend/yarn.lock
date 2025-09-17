@@ -1452,6 +1452,11 @@
     remove-trailing-slash "^0.1.0"
     uuid "^8.3.2"
 
+"@expo/schema-utils@^0.1.0":
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/@expo/schema-utils/-/schema-utils-0.1.7.tgz#38baa0effa0823cd4eca3f05e5eee3bde311da12"
+  integrity sha512-jWHoSuwRb5ZczjahrychMJ3GWZu54jK9ulNdh1d4OzAEq672K9E5yOlnlBsfIHWHGzUAT+0CL7Yt1INiXTz68g==
+
 "@expo/sdk-runtime-versions@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@expo/sdk-runtime-versions/-/sdk-runtime-versions-1.0.0.tgz#d7ebd21b19f1c6b0395e50d78da4416941c57f7c"
@@ -3599,11 +3604,6 @@
     "@types/tough-cookie" "*"
     parse5 "^7.0.0"
 
-"@types/json-schema@^7.0.9":
-  version "7.0.15"
-  resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.15.tgz#596a1747233694d50f6ad8a7869fcb6f56cf5841"
-  integrity sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==
-
 "@types/node-forge@^1.3.0":
   version "1.3.13"
   resolved "https://registry.yarnpkg.com/@types/node-forge/-/node-forge-1.3.13.tgz#1797af20f7eccaf5f37b4d1739923bb0519d95b6"
@@ -3763,21 +3763,7 @@ aggregate-error@^3.0.0:
     clean-stack "^2.0.0"
     indent-string "^4.0.0"
 
-ajv-formats@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/ajv-formats/-/ajv-formats-2.1.1.tgz#6e669400659eb74973bbf2e33327180a0996b520"
-  integrity sha512-Wx0Kx52hxE7C18hkMEggYlEifqWZtYaRgouJor+WMdPnQyEK13vgEWyVNup7SoeeoLMsr4kf5h6dOW11I15MUA==
-  dependencies:
-    ajv "^8.0.0"
-
-ajv-keywords@^5.1.0:
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/ajv-keywords/-/ajv-keywords-5.1.0.tgz#69d4d385a4733cdbeab44964a1170a88f87f0e16"
-  integrity sha512-YCS/JNFAUyr5vAuhk1DWm1CBxRHW9LbJ2ozWeemrIqpbsqKjHVxYPyi5GC0rjZIT5JxJ3virVTS8wk4i/Z+krw==
-  dependencies:
-    fast-deep-equal "^3.1.3"
-
-ajv@^8.0.0, ajv@^8.0.1, ajv@^8.9.0:
+ajv@^8.0.1:
   version "8.17.1"
   resolved "https://registry.yarnpkg.com/ajv/-/ajv-8.17.1.tgz#37d9a5c776af6bc92d7f4f9510eba4c0a60d11a6"
   integrity sha512-B/gBuNg5SiMTrPkC+A2+cW0RszwxYmn6VYxB/inlBStS5nx6xHIt/ehKRhIMhqusl7a8LjQoZnjCs5vhwxOQ1g==
@@ -5430,12 +5416,13 @@ expo-modules-core@2.5.0:
   dependencies:
     invariant "^2.2.4"
 
-expo-router@~5.1.4:
-  version "5.1.4"
-  resolved "https://registry.yarnpkg.com/expo-router/-/expo-router-5.1.4.tgz#37d611b35a474531a95638c2b5cc19b10fe13189"
-  integrity sha512-8GulCelVN9x+VSOio74K1ZYTG6VyCdJw417gV+M/J8xJOZZTA7rFxAdzujBZZ7jd6aIAG7WEwOUU3oSvUO76Vw==
+expo-router@~5.1.6:
+  version "5.1.6"
+  resolved "https://registry.yarnpkg.com/expo-router/-/expo-router-5.1.6.tgz#a82aa59b7ffd1b2a17153acf528ef2f9d37ee3b1"
+  integrity sha512-Tc7QFurWqLItrHvbL2TB4OLq8WA4y8fCXPkRG+q9zP4Lk4xKIDskO7/8ff3+XAOHJB5Z8GHn5IhXv4Ik89SVUA==
   dependencies:
     "@expo/metro-runtime" "5.0.4"
+    "@expo/schema-utils" "^0.1.0"
     "@expo/server" "^0.6.3"
     "@radix-ui/react-slot" "1.2.0"
     "@react-navigation/bottom-tabs" "^7.3.10"
@@ -5445,7 +5432,6 @@ expo-router@~5.1.4:
     invariant "^2.2.4"
     react-fast-compare "^3.2.2"
     react-native-is-edge-to-edge "^1.1.6"
-    schema-utils "^4.0.1"
     semver "~7.6.3"
     server-only "^0.0.1"
     shallowequal "^1.1.0"
@@ -9018,16 +9004,6 @@ scheduler@^0.23.0:
   integrity sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==
   dependencies:
     loose-envify "^1.1.0"
-
-schema-utils@^4.0.1:
-  version "4.3.2"
-  resolved "https://registry.yarnpkg.com/schema-utils/-/schema-utils-4.3.2.tgz#0c10878bf4a73fd2b1dfd14b9462b26788c806ae"
-  integrity sha512-Gn/JaSk/Mt9gYubxTtSn/QCV4em9mpAPiR1rqy/Ocu19u/G9J5WWdNoUT4SiV6mFC3y6cxyFcFwdzPM3FgxGAQ==
-  dependencies:
-    "@types/json-schema" "^7.0.9"
-    ajv "^8.9.0"
-    ajv-formats "^2.1.1"
-    ajv-keywords "^5.1.0"
 
 selfsigned@^2.4.1:
   version "2.4.1"
