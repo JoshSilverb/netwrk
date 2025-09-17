@@ -8,8 +8,7 @@ import { addContactForUserURL, getContactByIdURL, updateContactForUserURL, getS3
 import axios from 'axios';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/components/AuthContext';
-import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import { placesApiKey } from '@/constants/Secrets';
+import CustomPlacesAutocomplete, { CustomPlacesAutocompleteRef } from '@/components/CustomPlacesAutocomplete';
 import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon, User as UserIcon } from '@tamagui/lucide-icons';
 import { CommunicationFrequencySelector } from '@/components/CommunicationFrequencySelector';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
@@ -39,7 +38,7 @@ export default function AddContactPage() {
     const [selectedImage, setSelectedImage] = React.useState(null);
 
     // Extra location var
-    const ref = React.useRef();
+    const ref = React.useRef<CustomPlacesAutocompleteRef>(null);
 
     // Last Contact date picker
     const [date, setDate] = React.useState(() => new Date());
@@ -481,7 +480,7 @@ export default function AddContactPage() {
                         borderRadius={BORDER_RADIUS.md}
                         backgroundColor="$background"
                     >
-                        <GooglePlacesAutocomplete
+                        <CustomPlacesAutocomplete
                             predefinedPlaces={[]}
                             textInputProps={{
                                 style: {
@@ -505,10 +504,6 @@ export default function AddContactPage() {
                             onPress={(data, details = null) => {
                                 onChangeLocation(data.description);
                                 console.log(data);
-                            }}
-                            query={{
-                                key: placesApiKey,
-                                language: 'en',
                             }}
                             disableScroll={true}
                             ref={ref}
