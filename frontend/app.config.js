@@ -1,4 +1,4 @@
-{
+export default {
   "expo": {
     "name": "netwrk",
     "slug": "expo-frontend",
@@ -24,7 +24,12 @@
         "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_FINE_LOCATION"
       ],
-      "package": "com.joshsilv.netwrk"
+      "package": "com.joshsilv.netwrk",
+      "config": {
+        "googleMaps": {
+          "apiKey": process.env.ANDROID_GOOGLE_API_KEY,
+        }
+      }
     },
     "web": {
       "bundler": "metro",

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Sheet } from '@tamagui/sheet';
 import { Text, YStack, Button, XStack, ScrollView, View, Image } from 'tamagui'; 
 import ContactsList from '@/components/ContactsList';
@@ -194,6 +194,7 @@ export default function mapScreen() {
               }}
               region={mapRegion}
               onRegionChangeComplete={setMapRegion}
+              provider={PROVIDER_GOOGLE}
             >
               {contacts.map((contact, index) => (
                 <View key={index}>
