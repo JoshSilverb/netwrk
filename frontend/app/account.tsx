@@ -29,23 +29,8 @@ export default function AccountPage() {
   const [isLightMode, setIsLightMode] = useState(true);
 
   // Edit profile form state
-  const [editSocials, setEditSocials] = useState([]);
   const [editBio, setEditBio] = useState('');
-  const [newSocial, setNewSocial] = useState({ label: '', address: ''});
-  const [openNewSocial, setOpenNewSocial] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-
-  const userId = "#1234567890";
-  const socials = [
-      {
-          label: "Email Address",
-          address: "josh@gmail.com"
-      },
-      {
-        label: "Phone Number",
-        address: "2222222222"
-      }
-  ];
   
   useEffect(() => {
       fetchUserDetails();
@@ -155,25 +140,6 @@ export default function AccountPage() {
     router.replace('/');
   };
 
-  // Social media editing functions
-  const addSocial = () => {
-    if (newSocial.label && newSocial.address) {
-      setEditSocials([...editSocials, newSocial]);
-      setNewSocial({ label: '', address: '' });
-      setOpenNewSocial(false);
-    }
-  };
-  
-  const editSocial = (index, key, value) => {
-    const updatedSocials = [...editSocials];
-    updatedSocials[index][key] = value;
-    setEditSocials(updatedSocials);
-  };
-
-  const removeSocial = (index) => {
-    setEditSocials(editSocials.filter((_, i) => i !== index));
-  };
-
   const selectImage = async () => {
     // Request permission
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -197,7 +163,6 @@ export default function AccountPage() {
 
   const handleEditProfile = () => {
     // Initialize edit state with current data
-    setEditSocials([...socials]);
     setEditBio(userBio);
     setSelectedImage(null); // Reset selected image
     setEditProfileSheetActive(true);
@@ -205,7 +170,6 @@ export default function AccountPage() {
 
   const handleSaveProfile = async () => {
     console.log('Saving profile:', { 
-      socials: editSocials, 
       bio: editBio, 
       profileImage: selectedImage 
     });
@@ -269,63 +233,10 @@ export default function AccountPage() {
             </Button>
           </Link>
           
-          <Text 
-            fontSize={TYPOGRAPHY.sizes.sm}
-            color="$gray10"
-          >
-            {userId}
-          </Text>
-          
         </YStack>
 
         {/* Personal Info Stack */}
         <YStack space={SPACING.md} width="100%" marginTop={SPACING.lg}>
-          <Text 
-            fontSize={TYPOGRAPHY.sizes.lg}
-            fontWeight={TYPOGRAPHY.weights.bold}
-            color="$gray10"
-          >
-            Contact info
-          </Text>
-
-          {socials && socials.length > 0 ? (
-            socials.map((social, index) => (
-              <XStack 
-                key={`social-${index}`}
-                space={SPACING.xs}
-                padding={SPACING.sm}
-                borderWidth={1}
-                borderColor="$borderColor"
-                borderRadius={BORDER_RADIUS.sm}
-                backgroundColor="$background"
-                alignItems="center"
-              >
-                <Text 
-                  fontSize={TYPOGRAPHY.sizes.sm}
-                  fontWeight={TYPOGRAPHY.weights.medium}
-                  color="$gray10"
-                  minWidth={80}
-                >
-                  {social.label}:
-                </Text>
-                <Text 
-                  fontSize={TYPOGRAPHY.sizes.sm}
-                  flex={1}
-                >
-                  {social.address}
-                </Text>
-              </XStack>
-            ))
-          ) : (
-            <Text 
-              fontSize={TYPOGRAPHY.sizes.sm}
-              color="$gray9"
-              fontStyle="italic"
-            >
-              No social media added
-            </Text>
-          )}
-          
           <YStack space={SPACING.sm}>
             <Text 
               fontSize={TYPOGRAPHY.sizes.lg}
@@ -598,133 +509,6 @@ export default function AccountPage() {
                     >
                         Tap to change profile picture
                     </Text>
-                </YStack>
-
-                {/* Contact Information Section */}
-                <YStack 
-                    space={SPACING.md}
-                    padding={SPACING.md}
-                    borderWidth={1}
-                    borderColor="$borderColor"
-                    borderRadius={BORDER_RADIUS.md}
-                    backgroundColor="$gray1"
-                >
-                    <Text 
-                        fontSize={TYPOGRAPHY.sizes.md}
-                        fontWeight={TYPOGRAPHY.weights.medium}
-                        color="$gray11"
-                        marginBottom={SPACING.xs}
-                    >
-                        Contact Information
-                    </Text>
-
-                    {/* Existing Socials */}
-                    {editSocials.map((social, index) => (
-                        <XStack 
-                            key={index} 
-                            space={SPACING.xs}
-                            padding={SPACING.sm}
-                            borderWidth={1}
-                            borderColor="$borderColor"
-                            borderRadius={BORDER_RADIUS.sm}
-                            backgroundColor="$background"
-                            alignItems="center"
-                        >
-                            <YStack flex={1} space={SPACING.xs}>
-                                <Input
-                                    value={social.label}
-                                    onChangeText={(text) => editSocial(index, 'label', text)}
-                                    placeholder="Platform"
-                                    size="$3"
-                                    fontSize={TYPOGRAPHY.sizes.sm}
-                                    height={38}
-                                />
-                                <Input
-                                    value={social.address}
-                                    onChangeText={(text) => editSocial(index, 'address', text)}
-                                    placeholder="Contact info"
-                                    size="$3"
-                                    fontSize={TYPOGRAPHY.sizes.sm}
-                                    height={38}
-                                />
-                            </YStack>
-                            <Button
-                                size="$2"
-                                variant="ghost"
-                                onPress={() => removeSocial(index)}
-                                padding={SPACING.xs}
-                                minWidth={32}
-                                minHeight={32}
-                            >
-                                <XIcon size={16} color="$red10" />
-                            </Button>
-                        </XStack>
-                    ))}
-
-                    {/* Add New Social */}
-                    {openNewSocial && 
-                        <YStack 
-                            space={SPACING.xs}
-                            padding={SPACING.sm}
-                            borderWidth={1}
-                            borderColor="$blue6"
-                            borderRadius={BORDER_RADIUS.sm}
-                            backgroundColor="$blue1"
-                        >
-                            <XStack space={SPACING.xs} alignItems="flex-end">
-                                <YStack flex={1} space={SPACING.xs}>
-                                    <Input
-                                        placeholder="Platform"
-                                        value={newSocial.label}
-                                        onChangeText={(text) => setNewSocial({ ...newSocial, label: text })}
-                                        size="$3"
-                                        fontSize={TYPOGRAPHY.sizes.sm}
-                                        height={38}
-                                    />
-                                    <Input
-                                        placeholder="Contact info"
-                                        value={newSocial.address}
-                                        onChangeText={(text) => setNewSocial({ ...newSocial, address: text })}
-                                        size="$3"
-                                        fontSize={TYPOGRAPHY.sizes.sm}
-                                        height={38}
-                                    />
-                                </YStack>
-                                
-                                <XStack space={SPACING.xs}>
-                                    <Button
-                                        size="$2"
-                                        variant="outlined"
-                                        onPress={() => setOpenNewSocial(false)}
-                                        minWidth={60}
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        size="$2"
-                                        onPress={addSocial}
-                                        backgroundColor="$green9"
-                                        color="white"
-                                        minWidth={50}
-                                    >
-                                        <PlusIcon size={14} />
-                                    </Button>
-                                </XStack>
-                            </XStack>
-                        </YStack>
-                    }
-                    
-                    {!openNewSocial && (
-                        <XStack justifyContent="center">
-                            <Button 
-                                onPress={() => setOpenNewSocial(true)} 
-                                variant="outlined"
-                                size="$3"
-                            >
-                                + Add Contact Method
-                            </Button>
-                        </XStack>
-                    )}
                 </YStack>
 
                 {/* Bio Section */}
