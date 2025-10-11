@@ -593,6 +593,8 @@ def search_contacts_and_sort(
         query = query.join(TagLabel, Tag.tag_id == TagLabel.id)
         query = query.filter(TagLabel.label.in_(tags))
 
+    logging.info(f"Embedding string: {embedding_string}")
+
     # Add ordering
     if sort_option == SortOptions.DATE_ADDED:
         query = query.order_by(Contact.contact_id.desc())
@@ -607,7 +609,6 @@ def search_contacts_and_sort(
         query = query.order_by(Contact.coordinates.distance_centroid(user_point))
     elif sort_option == SortOptions.RELEVANCE:
         # Sort by embedding vector similarity (e.g. <-> operator)
-        # assuming `embedding` is a vector or cube column
         query = query.order_by(text(f"embedding <-> '{embedding_string}'")).limit(15)
     elif sort_option == SortOptions.NEXT_CONTACT_DATE:
         query = query.order_by(Contact.next_contact.asc())

@@ -25,7 +25,7 @@ def _location_to_coords(location: str) -> dict[str, str] | None:
             othewise return 'None'
     """
 
-    logger.debug(f"Getting coordinates for location: {location}")
+    logger.info(f"Getting coordinates for location: {location}")
 
     if len(location) == 0:
         return None
@@ -36,7 +36,7 @@ def _location_to_coords(location: str) -> dict[str, str] | None:
     
     geocode_response.raise_for_status()
     location_coords = geocode_response.json()["results"][0]["geometry"]["location"]
-    logger.debug(f"Parsed location coordinates: {location_coords}")
+    logger.info(f"Parsed location coordinates: {location_coords}")
 
     return location_coords
 
@@ -105,16 +105,14 @@ def _generate_contact_profile_pic_url(profile_pic_object_name: str) -> str:
 
 @contacts_bp.route("/getContactById", methods=["POST"])
 def get_contact_by_id():
-    logger.debug("Received get contact by ID request")
-
     data = request.get_json()
+    logger.info("Received get contact by ID request with data:", data)
+
     user_token = data["user_token"]
     contact_id = int(data["contact_id"])
 
-    logger.debug(f"Processing request - user_token: {user_token}, contact_id: {contact_id}")
-
     contact = db_accessor.get_contact_by_id(user_token, contact_id)
-    logger.debug(f"Retrieved contact: {contact}")
+    logger.info(f"Retrieved contact: {contact}")
     
     # Add profile picture URL if available
     if contact and contact.get("profile_pic_object_name"):
@@ -125,8 +123,9 @@ def get_contact_by_id():
 
 @contacts_bp.route("/addContactForUser", methods=["POST"])
 def add_new_contact():
-    logger.debug("Received add contact request")
     data = request.get_json()
+    logger.info("Received add contact request with data:", data)
+
     newcontact = data["newContact"]
 
     user_token: str = data['user_token']
@@ -171,13 +170,11 @@ def add_new_contact():
 
 @contacts_bp.route("/removeContactForUser", methods=["POST"])
 def remove_contact():
-    logger.debug("Received remove contact request")
-
     data = request.get_json()
+    logger.info("Received remove contact request with data:", data)
+
     user_token = data["user_token"]
     contact_id = int(data["contact_id"])
-
-    logger.debug(f"Processing remove request - user_token: {user_token}, contact_id: {contact_id}")
 
     db_accessor.delete_contact(user_token, contact_id)
 
@@ -186,9 +183,9 @@ def remove_contact():
 
 @contacts_bp.route("/updateContactForUser", methods=["POST"])
 def update_contact():
-    logger.debug("Received update contact request")
-
     data = request.get_json()
+    logger.info("Received update contact request wtih data:", data)
+
     newcontact = data["newContact"]
 
     user_token: str = data['user_token']
@@ -236,9 +233,9 @@ def update_contact():
 
 @contacts_bp.route("/searchContacts", methods=["POST"])
 def search_contacts():
-    logger.debug("Received search contacts request")
-
     data = request.get_json()
+    logger.info("Received search contacts request with data:", data)
+
     user_token: str = data['user_token']
     search_params: dict = data['search_params']
 
@@ -257,10 +254,10 @@ def search_contacts():
 
     if order_by == 'Relevance' and len(query_string) > 0:
         embedding_vector = _get_query_string_embedding(query_string)
-        logger.debug("Generated embedding vector for search query")
+        logger.info("Generated embedding vector for search query")
     else:
         embedding_vector = None
-        logger.debug("No embedding vector generated for search query")
+        logger.info("No embedding vector generated for search query")
 
     contacts = db_accessor.search_contacts_and_sort(
         user_token=user_token,
