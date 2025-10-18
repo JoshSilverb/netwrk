@@ -29,6 +29,16 @@ class SortOptions(Enum):
     NEXT_CONTACT_DATE = 'Next contact date'
     
 
+def get_sort_option(value: str) -> SortOptions | None:
+    """Return an enum option from 'SortOptions' whose value matches that of the 
+    specified 'value', or return 'none' if 'value' is not in 'SortOptions'."""
+
+    for opt in SortOptions:
+        if opt.value == value:
+            return opt
+    return None
+
+
 def get_contact_by_id(
     user_token: str,
     contact_id: int
@@ -554,14 +564,16 @@ def search_contacts_and_sort(
         A list of contacts matching the given args
     """
 
-    # Fallbacks for invalid sorting
-    if sort_option == SortOptions.RELEVANCE and not query_string:
-        logger.error("Search failed: Cannot search by relevance without a query")
-        sort_option = SortOptions.DATE_ADDED
+    sort_option_enum = get_sort_option(sort_option)
 
-    if sort_option == SortOptions.DISTANCE and (not user_latitude or not user_longitude):
+    # Fallbacks for invalid sorting
+    if sort_option_enum == SortOptions.RELEVANCE and not embedding_string:
+        logger.error("Search failed: Cannot search by relevance without an embedding")
+        sort_option_enum = SortOptions.DATE_ADDED
+
+    if sort_option_enum == SortOptions.DISTANCE and (not user_latitude or not user_longitude):
         logger.error("Search failed: Cannot sort by distance without coordinates")
-        sort_option = SortOptions.DATE_ADDED
+        sort_option_enum = SortOptions.DATE_ADDED
 
     # Base query
     query = (
@@ -579,8 +591,12 @@ def search_contacts_and_sort(
         .filter(Contact.lastcontact <= upper_bound_date)
     )
 
-    # Add search filter
-    if sort_option != SortOptions.RELEVANCE and query_string:
+    # If sorting by relevance, ignore entries without embeddings
+    if sort_option_enum == SortOptions.RELEVANCE:
+        query = query.filter(Contact.embedding.isnot(None))
+
+    # Add search filter if not sorting by relevance
+    if sort_option_enum != SortOptions.RELEVANCE and query_string:
         like_term = f"%{query_string}%"
         query = query.filter(or_(
             Contact.userbio.ilike(like_term),
@@ -596,25 +612,25 @@ def search_contacts_and_sort(
     logging.info(f"Embedding string: {embedding_string}")
 
     # Add ordering
-    if sort_option == SortOptions.DATE_ADDED:
+    if sort_option_enum == SortOptions.DATE_ADDED:
         query = query.order_by(Contact.contact_id.desc())
-    elif sort_option == SortOptions.LAST_CONTACT_NEWEST:
+    elif sort_option_enum == SortOptions.LAST_CONTACT_NEWEST:
         query = query.order_by(Contact.last_contact.desc())
-    elif sort_option == SortOptions.LAST_CONTACT_OLDEST:
+    elif sort_option_enum == SortOptions.LAST_CONTACT_OLDEST:
         query = query.order_by(Contact.last_contact.asc())
-    elif sort_option == SortOptions.ALPHABETICAL:
+    elif sort_option_enum == SortOptions.ALPHABETICAL:
         query = query.order_by(Contact.fullname.asc())
-    elif sort_option == SortOptions.DISTANCE:
+    elif sort_option_enum == SortOptions.DISTANCE:
         user_point = func.ST_MakePoint(user_longitude, user_latitude)
         query = query.order_by(Contact.coordinates.distance_centroid(user_point))
-    elif sort_option == SortOptions.RELEVANCE:
-        # Sort by embedding vector similarity (e.g. <-> operator)
-        query = query.order_by(text(f"embedding <-> '{embedding_string}'")).limit(15)
-    elif sort_option == SortOptions.NEXT_CONTACT_DATE:
+    elif sort_option_enum == SortOptions.RELEVANCE:
+        vector_str = '[' + ','.join(map(str, embedding_string)) + ']'
+        query = query.order_by(text(f"embedding <-> '{vector_str}'")).limit(15)
+    elif sort_option_enum == SortOptions.NEXT_CONTACT_DATE:
         query = query.order_by(Contact.next_contact.asc())
 
-    logger.info(f"Executing contact search - Sort: {sort_option}, Query: '{query_string}'")
-    logger.debug(f"Generated SQL query:\n{str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
+    logger.info(f"Executing contact search - Sort: {sort_option_enum}, Query: '{query_string}'")
+    logger.info(f"Generated SQL query:\n{str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
 
     contacts_raw = query.all()
     logger.info(f"Search completed: Found {len(contacts_raw)} contacts")
