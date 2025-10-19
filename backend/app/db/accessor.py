@@ -627,7 +627,7 @@ def search_contacts_and_sort(
         vector_str = '[' + ','.join(map(str, embedding_string)) + ']'
         query = query.order_by(text(f"embedding <-> '{vector_str}'")).limit(15)
     elif sort_option_enum == SortOptions.NEXT_CONTACT_DATE:
-        query = query.order_by(Contact.next_contact.asc())
+        query = query.order_by(Contact.nextcontact.asc())
 
     logger.info(f"Executing contact search - Sort: {sort_option_enum}, Query: '{query_string}'")
     logger.info(f"Generated SQL query:\n{str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")
