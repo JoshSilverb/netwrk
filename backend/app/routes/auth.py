@@ -11,16 +11,18 @@ logger = logging.getLogger(__name__)
 auth_bp = Blueprint("auth", __name__)
 
 @auth_bp.route("/validateUserCredentials", methods=["POST"])
-def get_users():
-
+def validate_user_credentials():
     data = request.get_json()
 
     username: str = data['username']
     password: str = data['password']
 
-    user_token = db_accessor.validate_user_credentials_and_regenerate_token(username=username, password=password)
+    try:
+        user_token = db_accessor.validate_user_credentials_and_regenerate_token(username=username, password=password)
+    except NameError as e:
+        return jsonify({"error": "Invalid username or password"}), 401
     
-    return jsonify({"user_token": user_token})
+    return jsonify({"user_token": user_token}), 200
 
 
 @auth_bp.route("/generate_upload_url", methods=["POST"])

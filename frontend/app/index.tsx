@@ -10,7 +10,7 @@ import { saveToken, getToken } from '@/utils/tokenstore';
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
 
   const router = useRouter();
@@ -26,7 +26,6 @@ export default function LoginScreen() {
     if (retrievedToken) {
       console.log("Retrieved saved token:", retrievedToken);
       setToken(retrievedToken);
-      setError('');
       router.replace('/(tabs)/dashboard');
     }
     else {
@@ -41,24 +40,28 @@ export default function LoginScreen() {
       password: password
     }
 
-    console.log(`sending login request with body=${requestBody} to URL=${validateUserCredentialsURL}`)
+    console.log(`sending login request with body=${JSON.stringify(requestBody)} to URL=${validateUserCredentialsURL}`)
 
     try {
       const response = await axios.post(validateUserCredentialsURL, requestBody);
-      if (response.status == 200) {
-        setError('');
-        setToken(response.data['user_token']);
-        if (rememberMe) {
-          console.log("Saving token:", response.data['user_token']);
-          await saveToken(response.data['user_token']);
-        }
-        router.replace('/(tabs)/dashboard');
+      setLoginError('');
+      setToken(response.data['user_token']);
+      if (rememberMe) {
+        console.log("Saving token:", response.data['user_token']);
+        await saveToken(response.data['user_token']);
       }
-      else {
-        setError('Invalid username or password.');
-      }
+      router.replace('/(tabs)/dashboard');
+      
     } catch (error) {
-      console.error('Error fetching data:', error.message);
+      if (axios.isAxiosError(error) && error.response) {
+        if (error.response.status === 401) {
+          setLoginError('Invalid username or password.');
+        } else {
+          setLoginError(`Server error: ${error.response.status}`);
+        }
+      } else {
+        setLoginError('Network error');
+      }
     }
   };
 
@@ -99,9 +102,9 @@ export default function LoginScreen() {
         secureTextEntry
         borderWidth="$0.5"
       />
-      {error && (
+      {loginError && (
         <Text color="$red9" mt="$3">
-          {error}
+          {loginError}
         </Text>
       )}
 

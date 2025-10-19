@@ -20,14 +20,14 @@ export default function DashboardScreen() {
     const [nearbyLoading, setNearbyLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     // const [location, setLocation] = useState<Location.LocationObject | null>(null);
-    // const [locErrorMsg, setLocErrorMsg] = useState<string | null>(null);
+    const [featuredError, setFeaturedError] = useState<string>('');
+    const [locationError, setLocationError] = useState<string>('');
     const { token, setToken } = useAuth();
 
     console.log(token);
 
     useEffect(() => {
-        fetchContactsByNextContactDate();
-        fetchContactsByLocation();
+        getContacts();
     }, []);
 
     const getContacts = async () => {
@@ -60,11 +60,17 @@ export default function DashboardScreen() {
             setContacts(response.data);
             setFeatLoading(false);
             console.log("Successfully got FetchContactsByNextContactDate response");
-
+            setFeaturedError('');
         } catch (error) {
-            console.error('Error received in FetchContactsByNextContactDate response:', error);
-        } finally {
-            setFeatLoading(false);
+            if (axios.isAxiosError(error) && error.response) {
+                if (error.response.status === 401) {
+                    setFeaturedError('Invalid user token, try logging in again.');
+                } else {
+                    setFeaturedError(`Server error: ${error.response.status}`);
+                }
+            } else {
+                setFeaturedError('Network error');
+            }
         }
     };
 
@@ -74,6 +80,7 @@ export default function DashboardScreen() {
         const location = await getCurrentLocation();
         if (!location) {
             console.log("Location not retrieved, not searching for nearby contacts");
+            setLocationError('Failed to get user location.');
             return; // Exit if location is null
         }
         console.log("Location retrieved!", location);
@@ -101,10 +108,18 @@ export default function DashboardScreen() {
             const response = await axios.post(searchContactsURL, requestBody);
             setNearbyContacts(response.data);
             setNearbyLoading(false);
+            setLocationError('');
+
         } catch (error) {
-            console.error('Error received in FetchContactsByLocation response:', error);
-        } finally {
-            setNearbyLoading(false);
+            if (axios.isAxiosError(error) && error.response) {
+                if (error.response.status === 401) {
+                    setLocationError('Invalid user token, try logging in again.');
+                } else {
+                    setLocationError(`Server error: ${error.response.status}`);
+                }
+            } else {
+                setLocationError('Network error');
+            }
         }
     };
 
@@ -127,6 +142,11 @@ export default function DashboardScreen() {
                     FEATURED CONTACTS
                 </Text>
                 <Loader loading={featLoading} >
+                    {featuredError && (
+                    <Text color="$red9" mt="$3">
+                        {featuredError}
+                    </Text>
+                    )}
                     <ContactsList contacts={contacts.slice(0,3)} prefix="featured" />
                 </Loader>
                 <Link href='/(tabs)/contacts' asChild>
@@ -153,6 +173,11 @@ export default function DashboardScreen() {
                     NEARBY CONTACTS
                 </Text>
                 <Loader loading={nearbyLoading} >
+                    {locationError && (
+                    <Text color="$red9" mt="$3">
+                        {locationError}
+                    </Text>
+                    )}
                     {<ContactsList contacts={nearbyContacts.slice(0,3)} prefix="nearby" />}
                 </Loader>
                 <Link href='/(tabs)/contacts' asChild>

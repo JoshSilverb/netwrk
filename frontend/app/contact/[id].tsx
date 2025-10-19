@@ -53,7 +53,7 @@ export default function ContactPage() {
   const removeContact = async () => {
     const requestBody = {
         user_token: token,
-        contactId: id
+        contact_id: id
     }
 
     console.log("Removing contact with ID:", id);

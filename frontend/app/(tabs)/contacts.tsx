@@ -26,6 +26,8 @@ export default function contactsScreen() {
 
     const { token, setToken } = useAuth();
 
+    const [searchError, setSearchError] = useState<string>('');
+
     const [tags, setTags] = useState([]);
 
     const [contacts, setContacts] = useState([]);
@@ -120,8 +122,19 @@ export default function contactsScreen() {
             setContacts(response.data);
             console.log(contacts);
             setLoading(false);
+            setSearchError('');
+        
         } catch (error) {
-            console.error('Error fetching data:', error);
+            if (axios.isAxiosError(error) && error.response) {
+                if (error.response.status === 401) {
+                    setSearchError('Invalid user token, try logging in again.');
+                } else {
+                    setSearchError(`Server error: ${error.response.status}`);
+                }
+            } else {
+                setSearchError('Network error');
+            }
+            setContacts([]);
         }
     };
 
@@ -723,6 +736,11 @@ export default function contactsScreen() {
 
                     <View style={CONTAINER_STYLES.section}>
                         <Loader loading={loading}>
+                            {searchError && (
+                            <Text color="$red9" mt="$3">
+                                {searchError}
+                            </Text>
+                            )}
                             <ContactsList contacts={contacts} prefix="searchlist"/>
                         </Loader>
                     </View>
