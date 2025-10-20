@@ -40,17 +40,22 @@ def _location_to_coords(location: str) -> dict[str, str] | None:
 
     return location_coords
 
-def _get_contact_embedding(location: str, bio: str) -> list[float]:
+def _get_contact_embedding(name: str, 
+                           location: str, 
+                           met_through:str, 
+                           bio: str) -> list[float]:
     """
-    Get the embedding of the given contact fields.
+    Get the embedding for a contact with the given attributes.
     Args:
-        location: an address or name of a place as a string
-        bio: user-specified description of the contact as a string
+        name: the name of the contact
+        location: the location of the contact
+        met_through: how the user met the contact
+        bio: user-specified description of the contact
     Returns:
         A 1536-dimensional list representing the embedding of the fields
     """
 
-    embedding_text = f"location='{location}'; bio='{bio}'"
+    embedding_text = f"met_through='{met_through}'; location='{location}'; bio='{bio}; name='{name}'"
 
     openai_client = OpenAI(api_key=Config.OPENAI_API_KEY)
     embedding_object = openai_client.embeddings.create(

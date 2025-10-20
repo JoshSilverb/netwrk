@@ -145,9 +145,12 @@ def add_contact(
         geo_point = None  # Will be inserted as NULL in the DB
 
     # Prepare nextcontact field
-    reminderPeriod_days = reminder_period_weeks * 7
+    reminderPeriod_days = reminder_period_weeks * 7 if reminder_period_weeks else None
     reminderPeriod_months = reminder_period_months
-    next_contact = last_contact + relativedelta(months=+reminderPeriod_months, days=+reminderPeriod_days)
+    if not last_contact:
+        next_contact = None
+    else:
+        next_contact = last_contact + relativedelta(months=+reminderPeriod_months, days=+reminderPeriod_days)
 
 
     # Insert new contact
@@ -318,12 +321,12 @@ def update_contact(
     # 3. Update fields on the contact
     contact.fullname = fullname
     contact.location = location
-    contact.met_through = met_through
+    contact.metthrough = met_through
     contact.userbio = user_bio
-    contact.last_contact = last_contact
-    contact.reminder_period_weeks = reminder_period_weeks
-    contact.reminder_period_months = reminder_period_months
-    contact.embedding_vector = embedding_vector
+    contact.lastcontact = last_contact
+    contact.remind_in_weeks = reminder_period_weeks
+    contact.remind_in_months = reminder_period_months
+    contact.embedding = embedding_vector
     
     # Only update profile picture if a new one is provided
     if image_object_key:
@@ -467,7 +470,7 @@ def validate_token(user_token: str):
     # Fetch the user by username
     user = db.session.query(User).filter_by(user_token=user_token).first()
     if not user:
-        logger.warning(f"Authentication failed: No user profile found for username={username}")
+        logger.warning(f"Authentication failed: No user profile found for user token={user_token}")
         return False
 
     logger.info(f"Successfully authenticated user with token: {user_token}")
@@ -615,9 +618,9 @@ def search_contacts_and_sort(
     if sort_option_enum == SortOptions.DATE_ADDED:
         query = query.order_by(Contact.contact_id.desc())
     elif sort_option_enum == SortOptions.LAST_CONTACT_NEWEST:
-        query = query.order_by(Contact.last_contact.desc())
+        query = query.order_by(Contact.lastcontact.desc())
     elif sort_option_enum == SortOptions.LAST_CONTACT_OLDEST:
-        query = query.order_by(Contact.last_contact.asc())
+        query = query.order_by(Contact.lastcontact.asc())
     elif sort_option_enum == SortOptions.ALPHABETICAL:
         query = query.order_by(Contact.fullname.asc())
     elif sort_option_enum == SortOptions.DISTANCE:
@@ -654,7 +657,7 @@ def search_contacts_and_sort(
     )
 
     # Group socials by contact_id
-    socials_by_contact = {}
+    socials_by_contact: dict[str, list[str]] = {}
     for s in socials_rows:
         socials_by_contact.setdefault(s.contact_id, []).append({
             'label': s.label,
@@ -666,6 +669,4 @@ def search_contacts_and_sort(
         c['socials'] = socials_by_contact.get(c['contact_id'], [])
 
     return contact_dicts
-
-    # return [dict(row._mapping) for row in results]
 

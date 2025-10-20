@@ -55,7 +55,7 @@ def populate_missing_embeddings(db_url: str, openai_api_key: str, poll_interval:
 
     # Step 1: Query for contacts without embeddings
     with Session(engine) as session:
-        stmt = select(Contact).where(Contact.embedding.is_(None))
+        stmt = select(Contact) #.where(Contact.embedding.is_(None))
         contacts_without_embeddings = session.execute(stmt).scalars().all()
 
         total_contacts = len(contacts_without_embeddings)
@@ -70,9 +70,11 @@ def populate_missing_embeddings(db_url: str, openai_api_key: str, poll_interval:
         contact_id_map = {}  # Map custom_id to contact_id for later retrieval
 
         for idx, contact in enumerate(contacts_without_embeddings):
+            name = contact.fullname or ""
             location = contact.location or ""
+            met_through = contact.metthrough or ""
             bio = contact.userbio or ""
-            embedding_text = f"location='{location}'; bio='{bio}'"
+            embedding_text = f"met_through='{met_through}'; location='{location}'; bio='{bio}; name='{name}'"
 
             custom_id = f"contact_{contact.contact_id}"
             contact_id_map[custom_id] = contact.contact_id
