@@ -17,7 +17,7 @@ def places_autocomplete():
     location = request.args.get("location")
     radius = request.args.get("radius")
 
-    logger.info("Got places autofill request with input text:", input_text)
+    logger.info(f"Got places autofill request with input text: {input_text}")
 
     params = {
         "input": input_text,

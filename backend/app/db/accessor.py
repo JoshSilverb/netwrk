@@ -373,7 +373,7 @@ def update_contact(
             # Get or create tag label
             tag_label = db.session.query(TagLabel).filter_by(label=tag_name).first()
             if not tag_label:
-                tag_label = TagLabel(label=tag_name)
+                tag_label = TagLabel(user_id=user.user_id, label=tag_name)
                 db.session.add(tag_label)
                 db.session.flush()
 

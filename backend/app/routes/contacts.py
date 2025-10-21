@@ -152,7 +152,10 @@ def add_new_contact():
     if location:
         coordinate = _location_to_coords(location)
     
-    embedding_vector = _get_contact_embedding(location, userbio)
+    embedding_vector = _get_contact_embedding(fullname, 
+                                              location, 
+                                              metthrough, 
+                                              userbio)
 
     new_contact_id = db_accessor.add_contact(
         user_token=user_token,
@@ -214,7 +217,10 @@ def update_contact():
     if location:
         coordinate = _location_to_coords(location)
     
-    embedding_vector = _get_contact_embedding(location, userbio)
+    embedding_vector = _get_contact_embedding(fullname, 
+                                              location, 
+                                              metthrough, 
+                                              userbio)
 
     new_contact_id = db_accessor.update_contact(
         user_token=user_token,
