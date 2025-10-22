@@ -145,8 +145,8 @@ def add_contact(
         geo_point = None  # Will be inserted as NULL in the DB
 
     # Prepare nextcontact field
-    reminderPeriod_days = reminder_period_weeks * 7 if reminder_period_weeks else None
-    reminderPeriod_months = reminder_period_months
+    reminderPeriod_days = reminder_period_weeks * 7 if reminder_period_weeks else 0
+    reminderPeriod_months = reminder_period_months if reminder_period_months else 0
     if not last_contact:
         next_contact = None
     else:
