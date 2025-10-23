@@ -232,7 +232,7 @@ export default function ContactPage() {
           
           <YStack space={SPACING.sm}>
             <XStack justifyContent="space-between" alignItems="center">
-              <Text 
+              <Text
                 fontSize={TYPOGRAPHY.sizes.sm}
                 fontWeight={TYPOGRAPHY.weights.medium}
                 color="$gray10"
@@ -240,7 +240,7 @@ export default function ContactPage() {
               >
                 Last Contact:
               </Text>
-              <View 
+              <View
                 padding={SPACING.sm}
                 borderWidth={1}
                 borderColor="$borderColor"
@@ -248,7 +248,7 @@ export default function ContactPage() {
                 backgroundColor="$background"
                 flex={2}
               >
-                <Text 
+                <Text
                   fontSize={TYPOGRAPHY.sizes.sm}
                   textAlign="center"
                 >
@@ -256,61 +256,65 @@ export default function ContactPage() {
                 </Text>
               </View>
             </XStack>
-            
-            <XStack justifyContent="space-between" alignItems="center">
-              <Text 
-                fontSize={TYPOGRAPHY.sizes.sm}
-                fontWeight={TYPOGRAPHY.weights.medium}
-                color="$gray10"
-                flex={1}
-              >
-                Frequency:
-              </Text>
-              <View 
-                padding={SPACING.sm}
-                borderWidth={1}
-                borderColor="$borderColor"
-                borderRadius={BORDER_RADIUS.sm}
-                backgroundColor="$background"
-                flex={2}
-              >
-                <Text 
-                  fontSize={TYPOGRAPHY.sizes.sm}
-                  textAlign="center"
-                >
-                  {(contact.remind_in_months !== 0) && `${contact.remind_in_months} months`}
-                  {(contact.remind_in_weeks !== 0) && `${contact.remind_in_weeks} weeks`}
-                </Text>
-              </View>
-            </XStack>
-            
-            <XStack justifyContent="space-between" alignItems="center">
-              <Text 
-                fontSize={TYPOGRAPHY.sizes.sm}
-                fontWeight={TYPOGRAPHY.weights.medium}
-                color="$gray10"
-                flex={1}
-              >
-                Next Contact:
-              </Text>
-              <View 
-                padding={SPACING.sm}
-                borderWidth={1}
-                borderColor="$borderColor"
-                borderRadius={BORDER_RADIUS.sm}
-                backgroundColor="$blue2"
-                flex={2}
-              >
-                <Text 
-                  fontSize={TYPOGRAPHY.sizes.sm}
-                  textAlign="center"
-                  color="$blue11"
-                  fontWeight={TYPOGRAPHY.weights.medium}
-                >
-                  {contact.nextcontact}
-                </Text>
-              </View>
-            </XStack>
+
+            {(contact.remind_in_weeks != null || contact.remind_in_months != null) && (
+              <>
+                <XStack justifyContent="space-between" alignItems="center">
+                  <Text
+                    fontSize={TYPOGRAPHY.sizes.sm}
+                    fontWeight={TYPOGRAPHY.weights.medium}
+                    color="$gray10"
+                    flex={1}
+                  >
+                    Frequency:
+                  </Text>
+                  <View
+                    padding={SPACING.sm}
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius={BORDER_RADIUS.sm}
+                    backgroundColor="$background"
+                    flex={2}
+                  >
+                    <Text
+                      fontSize={TYPOGRAPHY.sizes.sm}
+                      textAlign="center"
+                    >
+                      {(contact.remind_in_months !== 0) && `${contact.remind_in_months} months`}
+                      {(contact.remind_in_weeks !== 0) && `${contact.remind_in_weeks} weeks`}
+                    </Text>
+                  </View>
+                </XStack>
+
+                <XStack justifyContent="space-between" alignItems="center">
+                  <Text
+                    fontSize={TYPOGRAPHY.sizes.sm}
+                    fontWeight={TYPOGRAPHY.weights.medium}
+                    color="$gray10"
+                    flex={1}
+                  >
+                    Next Contact:
+                  </Text>
+                  <View
+                    padding={SPACING.sm}
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius={BORDER_RADIUS.sm}
+                    backgroundColor="$blue2"
+                    flex={2}
+                  >
+                    <Text
+                      fontSize={TYPOGRAPHY.sizes.sm}
+                      textAlign="center"
+                      color="$blue11"
+                      fontWeight={TYPOGRAPHY.weights.medium}
+                    >
+                      {contact.nextcontact}
+                    </Text>
+                  </View>
+                </XStack>
+              </>
+            )}
           </YStack>
         </YStack>
         
