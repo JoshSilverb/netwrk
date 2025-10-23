@@ -344,8 +344,6 @@ export default function AddContactPage() {
         }
     }
 
-    const FrequencyOption = ['1 month', '3 months', '6 months', '1 year', 'custom'];
-    
     return (
         <View style={CONTAINER_STYLES.screen}>
             <Stack.Screen 
@@ -379,7 +377,7 @@ export default function AddContactPage() {
                         color="$gray11"
                         marginBottom={SPACING.xs}
                     >
-                        Full Name
+                        Name
                     </Text>
                     <Input
                         size="$4"
@@ -566,7 +564,7 @@ export default function AddContactPage() {
                         textAlignVertical="top"
                     />
                 </YStack>
-                {/* Contact Information */}
+                {/* Contact Frequency */}
                 <YStack 
                     space={SPACING.md}
                     padding={SPACING.md}
@@ -581,7 +579,7 @@ export default function AddContactPage() {
                         color="$gray11"
                         marginBottom={SPACING.sm}
                     >
-                        Contact Information
+                        Contact Frequency
                     </Text>
                     
                     {/* Last Contact Date */}
@@ -630,8 +628,7 @@ export default function AddContactPage() {
                         >
                             Contact Every
                         </Text>
-                        <CommunicationFrequencySelector 
-                            items={FrequencyOption}
+                        <CommunicationFrequencySelector
                             onChange={onChangeRemindPeriod}
                         />
                     </YStack>
@@ -730,7 +727,7 @@ export default function AddContactPage() {
                         color="$gray11"
                         marginBottom={SPACING.xs}
                     >
-                        Social Media
+                        Contact Info
                     </Text>
 
                 {/* Existing Socials */}
