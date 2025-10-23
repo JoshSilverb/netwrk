@@ -302,9 +302,9 @@ export default function AddContactPage() {
             const response = await axios.post(addContactForUserURL, requestBody)
             console.log(response.data)
             if (response.status == 200) {
-                // For new contacts, navigate to the contact page and reset the nav stack
+                // For new contacts, navigate to the contact page
                 const redirectLink = "/contact/" + response.data;
-                router.replace(redirectLink);
+                router.push(redirectLink);
             }
 
         }
@@ -345,10 +345,9 @@ export default function AddContactPage() {
             const response = await axios.post(updateContactForUserURL, requestBody)
             console.log(response.data)
             if (response.status == 200) {
-                // For updates, replace the current edit page with the updated contact view
-                // This preserves the navigation stack so back button works correctly
+                // For updates, navigate to the updated contact view
                 const redirectLink = "/contact/" + response.data;
-                router.replace(redirectLink);
+                router.push(redirectLink);
             }
 
         }
@@ -890,7 +889,7 @@ export default function AddContactPage() {
                             variant="outlined"
                             onPress={() => {
                                 const contactViewLink = "/contact/" + id;
-                                router.replace(contactViewLink);
+                                router.push(contactViewLink);
                             }}
                             fontSize={TYPOGRAPHY.sizes.md}
                             fontWeight={TYPOGRAPHY.weights.bold}
