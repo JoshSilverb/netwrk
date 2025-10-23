@@ -3,7 +3,7 @@ import React from 'react';
 import { TextInput, ScrollView, Pressable, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Months } from '@/constants/Definitions';
-import { Text, View, Group, Separator, XStack, YStack, Button, Paragraph, Input, Avatar } from 'tamagui';
+import { Text, View, Group, Separator, XStack, YStack, Button, Paragraph, Input, Avatar, Switch, Label } from 'tamagui';
 import { addContactForUserURL, getContactByIdURL, updateContactForUserURL, getS3UploadURL } from '@/constants/Apis';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
@@ -14,6 +14,7 @@ import { CommunicationFrequencySelector } from '@/components/CommunicationFreque
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import * as ImagePicker from 'expo-image-picker';
 import mime from 'mime';
+import { parse } from 'date-fns';
 
 export default function AddContactPage() {
     const params = useLocalSearchParams<{ id?: string }>();
@@ -33,6 +34,7 @@ export default function AddContactPage() {
     const [openNewSocial, setOpenNewSocial] = React.useState(false);
     const [remindPeriodWks, setRemindPeriodWks]  = React.useState(0);
     const [remindPeriodMos, setRemindPeriodMos]  = React.useState(1);
+    const [enableContactFrequency, setEnableContactFrequency] = React.useState(true);
     const [tags,       setTags]       = React.useState([]);
     const [newTag,     setNewTag]          = React.useState('');
     const [selectedImage, setSelectedImage] = React.useState(null);
@@ -222,7 +224,8 @@ export default function AddContactPage() {
         setSocials([]);
         setNewSocial({ label: '', address: ''});
         setRemindPeriodWks(0);
-        setRemindPeriodMos(0);
+        setRemindPeriodMos(1);
+        setEnableContactFrequency(true);
         setTags([]);
         setDate(new Date());
         setSelectedImage(null);
@@ -237,12 +240,18 @@ export default function AddContactPage() {
         onChangeMetThrough(contact.metthrough);
         setSocials(contact.socials);
         setNewSocial({ label: '', address: ''});
-        setRemindPeriodWks(contact.remind_in_weeks);
-        setRemindPeriodMos(contact.remind_in_months);
+
+        // Handle reminder period - enable toggle if values exist
+        const hasReminderPeriod = contact.remind_in_weeks != null || contact.remind_in_months != null;
+        setEnableContactFrequency(hasReminderPeriod);
+        setRemindPeriodWks(contact.remind_in_weeks || 0);
+        setRemindPeriodMos(contact.remind_in_months || 1);
+
         setTags(contact.tags);
         let dateStr = contact.lastcontact.replace(',', '');  // "17 Apr 2025"
         console.log(`Setting last contact date from value=${dateStr} with type=${typeof dateStr}`)
-        const newDate = new Date(dateStr);
+        // const newDate = new Date(dateStr);
+        const newDate = parse(dateStr, 'dd MMM yyyy', new Date());
         console.log(`Casting that to date gives ${newDate}`)
         if (!isNaN(newDate.getTime())) {
             setDate(newDate);
@@ -251,7 +260,7 @@ export default function AddContactPage() {
             setDate(new Date());
         }
         console.log(`Set last contact date to value=${date}`)
-        setSelectedImage(null); // Reset selected image when editing existing contact
+        setSelectedImage(null); 
     }
 
     //================================
@@ -276,8 +285,8 @@ export default function AddContactPage() {
                     "socials": socials,
                     "lastcontact": date,
                     "reminderPeriod": {
-                        "weeks": remindPeriodWks,
-                        "months": remindPeriodMos
+                        "weeks": enableContactFrequency ? remindPeriodWks : null,
+                        "months": enableContactFrequency ? remindPeriodMos : null
                     },
                     "tags": tags,
                     "image_object_key": imageObjectKey
@@ -319,8 +328,8 @@ export default function AddContactPage() {
                     "socials": socials,
                     "lastcontact": date,
                     "reminderPeriod": {
-                        "weeks": remindPeriodWks,
-                        "months": remindPeriodMos
+                        "weeks": enableContactFrequency ? remindPeriodWks : null,
+                        "months": enableContactFrequency ? remindPeriodMos : null
                     },
                     "tags": tags,
                     "image_object_key": imageObjectKey
@@ -621,16 +630,27 @@ export default function AddContactPage() {
                     
                     {/* Contact Frequency */}
                     <YStack space={SPACING.xs}>
-                        <Text 
-                            fontSize={TYPOGRAPHY.sizes.sm}
-                            fontWeight={TYPOGRAPHY.weights.medium}
-                            color="$gray10"
-                        >
-                            Contact Every
-                        </Text>
-                        <CommunicationFrequencySelector
-                            onChange={onChangeRemindPeriod}
-                        />
+                        <XStack justifyContent="space-between" alignItems="center">
+                            <Text
+                                fontSize={TYPOGRAPHY.sizes.sm}
+                                fontWeight={TYPOGRAPHY.weights.medium}
+                                color="$gray10"
+                            >
+                                Contact Every
+                            </Text>
+                            <Switch
+                                size="$2"
+                                checked={enableContactFrequency}
+                                onCheckedChange={setEnableContactFrequency}
+                            >
+                                <Switch.Thumb animation="quick" />
+                            </Switch>
+                        </XStack>
+                        {enableContactFrequency && (
+                            <CommunicationFrequencySelector
+                                onChange={onChangeRemindPeriod}
+                            />
+                        )}
                     </YStack>
                 </YStack>
 

@@ -30,6 +30,7 @@
     "@tamagui/lucide-icons": "^1.108.4",
     "axios": "^1.7.7",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "expo": "53.0.22",
     "expo-doctor": "^1.13.5",
     "expo-file-system": "^18.1.11",
