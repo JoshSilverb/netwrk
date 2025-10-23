@@ -327,6 +327,20 @@ def update_contact(
     contact.remind_in_weeks = reminder_period_weeks
     contact.remind_in_months = reminder_period_months
     contact.embedding = embedding_vector
+
+
+    # Prepare nextcontact field
+
+    if not reminder_period_months and not reminder_period_weeks:
+        contact.nextcontact = None
+    elif not last_contact:
+        contact.nextcontact = None
+    else:
+        reminderPeriod_days = reminder_period_weeks * 7 if reminder_period_weeks else 0
+        reminderPeriod_months = reminder_period_months if reminder_period_months else 0
+        contact.nextcontact = last_contact + relativedelta(months=+reminderPeriod_months, days=+reminderPeriod_days)
+
+    logger.info(f"Contact's next contact date set to {contact.nextcontact}")
     
     # Only update profile picture if a new one is provided
     if image_object_key:

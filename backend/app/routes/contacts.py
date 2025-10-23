@@ -111,7 +111,7 @@ def _generate_contact_profile_pic_url(profile_pic_object_name: str) -> str:
 @contacts_bp.route("/getContactById", methods=["POST"])
 def get_contact_by_id():
     data = request.get_json()
-    logger.info("Received get contact by ID request with data:", data)
+    logger.info(f"Received get contact by ID request with data: {data}")
 
     user_token = data["user_token"]
     contact_id = int(data["contact_id"])
@@ -129,7 +129,7 @@ def get_contact_by_id():
 @contacts_bp.route("/addContactForUser", methods=["POST"])
 def add_new_contact():
     data = request.get_json()
-    logger.info("Received add contact request with data:", data)
+    logger.info(f"Received add contact request with data: {data}")
 
     newcontact = data["newContact"]
 
@@ -144,8 +144,8 @@ def add_new_contact():
     lastcontact = datetime.strptime(lastcontact_str, "%Y-%M-%d").date()
     
     tags: list[str] = newcontact['tags']
-    reminder_period_weeks: int = int(newcontact['reminderPeriod']['weeks'])
-    reminder_period_months: int = int(newcontact['reminderPeriod']['months'])
+    reminder_period_weeks: int | None = newcontact['reminderPeriod']['weeks']
+    reminder_period_months: int | None = newcontact['reminderPeriod']['months']
     image_object_key: str = newcontact.get('image_object_key', '')
 
     coordinate = None
@@ -179,7 +179,7 @@ def add_new_contact():
 @contacts_bp.route("/removeContactForUser", methods=["POST"])
 def remove_contact():
     data = request.get_json()
-    logger.info("Received remove contact request with data:", data)
+    logger.info(f"Received remove contact request with data: {data}")
 
     user_token = data["user_token"]
     contact_id = int(data["contact_id"])
@@ -192,7 +192,7 @@ def remove_contact():
 @contacts_bp.route("/updateContactForUser", methods=["POST"])
 def update_contact():
     data = request.get_json()
-    logger.info("Received update contact request wtih data:", data)
+    logger.info(f"Received update contact request wtih data: {data}")
 
     newcontact = data["newContact"]
 
@@ -209,8 +209,8 @@ def update_contact():
     lastcontact = datetime.strptime(lastcontact_str, "%Y-%M-%d").date()
     
     tags: list[str] = newcontact['tags']
-    reminder_period_weeks: int = int(newcontact['reminderPeriod']['weeks'])
-    reminder_period_months: int = int(newcontact['reminderPeriod']['months'])
+    reminder_period_weeks: int | None = newcontact['reminderPeriod']['weeks']
+    reminder_period_months: int | None = newcontact['reminderPeriod']['months']
     image_object_key: str = newcontact.get('image_object_key', '')
 
     coordinate = None
@@ -245,7 +245,7 @@ def update_contact():
 @contacts_bp.route("/searchContacts", methods=["POST"])
 def search_contacts():
     data = request.get_json()
-    logger.info("Received search contacts request with data:", data)
+    logger.info(f"Received search contacts request with data: {data}")
 
     user_token: str = data['user_token']
     search_params: dict = data['search_params']
