@@ -38,6 +38,7 @@ export default function AddContactPage() {
     const [tags,       setTags]       = React.useState([]);
     const [newTag,     setNewTag]          = React.useState('');
     const [selectedImage, setSelectedImage] = React.useState(null);
+    const [profileImageURI, setProfileImageURI] = React.useState(null);
 
     // Extra location var
     const ref = React.useRef<CustomPlacesAutocompleteRef>(null);
@@ -104,6 +105,7 @@ export default function AddContactPage() {
 
         if (!result.canceled) {
             setSelectedImage(result.assets[0]);
+            setProfileImageURI(result.assets[0].uri)
         }
     };
 
@@ -229,6 +231,7 @@ export default function AddContactPage() {
         setTags([]);
         setDate(new Date());
         setSelectedImage(null);
+        setProfileImageURI(null);
     }
 
     const setDataFromContact = (contact) => {
@@ -261,6 +264,7 @@ export default function AddContactPage() {
         }
         console.log(`Set last contact date to value=${date}`)
         setSelectedImage(null); 
+        setProfileImageURI(contact.profile_pic_url);
     }
 
     //================================
@@ -423,10 +427,10 @@ export default function AddContactPage() {
                     <Pressable onPress={selectImage}>
                         <View position="relative">
                             <Avatar circular size="$10">
-                                {selectedImage ? (
+                                {profileImageURI ? (
                                 <Avatar.Image
                                     accessibilityLabel={fullname}
-                                    src={selectedImage.uri}
+                                    src={profileImageURI}
                                 />
                                 ) : (
                                 <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">
