@@ -302,6 +302,7 @@ export default function AddContactPage() {
             const response = await axios.post(addContactForUserURL, requestBody)
             console.log(response.data)
             if (response.status == 200) {
+                await resetData();
                 // For new contacts, navigate to the contact page
                 const redirectLink = "/contact/" + response.data;
                 router.push(redirectLink);
@@ -345,6 +346,7 @@ export default function AddContactPage() {
             const response = await axios.post(updateContactForUserURL, requestBody)
             console.log(response.data)
             if (response.status == 200) {
+                await resetData();
                 // For updates, navigate to the updated contact view
                 const redirectLink = "/contact/" + response.data;
                 router.push(redirectLink);
