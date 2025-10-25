@@ -890,6 +890,7 @@ export default function AddContactPage() {
                             size="$4"
                             variant="outlined"
                             onPress={() => {
+                                resetData();
                                 const contactViewLink = "/contact/" + id;
                                 router.push(contactViewLink);
                             }}

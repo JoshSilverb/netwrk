@@ -272,6 +272,7 @@ export default function mapScreen() {
                   <ContactsList 
                     contacts={contactsByLocation.get(activeLocation)} 
                     prefix="locationlist" 
+                    onMorePressCallback={() => setIsSheetOpen(false)}
                   />
                 }
               </YStack>

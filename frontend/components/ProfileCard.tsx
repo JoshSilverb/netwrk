@@ -1,13 +1,32 @@
 import React from "react";
 
 import { Contact } from '@/constants/Definitions';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { ChevronDown, User as UserIcon } from '@tamagui/lucide-icons'
 import { Accordion, Paragraph, Square, Avatar, XStack, YStack, SizableText, View, Button } from 'tamagui'
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES } from '@/constants/Styles';
 
-const ProfileCard = ({ contact, keyNum } : { contact : Contact, keyNum : number}) => {
+const ProfileCard = ({ 
+    contact, 
+    keyNum, 
+    onMorePressCallback 
+} : { 
+    contact: Contact, 
+    keyNum: number, 
+    onMorePressCallback?: () => void
+}) => {
+
     const contactLinkUrl = "/contact/" + contact.contact_id;
+
+    const router = useRouter();
+    
+    const callCallbackAndRedirect = async () => {
+        // Call parent-provided callback if given.
+        onMorePressCallback?.();
+
+        // Redirect to contact page
+        router.push(contactLinkUrl);
+    }
 
     return (
         <Accordion 
@@ -82,16 +101,17 @@ const ProfileCard = ({ contact, keyNum } : { contact : Contact, keyNum : number}
                         >
                             {contact.userbio}
                         </Paragraph>
-                        <Link href={contactLinkUrl} key={keyNum} asChild >
+                        {/* <Link href={contactLinkUrl} key={keyNum} asChild > */}
                             <Button 
                                 size="$2" 
                                 backgroundColor="$blue9" 
                                 color="white"
                                 alignSelf="flex-start"
+                                onPress={callCallbackAndRedirect}
                             >
                                 More...
                             </Button>
-                        </Link>
+                        {/* </Link> */}
                     </YStack>
                 </Accordion.Content>
             </Accordion.Item>
