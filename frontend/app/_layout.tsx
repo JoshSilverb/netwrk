@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import config from '@/tamagui.config' // your configuration
 import { TamaguiProvider } from '@tamagui/core'
 import { PortalProvider } from '@tamagui/portal'
@@ -50,13 +51,15 @@ export default function RootLayout() {
   }
 
   return (
-    <TamaguiProvider config={config}>
-      <PortalProvider shouldAddRootHost>
-        <AuthProvider>
-          <RootLayoutNav />
-        </AuthProvider>
-      </PortalProvider>
-    </TamaguiProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <TamaguiProvider config={config}>
+        <PortalProvider shouldAddRootHost>
+          <AuthProvider>
+            <RootLayoutNav />
+          </AuthProvider>
+        </PortalProvider>
+      </TamaguiProvider>
+    </GestureHandlerRootView>
   );
 }
 

@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Sheet } from '@tamagui/sheet';
-import { Text, YStack, Button, XStack, ScrollView, View, Image } from 'tamagui'; 
+import { Text, YStack, Button, XStack, View, Image } from 'tamagui';
+import { ScrollView, RefreshControl } from 'react-native';
 import ContactsList from '@/components/ContactsList';
 import { Loader } from '@/components/Loader';
 import { searchContactsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
 import { RotateCw } from '@tamagui/lucide-icons';
-import { RefreshControl } from 'react-native';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import { getCurrentLocation } from '@/utils/locationutil';
 
@@ -227,11 +227,23 @@ export default function mapScreen() {
         onOpenChange={setIsSheetOpen}
         snapPoints={[70]}
         dismissOnSnapToBottom
+        zIndex={100000}
+        disableDrag
       >
-        <Sheet.Frame backgroundColor="$background">
+        <Sheet.Overlay
+          animation="lazy"
+          enterStyle={{ opacity: 0 }}
+          exitStyle={{ opacity: 0 }}
+        />
+        <Sheet.Frame backgroundColor="$background" padding="$2" space flex={1}>
           <Sheet.Handle backgroundColor="$gray8" />
-          <Sheet.Overlay />
-          <Sheet.ScrollView>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            showsVerticalScrollIndicator={true}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
+          >
             <YStack space={SPACING.lg} padding={SPACING.lg}>
               {/* Sheet Header */}
               <YStack 
@@ -278,17 +290,19 @@ export default function mapScreen() {
               </YStack>
               
               {/* Close Button */}
-              <Button 
+              <Button
                 onPress={() => setIsSheetOpen(false)}
                 size="$4"
                 backgroundColor="$blue9"
                 color="white"
                 marginTop={SPACING.md}
+                pressStyle={{ opacity: 0.8, backgroundColor: '$blue10' }}
+                focusStyle={{ backgroundColor: '$blue10' }}
               >
                 Close
               </Button>
             </YStack>
-          </Sheet.ScrollView>
+          </ScrollView>
         </Sheet.Frame>
       </Sheet>
     </View>

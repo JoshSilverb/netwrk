@@ -29,14 +29,15 @@ const ProfileCard = ({
     }
 
     return (
-        <Accordion 
-            overflow="hidden" 
-            type="multiple" 
+        <Accordion
+            overflow="hidden"
+            type="multiple"
             marginBottom={SPACING.sm}
             borderRadius={SPACING.sm}
             borderWidth={1}
             borderColor="$borderColor"
             backgroundColor="$background"
+            collapsable={false}
         >
             <Accordion.Item value={String(keyNum)}>
                 <Accordion.Trigger 
@@ -101,13 +102,14 @@ const ProfileCard = ({
                         >
                             {contact.userbio}
                         </Paragraph>
-                        {/* <Link href={contactLinkUrl} key={keyNum} asChild > */}
-                            <Button 
-                                size="$2" 
-                                backgroundColor="$blue9" 
+                            <Button
+                                size="$2"
+                                backgroundColor="$blue9"
                                 color="white"
                                 alignSelf="flex-start"
                                 onPress={callCallbackAndRedirect}
+                                pressStyle={{ opacity: 0.8, backgroundColor: '$blue10' }}
+                                focusStyle={{ backgroundColor: '$blue10' }}
                             >
                                 More...
                             </Button>
