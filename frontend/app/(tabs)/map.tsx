@@ -228,7 +228,6 @@ export default function mapScreen() {
         snapPoints={[70]}
         dismissOnSnapToBottom
         zIndex={100000}
-        disableDrag
       >
         <Sheet.Overlay
           animation="lazy"

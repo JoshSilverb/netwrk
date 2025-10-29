@@ -436,46 +436,58 @@ export default function ContactPage() {
       </ScrollView>        
       
       {/* Bottom Action Buttons */}
-      <XStack 
+      <View
         position="absolute"
         bottom={0}
         left={0}
         right={0}
+        padding={SPACING.md}
         backgroundColor="$background"
         borderTopWidth={1}
         borderTopColor="$borderColor"
-        padding={SPACING.md}
-        justifyContent="space-between"
-        alignItems="center"
         shadowColor="$shadowColor"
         shadowOffset={{ width: 0, height: -2 }}
         shadowOpacity={0.1}
         shadowRadius={4}
         elevation={4}
       >
-        <Button 
-          onPress={removeContact}
-          size="$3"
-          backgroundColor="$red9"
-          color="white"
-        >
-          Delete
-        </Button>
-        <Button 
-          size="$3"
-          variant="outlined"
-        >
-          Share
-        </Button>
-        <Button 
-          onPress={editContact}
-          size="$3"
-          backgroundColor="$blue9"
-          color="white"
-        >
-          Edit
-        </Button>
-      </XStack>
+        <XStack space={SPACING.sm}>
+          <Button
+            onPress={removeContact}
+            size="$4"
+            backgroundColor="$red9"
+            color="white"
+            fontSize={TYPOGRAPHY.sizes.md}
+            fontWeight={TYPOGRAPHY.weights.bold}
+            borderRadius={BORDER_RADIUS.md}
+            flex={1}
+          >
+            Delete
+          </Button>
+          <Button
+            size="$4"
+            variant="outlined"
+            fontSize={TYPOGRAPHY.sizes.md}
+            fontWeight={TYPOGRAPHY.weights.bold}
+            borderRadius={BORDER_RADIUS.md}
+            flex={1}
+          >
+            Share
+          </Button>
+          <Button
+            onPress={editContact}
+            size="$4"
+            backgroundColor="$blue9"
+            color="white"
+            fontSize={TYPOGRAPHY.sizes.md}
+            fontWeight={TYPOGRAPHY.weights.bold}
+            borderRadius={BORDER_RADIUS.md}
+            flex={1}
+          >
+            Edit
+          </Button>
+        </XStack>
+      </View>
       </YStack>
     </View>
   );
