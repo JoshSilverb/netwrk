@@ -23,6 +23,7 @@ export default function AddContactPage() {
     console.log("Rendering add page with ID param =", id);
 
     const [loading,       setLoading]       = React.useState(true);
+    const [errorMessage, setErrorMessage] = React.useState('');
 
     // Basic data 
     const [fullname,   onChangeFullname]   = React.useState('');
@@ -77,8 +78,9 @@ export default function AddContactPage() {
     
     // Tags
     const addTag = () => {
-        if (newTag && !tags.includes(newTag)) {
-            setTags([...tags, newTag]);
+        const trimmedTag = newTag.trim();
+        if (trimmedTag && !tags.includes(trimmedTag)) {
+            setTags([...tags, trimmedTag]);
             setNewTag('');
         }
     }
@@ -156,6 +158,7 @@ export default function AddContactPage() {
             return new_filename;
         } else {
             console.error("Contact image upload failed", uploadRes.status, await uploadRes.text());
+            setErrorMessage("Failed to upload contact image");
             return "";
         }
     };
@@ -202,6 +205,7 @@ export default function AddContactPage() {
             // setErrorReceived(false);
         } catch (error) {
             console.error('Error fetching data:', error.response.data);
+            setErrorMessage("Error getting contact");
             setLoading(false);
             // setErrorReceived(true);
         }
@@ -274,6 +278,13 @@ export default function AddContactPage() {
     // Send data to backend and redirect to contact page
 
     const postNewContact = async () => {
+        if (!fullname) {
+            setErrorMessage("Cannot create a contact without a name");
+            console.error("Cannot create a contact without a name");
+
+            return;
+        }
+
         try {
             // First upload the contact image if one is selected
             const imageObjectKey = await uploadContactPicture();
@@ -311,12 +322,20 @@ export default function AddContactPage() {
         }
         catch (error) {
             console.error("Error during add contact POST request:", error);
+            setErrorMessage("Failed to upload new contact details");
         }
     }
 
     // Update contact API call
 
     const updateContact = async () => {
+        if (!fullname) {
+            setErrorMessage("Cannot update a contact without a name");
+            console.error("Cannot update a contact without a name");
+
+            return;
+        }
+
         try {
             // First upload the contact image if one is selected
             const imageObjectKey = await uploadContactPicture();
@@ -354,7 +373,8 @@ export default function AddContactPage() {
 
         }
         catch (error) {
-            console.error("Error during add contact POST request:", error);
+            console.error("Error during update contact POST request:", error);
+            setErrorMessage("Failed to update contact details")
         }
     }
 
@@ -376,6 +396,7 @@ export default function AddContactPage() {
                 contentContainerStyle={{ paddingBottom: 100 }}
             >
             <YStack space={SPACING.lg} padding={SPACING.lg}>
+                {errorMessage && <Text color="red">errorMessage</Text>}
                 {/* Full Name Input */}
                 <YStack 
                     space={SPACING.sm}
@@ -545,9 +566,9 @@ export default function AddContactPage() {
                         onChangeText={onChangeMetThrough}
                         placeholder="Describe how you met this person"
                         multiline
-                        numberOfLines={2}
                         size="$4"
                         textAlignVertical="top"
+                        minHeight={60}
                     />
                 </YStack>
 
@@ -573,9 +594,9 @@ export default function AddContactPage() {
                         onChangeText={onChangeBio}
                         placeholder="Add any notes about this person"
                         multiline
-                        numberOfLines={4}
                         size="$4"
                         textAlignVertical="top"
+                        minHeight={80}
                     />
                 </YStack>
                 {/* Contact Frequency */}
