@@ -206,7 +206,7 @@ def update_contact():
     socials: list[dict] = newcontact['socials']
 
     lastcontact_str  = newcontact['lastcontact'].split('T')[0]
-    lastcontact = datetime.strptime(lastcontact_str, "%Y-%M-%d").date()
+    lastcontact = datetime.strptime(lastcontact_str, "%Y-%m-%d").date()
     
     tags: list[str] = newcontact['tags']
     reminder_period_weeks: int | None = newcontact['reminderPeriod']['weeks']
