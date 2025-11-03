@@ -36,6 +36,8 @@ export default function AddContactPage() {
     const [remindPeriodWks, setRemindPeriodWks]  = React.useState(0);
     const [remindPeriodMos, setRemindPeriodMos]  = React.useState(1);
     const [enableContactFrequency, setEnableContactFrequency] = React.useState(true);
+    const [initialFrequencyType, setInitialFrequencyType] = React.useState<'weeks' | 'months'>('months');
+    const [initialFrequencyValue, setInitialFrequencyValue] = React.useState(1);
     const [tags,       setTags]       = React.useState([]);
     const [newTag,     setNewTag]          = React.useState('');
     const [selectedImage, setSelectedImage] = React.useState(null);
@@ -232,6 +234,8 @@ export default function AddContactPage() {
         setRemindPeriodWks(0);
         setRemindPeriodMos(1);
         setEnableContactFrequency(true);
+        setInitialFrequencyType('months');
+        setInitialFrequencyValue(1);
         setTags([]);
         setDate(new Date());
         setSelectedImage(null);
@@ -253,6 +257,22 @@ export default function AddContactPage() {
         setEnableContactFrequency(hasReminderPeriod);
         setRemindPeriodWks(contact.remind_in_weeks || 0);
         setRemindPeriodMos(contact.remind_in_months || 1);
+
+        console.log(`Weeks: ${contact.remind_in_weeks}, months: ${contact.remind_in_months}, months?: ${Boolean(contact.remind_in_months)}`)
+
+        // Set initial frequency type based on which value is given
+        if (contact.remind_in_weeks && !contact.remind_in_months) {
+            console.log("Setting frequency to weeks");
+            setInitialFrequencyType('weeks');
+            setInitialFrequencyValue(contact.remind_in_weeks);
+        } else if (contact.remind_in_months && !contact.remind_in_weeks) {
+            console.log("Setting frequency to months");
+            setInitialFrequencyType('months');
+            setInitialFrequencyValue(contact.remind_in_months);
+        } else {
+            console.log("Setting frequency to default (months)");
+            setInitialFrequencyType('months'); // Default to months
+        }
 
         setTags(contact.tags);
         let dateStr = contact.lastcontact.replace(',', '');  // "17 Apr 2025"
@@ -675,6 +695,8 @@ export default function AddContactPage() {
                         {enableContactFrequency && (
                             <CommunicationFrequencySelector
                                 onChange={onChangeRemindPeriod}
+                                initialFrequencyType={initialFrequencyType}
+                                initialValue={initialFrequencyValue}
                             />
                         )}
                     </YStack>

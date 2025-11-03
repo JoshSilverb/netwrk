@@ -7,12 +7,28 @@ import { BORDER_RADIUS } from '@/constants/Styles';
 type FrequencyOption = 'weeks' | 'months'
 
 type SelectDemoItemProps = SelectProps & {
-    onChange?: (weeks: number, months: number) => void
+    onChange?: (weeks: number, months: number) => void,
+    initialFrequencyType?: FrequencyOption,
+    initialValue?: number
 }
 
-export function CommunicationFrequencySelector({ onChange, ...props }: SelectDemoItemProps) {
-    const [selectedOption, setSelectedOption] = useState<FrequencyOption>('months')
-    const [value, setValue] = useState('1')
+export function CommunicationFrequencySelector({ onChange, initialFrequencyType, initialValue, ...props }: SelectDemoItemProps) {
+    const [selectedOption, setSelectedOption] = useState<FrequencyOption>(initialFrequencyType || 'months')
+    const [value, setValue] = useState(String(initialValue || 1))
+
+    console.log(`Initialized selector with freq: ${selectedOption} given ${initialFrequencyType}`)
+
+    // Sync state with prop changes
+    useEffect(() => {
+        if (initialFrequencyType && initialFrequencyType !== selectedOption) {
+            console.log(`Updating selectedOption from ${selectedOption} to ${initialFrequencyType}`)
+            setSelectedOption(initialFrequencyType)
+        }
+        if (initialValue && String(initialValue) !== value) {
+            console.log(`Updating value from ${value} to ${initialValue}`)
+            setValue(String(initialValue))
+        }
+    }, [initialFrequencyType, initialValue])
 
     const cleanAndSetValue = (inputValue: string) => {
         const sanitizedValue = inputValue.replace(/[^0-9]/g, '')
@@ -25,6 +41,8 @@ export function CommunicationFrequencySelector({ onChange, ...props }: SelectDem
 
     useEffect(() => {
         const intValue = parseInt(value) || 0
+
+        console.log(`Update to communication frequency: now it's ${selectedOption}, ${intValue}`)
 
         if (selectedOption === 'weeks') {
             onChange?.(intValue, 0)
