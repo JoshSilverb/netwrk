@@ -336,7 +336,7 @@ export default function AddContactPage() {
                 await resetData();
                 // For new contacts, navigate to the contact page
                 const redirectLink = "/contact/" + response.data;
-                router.push(redirectLink);
+                router.replace(redirectLink);
             }
 
         }
@@ -386,9 +386,8 @@ export default function AddContactPage() {
             console.log(response.data)
             if (response.status == 200) {
                 await resetData();
-                // For updates, navigate to the updated contact view
-                const redirectLink = "/contact/" + response.data;
-                router.push(redirectLink);
+                // Just dismiss - the contact page will auto-refresh on focus
+                router.dismiss();
             }
 
         }

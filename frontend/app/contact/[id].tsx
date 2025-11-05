@@ -1,9 +1,9 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Contact } from '@/constants/Definitions';
 import { View, Text, Group, Button, Paragraph, XStack, YStack, Avatar, ScrollView, Accordion, Square } from 'tamagui';
 import { ChevronUp, ChevronDown, User as UserIcon } from '@tamagui/lucide-icons'
 import { removeContactForUserURL } from '@/constants/Apis';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Loader } from '@/components/Loader';
 import { getContactByIdURL } from '@/constants/Apis';
 import axios from 'axios';
@@ -21,10 +21,19 @@ export default function ContactPage() {
   const [errorReceived, setErrorReceived] = useState(false);
 
   const { token, setToken } = useAuth();
-  
+
   useEffect(() => {
       fetchContactById();
   }, []);
+
+  // Refetch contact data whenever the page comes into focus
+  // This ensures the page shows updated data after editing
+  useFocusEffect(
+    useCallback(() => {
+      console.log("Contact page focused, refetching data");
+      fetchContactById();
+    }, [id, token])
+  );
 
   const fetchContactById = async () => {
     const requestBody = {
