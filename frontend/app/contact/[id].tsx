@@ -3,7 +3,7 @@ import { Contact } from '@/constants/Definitions';
 import { View, Text, Group, Button, Paragraph, XStack, YStack, Avatar, ScrollView, Accordion, Square } from 'tamagui';
 import { ChevronUp, ChevronDown, User as UserIcon } from '@tamagui/lucide-icons'
 import { removeContactForUserURL } from '@/constants/Apis';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Loader } from '@/components/Loader';
 import { getContactByIdURL } from '@/constants/Apis';
 import axios from 'axios';
@@ -22,12 +22,8 @@ export default function ContactPage() {
 
   const { token, setToken } = useAuth();
 
-  useEffect(() => {
-      fetchContactById();
-  }, []);
-
   // Refetch contact data whenever the page comes into focus
-  // This ensures the page shows updated data after editing
+  // This ensures the page shows updated data after editing and on initial load
   useFocusEffect(
     useCallback(() => {
       console.log("Contact page focused, refetching data");

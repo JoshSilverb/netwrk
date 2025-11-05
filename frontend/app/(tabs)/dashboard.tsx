@@ -1,5 +1,5 @@
 import { Text, View, RefreshControl } from 'react-native';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 import ContactsList from '@/components/ContactsList'
 import { Link } from 'expo-router';
@@ -9,6 +9,7 @@ import { searchContactsURL } from '@/constants/Apis';
 import { Loader } from '@/components/Loader';
 import { useAuth } from '@/components/AuthContext';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES } from '@/constants/Styles';
+import { useFocusEffect } from 'expo-router'
 
 import { getCurrentLocation } from '@/utils/locationutil';
 
@@ -26,10 +27,13 @@ export default function DashboardScreen() {
 
     console.log(token);
 
-    useEffect(() => {
-        getContacts();
-    }, []);
-
+    // This ensures the page shows updated data whenever it's opened
+    useFocusEffect(
+        useCallback(() => {
+            getContacts();
+        }, [token])
+    );
+    
     const getContacts = async () => {
         fetchContactsByNextContactDate();
         fetchContactsByLocation();

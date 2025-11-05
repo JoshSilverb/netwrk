@@ -198,7 +198,7 @@ export default function mapScreen() {
             >
               {contacts.map((contact, index) => (
                 <View key={index}>
-                  {contactsByLocation.has(contact.location) && 
+                  {contact.coordinate && contactsByLocation.has(contact.location) && 
                   <Marker
                   coordinate={getContactCoords(contact)}
                   title={contact.location}

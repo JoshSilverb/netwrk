@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import  ContactsList from '@/components/ContactsList'
 import { RadioGroup, ScrollView, YStack, Paragraph, Input, Button, XStack, Sheet, Switch, Label, Text, View } from 'tamagui';
 import { Loader } from '@/components/Loader';
@@ -10,6 +10,7 @@ import { Months } from '@/constants/Definitions';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { getCurrentLocation } from '@/utils/locationutil';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
+import { useFocusEffect } from 'expo-router'
 
 import axios from 'axios';
 
@@ -69,9 +70,13 @@ export default function contactsScreen() {
         return String(date) === String(minDate);
     }
 
-    useEffect(() => {
-        fetchAll();
-    }, []);
+    // This ensures the page shows updated data whenever it's opened
+    useFocusEffect(
+        useCallback(() => {
+            fetchAll();
+        }, [token])
+    );
+    
 
     const fetchTags = async () => {
 
