@@ -465,14 +465,14 @@ def validate_user_credentials_and_regenerate_token(username: str, password: str)
         raise NameError("Invalid credentials")
 
     # Generate new token
-    new_user_token = uuid.uuid4().hex
-    user.user_token = new_user_token
+    # new_user_token = uuid.uuid4().hex
+    # user.user_token = new_user_token
 
     # Commit the update
-    db.session.commit()
+    # db.session.commit()
 
     logger.info(f"Successfully authenticated user: {username}")
-    return new_user_token
+    return user.user_token
 
 
 def validate_token(user_token: str):
@@ -644,6 +644,7 @@ def search_contacts_and_sort(
         vector_str = '[' + ','.join(map(str, embedding_string)) + ']'
         query = query.order_by(text(f"embedding <-> '{vector_str}'")).limit(15)
     elif sort_option_enum == SortOptions.NEXT_CONTACT_DATE:
+        query = query.filter(Contact.nextcontact.isnot(None))
         query = query.order_by(Contact.nextcontact.asc())
 
     logger.info(f"Executing contact search - Sort: {sort_option_enum}, Query: '{query_string}'")
