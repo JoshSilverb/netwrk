@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import  ContactsList from '@/components/ContactsList'
 import { RadioGroup, ScrollView, YStack, Paragraph, Input, Button, XStack, Sheet, Switch, Label, Text, View } from 'tamagui';
 import { Loader } from '@/components/Loader';
@@ -11,8 +11,11 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { getCurrentLocation } from '@/utils/locationutil';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import { useFocusEffect } from 'expo-router'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import axios from 'axios';
+
+const FILTER_STATE_KEY = '@contacts_filter_state';
 
 export default function contactsScreen() {
     // const tags = ['Friends', 'Family', 'Work', 'Other']; // Example tag list
@@ -34,18 +37,90 @@ export default function contactsScreen() {
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+
+    // Initialize with defaults - will be updated from AsyncStorage
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [selectedSortOption, setSelectedSortOption] = useState(String(sortOptions[0]));
-
     const [dateLowerBound, setDateLowerBound] = useState(new Date(0));
     const [dateUpperBound, setDateUpperBound] = useState(new Date(Date.now()));
+    const [filterStateLoaded, setFilterStateLoaded] = useState(false);
 
     const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
     const [tagsDropdownOpen, setTagsDropdownOpen] = useState(false);
     const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
     const [showDateLowerBound, setShowDateLowerBound] = useState(false);
     const [showDateUpperBound, setShowDateUpperBound] = useState(false);
+
+    // Load filter state from AsyncStorage and then fetch data
+    useFocusEffect(
+        useCallback(() => {
+            const loadAndFetch = async () => {
+                try {
+                    // First, load the saved filter state
+                    const savedState = await AsyncStorage.getItem(FILTER_STATE_KEY);
+                    console.log('Raw saved state from AsyncStorage:', savedState);
+
+                    let filterState = {
+                        searchQuery: '',
+                        selectedTags: [],
+                        selectedSortOption: String(sortOptions[0]),
+                        dateLowerBound: new Date(0),
+                        dateUpperBound: new Date(Date.now())
+                    };
+
+                    if (savedState) {
+                        const parsed = JSON.parse(savedState);
+                        console.log('Loading filter state from AsyncStorage:', parsed);
+                        filterState = {
+                            searchQuery: parsed.searchQuery || '',
+                            selectedTags: parsed.selectedTags || [],
+                            selectedSortOption: parsed.selectedSortOption || String(sortOptions[0]),
+                            dateLowerBound: parsed.dateLowerBound ? new Date(parsed.dateLowerBound) : new Date(0),
+                            dateUpperBound: parsed.dateUpperBound ? new Date(parsed.dateUpperBound) : new Date(Date.now())
+                        };
+                    }
+
+                    // Update state with loaded values
+                    setSearchQuery(filterState.searchQuery);
+                    setSelectedTags(filterState.selectedTags);
+                    setSelectedSortOption(filterState.selectedSortOption);
+                    setDateLowerBound(filterState.dateLowerBound);
+                    setDateUpperBound(filterState.dateUpperBound);
+                    setFilterStateLoaded(true);
+
+                    // Now fetch data using the loaded filter state
+                    await fetchTagsWithState();
+                    await fetchContactsWithState(filterState);
+                } catch (error) {
+                    console.error('Error in loadAndFetch:', error);
+                }
+            };
+            loadAndFetch();
+        }, [token])
+    );
+
+    // Save filter state to AsyncStorage whenever it changes (but only after initial load)
+    useEffect(() => {
+        if (!filterStateLoaded) return; // Don't save until we've loaded the initial state
+
+        const saveFilterState = async () => {
+            try {
+                const stateToSave = {
+                    searchQuery,
+                    selectedTags,
+                    selectedSortOption,
+                    dateLowerBound: dateLowerBound.toISOString(),
+                    dateUpperBound: dateUpperBound.toISOString()
+                };
+                console.log('Saving filter state to AsyncStorage:', stateToSave);
+                await AsyncStorage.setItem(FILTER_STATE_KEY, JSON.stringify(stateToSave));
+            } catch (error) {
+                console.error('Error saving filter state:', error);
+            }
+        };
+        saveFilterState();
+    }, [searchQuery, selectedTags, selectedSortOption, dateLowerBound, dateUpperBound, filterStateLoaded]);
 
     const showDateLowerBoundPicker = () => {
         setShowDateLowerBound(true);
@@ -70,16 +145,7 @@ export default function contactsScreen() {
         return String(date) === String(minDate);
     }
 
-    // This ensures the page shows updated data whenever it's opened
-    useFocusEffect(
-        useCallback(() => {
-            fetchAll();
-        }, [token])
-    );
-    
-
-    const fetchTags = async () => {
-
+    const fetchTagsWithState = async () => {
         // Get Tags query to be sent
         const requestBody = {
             user_token: token
@@ -98,22 +164,20 @@ export default function contactsScreen() {
         }
     };
 
-    const fetchContacts = async () => {
+    const fetchContactsWithState = async (filterState: any) => {
         const location = await getCurrentLocation();
-        
-        console.log(`Search query: ${searchQuery}`);
-        console.log(`Selected tags: ${selectedTags}`);
-        console.log(`Current location: ${location}`);
+
+        console.log(`Using filter state:`, filterState);
 
         // Search query to be sent
         const requestBody = {
             user_token: token,
             search_params: {
-                query_string: searchQuery,
-                order_by: selectedSortOption,
-                tags: selectedTags,
-                lower_bound_date: dateLowerBound,
-                upper_bound_date: dateUpperBound,
+                query_string: filterState.searchQuery,
+                order_by: filterState.selectedSortOption,
+                tags: filterState.selectedTags,
+                lower_bound_date: filterState.dateLowerBound,
+                upper_bound_date: filterState.dateUpperBound,
                 user_lat: location.latitude,
                 user_lon: location.longitude,
             }
@@ -143,9 +207,25 @@ export default function contactsScreen() {
         }
     };
 
+    // These functions use current state (for when user manually applies filters)
+    const fetchTags = async () => {
+        await fetchTagsWithState();
+    };
+
+    const fetchContacts = async () => {
+        const filterState = {
+            searchQuery,
+            selectedTags,
+            selectedSortOption,
+            dateLowerBound,
+            dateUpperBound
+        };
+        await fetchContactsWithState(filterState);
+    };
+
     const fetchAll = async () => {
-        fetchTags();
-        fetchContacts();
+        await fetchTags();
+        await fetchContacts();
     }
 
     const toggleTag = (tag: string) => {
