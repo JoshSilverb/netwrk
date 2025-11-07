@@ -86,15 +86,7 @@ def get_contact_by_id(
     if contact.nextcontact:
         contact_dict["nextcontact"] = contact.nextcontact.strftime('%d %b, %Y')
     else:
-        last = contact.lastcontact
-        days = (contact.remind_in_weeks or 0) * 7
-        months = contact.remind_in_months or 0
-
-        next_contact_date = last + relativedelta(months=months, days=days)
-        contact.nextcontact = next_contact_date
-        db.session.commit()
-
-        contact_dict["nextcontact"] = next_contact_date.strftime('%d %b, %Y')
+        contact_dict["nextcontact"] = None
 
     # Step 4: Get socials
     contact_dict["socials"] = [
