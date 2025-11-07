@@ -145,11 +145,11 @@ def add_contact(
         geo_point = None  # Will be inserted as NULL in the DB
 
     # Prepare nextcontact field
-    reminderPeriod_days = reminder_period_weeks * 7 if reminder_period_weeks else 0
-    reminderPeriod_months = reminder_period_months if reminder_period_months else 0
-    if not last_contact:
+    if (not reminder_period_months and not reminder_period_weeks) or not last_contact:
         next_contact = None
     else:
+        reminderPeriod_days = reminder_period_weeks * 7 if reminder_period_weeks else 0
+        reminderPeriod_months = reminder_period_months if reminder_period_months else 0
         next_contact = last_contact + relativedelta(months=+reminderPeriod_months, days=+reminderPeriod_days)
 
 
@@ -331,9 +331,7 @@ def update_contact(
 
     # Prepare nextcontact field
 
-    if not reminder_period_months and not reminder_period_weeks:
-        contact.nextcontact = None
-    elif not last_contact:
+    if (not reminder_period_months and not reminder_period_weeks) or not last_contact:
         contact.nextcontact = None
     else:
         reminderPeriod_days = reminder_period_weeks * 7 if reminder_period_weeks else 0
