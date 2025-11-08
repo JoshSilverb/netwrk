@@ -336,7 +336,7 @@ export default function AddContactPage() {
                 await resetData();
                 // For new contacts, navigate to the contact page
                 const redirectLink = "/contact/" + response.data;
-                router.replace(redirectLink);
+                router.push(redirectLink);
             }
 
         }
