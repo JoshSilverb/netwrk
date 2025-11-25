@@ -13,7 +13,8 @@ export default {
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.joshsilv.netwrk"
     },
     "android": {
       "adaptiveIcon": {
