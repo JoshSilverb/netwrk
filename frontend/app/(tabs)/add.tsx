@@ -9,6 +9,7 @@ import axios from 'axios';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/components/AuthContext';
 import CustomPlacesAutocomplete, { CustomPlacesAutocompleteRef } from '@/components/CustomPlacesAutocomplete';
+import CustomTagsAutocomplete, { CustomTagsAutocompleteRef } from '@/components/CustomTagsAutocomplete';
 import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon, User as UserIcon } from '@tamagui/lucide-icons';
 import { CommunicationFrequencySelector } from '@/components/CommunicationFrequencySelector';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
@@ -45,6 +46,7 @@ export default function AddContactPage() {
 
     // Extra location var
     const ref = React.useRef<CustomPlacesAutocompleteRef>(null);
+    const tagRef = React.useRef<CustomTagsAutocompleteRef>(null);
 
     // Last Contact date picker
     const [date, setDate] = React.useState(() => new Date());
@@ -84,8 +86,13 @@ export default function AddContactPage() {
         if (trimmedTag && !tags.includes(trimmedTag)) {
             setTags([...tags, trimmedTag]);
             setNewTag('');
+            tagRef.current?.setTagText('');
         }
     }
+
+    const handleTagSuggestionPress = (tag: string) => {
+        setNewTag(tag);
+    };
 
     const removeTag = (index) => {
         setTags(tags.filter((_, i) => i !== index));
@@ -756,15 +763,36 @@ export default function AddContactPage() {
                         
                         {/* Add New Tag */}
                         <XStack space={SPACING.xs} alignItems="center">
-                            <Input
+                            <View
                                 flex={1}
-                                placeholder="Add a tag"
-                                value={newTag}
-                                onChangeText={setNewTag}
-                                size="$2"
-                                height={36}
-                                fontSize={TYPOGRAPHY.sizes.sm}
-                            />
+                                borderWidth={1}
+                                borderColor="$borderColor"
+                                borderRadius={BORDER_RADIUS.sm}
+                                backgroundColor="$background"
+                            >
+                                <CustomTagsAutocomplete
+                                    placeholder="Add a tag"
+                                    value={newTag}
+                                    onChangeText={setNewTag}
+                                    onPress={handleTagSuggestionPress}
+                                    token={token}
+                                    ref={tagRef}
+                                    textInputProps={{
+                                        style: {
+                                            fontSize: TYPOGRAPHY.sizes.sm,
+                                            height: 36,
+                                        }
+                                    }}
+                                    styles={{
+                                        container: { flex: 0 },
+                                        textInput: {
+                                            borderWidth: 0,
+                                            backgroundColor: 'transparent',
+                                        },
+                                    }}
+                                    disableScroll={true}
+                                />
+                            </View>
                             <Button
                                 size="$2"
                                 onPress={addTag}
