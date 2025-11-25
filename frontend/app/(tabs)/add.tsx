@@ -16,14 +16,7 @@ import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constant
 import * as ImagePicker from 'expo-image-picker';
 import mime from 'mime';
 import { parse } from 'date-fns';
-
-// Utility function to format date as YYYY-MM-DD string (timezone-agnostic)
-const formatDateForAPI = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-};
+import { formatDateForAPI } from '@/utils/utilfunctions';
 
 export default function AddContactPage() {
     const params = useLocalSearchParams<{ id?: string }>();

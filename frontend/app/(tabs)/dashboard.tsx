@@ -11,6 +11,7 @@ import { useAuth } from '@/components/AuthContext';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES } from '@/constants/Styles';
 import { useFocusEffect } from 'expo-router'
 
+import { formatDateForAPI } from '@/utils/utilfunctions';
 import { getCurrentLocation } from '@/utils/locationutil';
 
 export default function DashboardScreen() {
@@ -53,8 +54,8 @@ export default function DashboardScreen() {
                 query_string: "",
                 order_by: "Next contact date",
                 tags: [],
-                lower_bound_date: dateLowerBound,
-                upper_bound_date: dateUpperBound
+                lower_bound_date: formatDateForAPI(dateLowerBound),
+                upper_bound_date: formatDateForAPI(dateUpperBound)
             }
         }
         console.log("Sending FetchContactsByNextContactDate request with body:", requestBody);
@@ -100,8 +101,8 @@ export default function DashboardScreen() {
                 query_string: "",
                 order_by: "Distance",
                 tags: [],
-                lower_bound_date: dateLowerBound,
-                upper_bound_date: dateUpperBound,
+                lower_bound_date: formatDateForAPI(dateLowerBound),
+                upper_bound_date: formatDateForAPI(dateUpperBound),
                 user_lat: location.latitude,
                 user_lon: location.longitude,
             }
