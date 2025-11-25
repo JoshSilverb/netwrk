@@ -140,9 +140,9 @@ def add_new_contact():
     metthrough: str = newcontact['metthrough']
     socials: list[dict] = newcontact['socials']
 
-    lastcontact_str  = newcontact['lastcontact'].split('T')[0]
+    lastcontact_str = newcontact['lastcontact']
     lastcontact = datetime.strptime(lastcontact_str, "%Y-%m-%d").date()
-    
+
     tags: list[str] = newcontact['tags']
     reminder_period_weeks: int | None = newcontact['reminderPeriod']['weeks']
     reminder_period_months: int | None = newcontact['reminderPeriod']['months']
@@ -205,9 +205,9 @@ def update_contact():
     metthrough: str = newcontact['metthrough']
     socials: list[dict] = newcontact['socials']
 
-    lastcontact_str  = newcontact['lastcontact'].split('T')[0]
+    lastcontact_str = newcontact['lastcontact']
     lastcontact = datetime.strptime(lastcontact_str, "%Y-%m-%d").date()
-    
+
     tags: list[str] = newcontact['tags']
     reminder_period_weeks: int | None = newcontact['reminderPeriod']['weeks']
     reminder_period_months: int | None = newcontact['reminderPeriod']['months']
@@ -254,8 +254,9 @@ def search_contacts():
     order_by: str     = search_params['order_by']
     tags: list[str]   = search_params['tags']
 
-    lower_bound_date_str  = search_params['lower_bound_date'].split('T')[0]
-    upper_bound_date_str  = search_params['upper_bound_date'].split('T')[0]
+    # Dates are now sent as YYYY-MM-DD strings (timezone-agnostic)
+    lower_bound_date_str = search_params['lower_bound_date']
+    upper_bound_date_str = search_params['upper_bound_date']
 
     lower_bound_date = datetime.strptime(lower_bound_date_str, "%Y-%m-%d").date()
     upper_bound_date = datetime.strptime(upper_bound_date_str, "%Y-%m-%d").date()
