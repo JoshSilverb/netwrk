@@ -10,6 +10,7 @@ import { useAuth } from '@/components/AuthContext';
 import { RotateCw } from '@tamagui/lucide-icons';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import { getCurrentLocation } from '@/utils/locationutil';
+import { formatDateForAPI } from '@/utils/utilfunctions';
 
 import axios from 'axios';
 
@@ -30,8 +31,6 @@ export default function mapScreen() {
   const { token, setToken }     = useAuth();
 
   const [contactsByLocation, _]   = useState(new Map<string, string[]>());
-
-  // const contactsByLocation = new Map<string, string[]>();
 
   // Function to open the modal sheet
   const handleMarkerPress = (location:string) => {
@@ -82,8 +81,6 @@ export default function mapScreen() {
         contactsByLocation.set(location, [contact]);
       }
     }
-
-    // console.log("Contacts by location:", contactsByLocation);
   }
 
   const fetchContacts = async () => {
@@ -96,8 +93,8 @@ export default function mapScreen() {
     const requestBody = {
         user_token: token,
         search_params: {
-          "lower_bound_date": dateLowerBound, 
-          "upper_bound_date": dateUpperBound,
+          "lower_bound_date": formatDateForAPI(dateLowerBound), 
+          "upper_bound_date": formatDateForAPI(dateUpperBound),
           "order_by": "Date added",
           "query_string": "",
           "tags": []
@@ -136,12 +133,6 @@ export default function mapScreen() {
 
     return {latitude: lat, longitude: lon};
   } 
-
-  // const location = await getCurrentLocation();
-  // if (!location) {
-  //     console.log("Location not retrieved, not searching for nearby contacts");
-  //     return; // Exit if location is null
-  // }
 
   return (
     <View style={CONTAINER_STYLES.screen}>
