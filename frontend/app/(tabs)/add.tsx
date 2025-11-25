@@ -17,6 +17,14 @@ import * as ImagePicker from 'expo-image-picker';
 import mime from 'mime';
 import { parse } from 'date-fns';
 
+// Utility function to format date as YYYY-MM-DD string (timezone-agnostic)
+const formatDateForAPI = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 export default function AddContactPage() {
     const params = useLocalSearchParams<{ id?: string }>();
     const id = params.id ?? "0";
@@ -325,7 +333,7 @@ export default function AddContactPage() {
                     "userbio": bio,
                     "metthrough": metThrough,
                     "socials": socials,
-                    "lastcontact": date,
+                    "lastcontact": formatDateForAPI(date),
                     "reminderPeriod": {
                         "weeks": enableContactFrequency ? remindPeriodWks : null,
                         "months": enableContactFrequency ? remindPeriodMos : null
@@ -377,7 +385,7 @@ export default function AddContactPage() {
                     "userbio": bio,
                     "metthrough": metThrough,
                     "socials": socials,
-                    "lastcontact": date,
+                    "lastcontact": formatDateForAPI(date),
                     "reminderPeriod": {
                         "weeks": enableContactFrequency ? remindPeriodWks : null,
                         "months": enableContactFrequency ? remindPeriodMos : null
