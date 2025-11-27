@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 
-import { TextInput, ScrollView, Pressable, Alert } from 'react-native';
+import { TextInput, ScrollView, Pressable, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Months } from '@/constants/Definitions';
 import { Text, View, Group, Separator, XStack, YStack, Button, Paragraph, Input, Avatar, Switch, Label } from 'tamagui';
@@ -421,6 +421,11 @@ export default function AddContactPage() {
                     headerBackButtonMenuEnabled: false,
                 }}
             />
+            <KeyboardAvoidingView
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                style={{ flex: 1 }}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+            >
             <ScrollView
                 automaticallyAdjustKeyboardInsets={true}
                 keyboardShouldPersistTaps='always'
@@ -942,7 +947,8 @@ export default function AddContactPage() {
 
             </YStack>
             </ScrollView>
-            
+            </KeyboardAvoidingView>
+
             {/* Floating Action Buttons */}
             <View
                 position="absolute"

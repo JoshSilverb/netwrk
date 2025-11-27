@@ -7,6 +7,7 @@ import { useAuth } from '@/components/AuthContext';
 import { Check as CheckIcon } from '@tamagui/lucide-icons';
 import { saveToken, getToken } from '@/utils/tokenstore';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardAvoidingView, Platform } from 'react-native';
 
 export default function createAccountScreen() {
   const [username, setUsername] = useState('');
@@ -65,7 +66,11 @@ export default function createAccountScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }} edges={['top', 'bottom']}>
-    <ScrollView>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
+    <ScrollView keyboardShouldPersistTaps="handled">
     <YStack
       f={1}
       alignItems="center"
@@ -154,6 +159,7 @@ export default function createAccountScreen() {
       </XStack>
     </YStack>
     </ScrollView>
+    </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

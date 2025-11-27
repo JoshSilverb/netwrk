@@ -1,6 +1,6 @@
 import { Stack, Link, router } from 'expo-router';
 import { View, Button, XStack, YStack, Avatar, ScrollView, Text, Sheet, Label, Switch, Separator, Input } from 'tamagui';
-import { Pressable, Alert } from 'react-native';
+import { Pressable, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon, User as UserIcon } from '@tamagui/lucide-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { getUserDetailsURL, updateUserDetailsURL, getS3UploadURL } from '@/constants/Apis';
@@ -437,13 +437,17 @@ export default function AccountPage() {
       {/* Edit Profile Modal */}
       {editProfileSheetActive && (
       <Sheet native open={editProfileSheetActive} onOpenChange={setEditProfileSheetActive} dismissOnOverlayPress>
-          <Sheet.Frame 
+          <Sheet.Frame
               backgroundColor="$background"
               borderTopLeftRadius={BORDER_RADIUS.lg}
               borderTopRightRadius={BORDER_RADIUS.lg}
           >
           <Sheet.Handle backgroundColor="$gray8" />
-          <ScrollView>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+          >
+          <ScrollView keyboardShouldPersistTaps="handled">
             <YStack 
                 space={SPACING.lg} 
                 padding={SPACING.lg}
@@ -540,11 +544,12 @@ export default function AccountPage() {
                 </YStack>
             </YStack>
           </ScrollView>
-          
+          </KeyboardAvoidingView>
+
           {/* Action Buttons */}
-          <XStack 
-              padding={SPACING.md} 
-              justifyContent="flex-end" 
+          <XStack
+              padding={SPACING.md}
+              justifyContent="flex-end"
               space={SPACING.sm}
               borderTopWidth={1}
               borderTopColor="$borderColor"
