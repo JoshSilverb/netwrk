@@ -40,9 +40,18 @@ export default {
     "plugins": [
       "expo-router",
       [
-        "expo-location",
+      "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+          "locationAlwaysAndWhenInUsePermission": "We use your location to show nearby contacts on the map and help you discover people in your area. Your location is only used while the app is open.",
+          "locationWhenInUsePermission": "We use your location to show nearby contacts on the map while you're using the app.",
+          "isIosBackgroundLocationEnabled": false
+        }
+      ]
+      [
+      "expo-image-picker",
+        {
+          "photosPermission": "We need access to your photo library so you can select profile pictures for your contacts and personalize your account.",
+          "cameraPermission": "We need access to your camera so you can take profile pictures for your contacts and account."
         }
       ],
       "expo-font",
