@@ -57,6 +57,12 @@ export default {
         "cameraPermission": "We need access to your camera so you can take profile pictures for your contacts and account."
       }
       ],
+      [
+      "react-native-maps",
+        {
+          "useGoogleMaps": true
+        }
+      ]
       "expo-font",
       "expo-secure-store",
       "expo-web-browser"
