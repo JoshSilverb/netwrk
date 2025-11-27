@@ -1,0 +1,4 @@
+export DATABASE_URL="A"
+export GOOGLE_API_KEY="A"
+export OPENAI_API_KEY="A"
+export S3_BUCKET_NAME="A"
