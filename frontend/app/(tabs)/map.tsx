@@ -3,6 +3,7 @@ import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Sheet } from '@tamagui/sheet';
 import { Text, YStack, Button, XStack, View, Image } from 'tamagui';
 import { ScrollView, RefreshControl } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import ContactsList from '@/components/ContactsList';
 import { Loader } from '@/components/Loader';
 import { searchContactsURL } from '@/constants/Apis';
@@ -135,6 +136,7 @@ export default function mapScreen() {
   } 
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
     <View style={CONTAINER_STYLES.screen}>
       <ScrollView
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
@@ -296,5 +298,6 @@ export default function mapScreen() {
         </Sheet.Frame>
       </Sheet>
     </View>
+    </SafeAreaView>
   );
 }

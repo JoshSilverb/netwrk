@@ -5,6 +5,7 @@ import { Loader } from '@/components/Loader';
 import { searchContactsURL, getTagsForUserURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
 import { Keyboard, Pressable, RefreshControl, Modal, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Months } from '@/constants/Definitions';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -236,6 +237,7 @@ export default function contactsScreen() {
     };
     
     return (
+        <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
         <View style={CONTAINER_STYLES.screen}>
             <ScrollView
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAll} />}>
@@ -833,6 +835,7 @@ export default function contactsScreen() {
                 </YStack>
             </ScrollView>
         </View>
+        </SafeAreaView>
     );
 
 }

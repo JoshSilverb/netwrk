@@ -6,6 +6,7 @@ import { storeUserCredentialsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
 import { Check as CheckIcon } from '@tamagui/lucide-icons';
 import { saveToken, getToken } from '@/utils/tokenstore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function createAccountScreen() {
   const [username, setUsername] = useState('');
@@ -63,13 +64,14 @@ export default function createAccountScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white pt-10">
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }} edges={['top', 'bottom']}>
     <ScrollView>
     <YStack
       f={1}
       alignItems="center"
       justifyContent="center"
       backgroundColor="$background"
+      paddingTop={20}
       // px="$4"
       // space
     >
@@ -152,6 +154,6 @@ export default function createAccountScreen() {
       </XStack>
     </YStack>
     </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

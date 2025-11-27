@@ -1,4 +1,5 @@
 import React from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { TextInput, ScrollView, Pressable, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -44,6 +45,9 @@ export default function AddContactPage() {
     const [newTag,     setNewTag]          = React.useState('');
     const [selectedImage, setSelectedImage] = React.useState(null);
     const [profileImageURI, setProfileImageURI] = React.useState(null);
+
+    // Safe area insets for bottom button
+    const insets = useSafeAreaInsets();
 
     // Extra location var
     const ref = React.useRef<CustomPlacesAutocompleteRef>(null);
@@ -417,10 +421,10 @@ export default function AddContactPage() {
                     headerBackButtonMenuEnabled: false,
                 }} 
             />
-            <ScrollView 
-                automaticallyAdjustKeyboardInsets={true} 
+            <ScrollView
+                automaticallyAdjustKeyboardInsets={true}
                 keyboardShouldPersistTaps='always'
-                contentContainerStyle={{ paddingBottom: 100 }}
+                contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
             >
             <YStack space={SPACING.lg} padding={SPACING.lg}>
                 {errorMessage && <Text color="red">errorMessage</Text>}
@@ -941,7 +945,7 @@ export default function AddContactPage() {
             {/* Floating Action Buttons */}
             <View
                 position="absolute"
-                bottom={0}
+                bottom={insets.bottom}
                 left={0}
                 right={0}
                 padding={SPACING.md}

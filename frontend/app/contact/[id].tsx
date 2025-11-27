@@ -10,17 +10,19 @@ import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/components/AuthContext';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
 export default function ContactPage() {
   const { id } = useLocalSearchParams();
-  
+
   const [contact, setContact] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [errorReceived, setErrorReceived] = useState(false);
 
   const { token, setToken } = useAuth();
+  const insets = useSafeAreaInsets();
 
   // Refetch contact data whenever the page comes into focus
   // This ensures the page shows updated data after editing and on initial load
@@ -443,7 +445,7 @@ export default function ContactPage() {
       {/* Bottom Action Buttons */}
       <View
         position="absolute"
-        bottom={0}
+        bottom={insets.bottom}
         left={0}
         right={0}
         padding={SPACING.md}

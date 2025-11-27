@@ -6,6 +6,7 @@ import { validateUserCredentialsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
 import { Check as CheckIcon } from '@tamagui/lucide-icons';
 import { saveToken, getToken } from '@/utils/tokenstore';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -66,13 +67,14 @@ export default function LoginScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white pt-20"> 
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }} edges={['top', 'bottom']}>
     <ScrollView>
     <YStack
       f={1}
       alignItems="center"
       justifyContent="center"
       backgroundColor="$background"
+      paddingTop={20}
     >
       <Text fontFamily="$heading" fontSize="$7" color="$color" mb="$4">
         Welcome Back
@@ -139,6 +141,6 @@ export default function LoginScreen() {
       </XStack>
     </YStack>
     </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }

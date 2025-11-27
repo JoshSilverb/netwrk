@@ -1,5 +1,6 @@
 import { Text, View, RefreshControl } from 'react-native';
 import { useState, useEffect, useCallback } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import ContactsList from '@/components/ContactsList'
 import { Link } from 'expo-router';
@@ -129,6 +130,7 @@ export default function DashboardScreen() {
     };
 
     return (
+        <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
         <View style={CONTAINER_STYLES.screen}>
         <ScrollView
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={getContacts} />}>
@@ -199,5 +201,6 @@ export default function DashboardScreen() {
         </YStack>
         </ScrollView>
         </View>
+        </SafeAreaView>
     );
 }
