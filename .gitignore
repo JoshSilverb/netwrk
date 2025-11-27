@@ -9,6 +9,7 @@ node_modules/
 .expo/
 dist/
 web-build/
+frontend/ios/
 
 # Native
 *.orig.*
