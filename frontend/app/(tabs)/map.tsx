@@ -136,11 +136,10 @@ export default function mapScreen() {
   } 
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+    <SafeAreaView style={{ flex: 1 }} edges={[]}>
     <View style={CONTAINER_STYLES.screen}>
       <ScrollView
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
-        contentContainerStyle={{ paddingBottom: 20 }}
       >
       <YStack space={SPACING.lg} padding={SPACING.lg}>
         {/* Header */}

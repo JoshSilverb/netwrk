@@ -237,7 +237,7 @@ export default function contactsScreen() {
     };
     
     return (
-        <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+        <SafeAreaView style={{ flex: 1 }} edges={[]}>
         <View style={CONTAINER_STYLES.screen}>
             <ScrollView
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAll} />}>

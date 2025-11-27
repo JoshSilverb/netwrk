@@ -130,12 +130,12 @@ export default function DashboardScreen() {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+        <SafeAreaView style={{ flex: 1 }} edges={[]}>
         <View style={CONTAINER_STYLES.screen}>
         <ScrollView
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={getContacts} />}>
         {/* Scrolling Stack */}
-        <YStack space={SPACING.xl} paddingBottom={SPACING.xl}>
+        <YStack space={SPACING.md}>
             {/* Featured Contacts Stack */}
             <YStack style={CONTAINER_STYLES.section}>
                 <Text style={{

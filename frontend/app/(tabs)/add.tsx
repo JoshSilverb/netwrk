@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 
 import { TextInput, ScrollView, Pressable, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -410,6 +410,7 @@ export default function AddContactPage() {
     }
 
     return (
+        <SafeAreaView style={{ flex: 1 }} edges={[]}>
         <View style={CONTAINER_STYLES.screen}>
             <Stack.Screen 
                 options={{
@@ -424,7 +425,7 @@ export default function AddContactPage() {
             <ScrollView
                 automaticallyAdjustKeyboardInsets={true}
                 keyboardShouldPersistTaps='always'
-                contentContainerStyle={{ paddingBottom: 100 + insets.bottom }}
+                contentContainerStyle={{ paddingBottom: 80 }}
             >
             <YStack space={SPACING.lg} padding={SPACING.lg}>
                 {errorMessage && <Text color="red">errorMessage</Text>}
@@ -945,10 +946,11 @@ export default function AddContactPage() {
             {/* Floating Action Buttons */}
             <View
                 position="absolute"
-                bottom={insets.bottom}
+                bottom={0}
                 left={0}
                 right={0}
                 padding={SPACING.md}
+                paddingBottom={insets.bottom || SPACING.md}
                 backgroundColor="$background"
                 borderTopWidth={1}
                 borderTopColor="$borderColor"
@@ -1005,5 +1007,6 @@ export default function AddContactPage() {
                 )}
             </View>
         </View>
+        </SafeAreaView>
     );
 }
