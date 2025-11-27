@@ -130,10 +130,10 @@ export default function DashboardScreen() {
     };
 
     return (
-        <SafeAreaView style={{ flex: 1 }} edges={[]}>
         <View style={CONTAINER_STYLES.screen}>
         <ScrollView
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={getContacts} />}>
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={getContacts} />}
+            contentInsetAdjustmentBehavior="automatic">
         {/* Scrolling Stack */}
         <YStack space={SPACING.md}>
             {/* Featured Contacts Stack */}
@@ -201,6 +201,5 @@ export default function DashboardScreen() {
         </YStack>
         </ScrollView>
         </View>
-        </SafeAreaView>
     );
 }

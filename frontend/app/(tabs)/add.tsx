@@ -410,9 +410,8 @@ export default function AddContactPage() {
     }
 
     return (
-        <SafeAreaView style={{ flex: 1 }} edges={[]}>
         <View style={CONTAINER_STYLES.screen}>
-            <Stack.Screen 
+            <Stack.Screen
                 options={{
                     title: id === '0' ? 'Add Contact' : 'Edit Contact',
                     headerShown: true,
@@ -420,12 +419,13 @@ export default function AddContactPage() {
                     presentation: id === '0' ? 'modal' : 'card',
                     gestureEnabled: true,
                     headerBackButtonMenuEnabled: false,
-                }} 
+                }}
             />
             <ScrollView
                 automaticallyAdjustKeyboardInsets={true}
                 keyboardShouldPersistTaps='always'
-                contentContainerStyle={{ paddingBottom: 80 }}
+                contentInsetAdjustmentBehavior="automatic"
+                contentContainerStyle={{ paddingBottom: 80 + (insets.bottom || 0) }}
             >
             <YStack space={SPACING.lg} padding={SPACING.lg}>
                 {errorMessage && <Text color="red">errorMessage</Text>}
@@ -1007,6 +1007,5 @@ export default function AddContactPage() {
                 )}
             </View>
         </View>
-        </SafeAreaView>
     );
 }

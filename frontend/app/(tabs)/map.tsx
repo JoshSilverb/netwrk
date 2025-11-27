@@ -136,10 +136,10 @@ export default function mapScreen() {
   } 
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={[]}>
     <View style={CONTAINER_STYLES.screen}>
       <ScrollView
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+        contentInsetAdjustmentBehavior="automatic"
       >
       <YStack space={SPACING.lg} padding={SPACING.lg}>
         {/* Header */}
@@ -297,6 +297,5 @@ export default function mapScreen() {
         </Sheet.Frame>
       </Sheet>
     </View>
-    </SafeAreaView>
   );
 }
