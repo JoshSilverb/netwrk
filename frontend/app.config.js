@@ -14,7 +14,10 @@ export default {
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.joshsilv.netwrk"
+      "bundleIdentifier": "com.joshsilv.netwrk",
+      "config": {
+        "googleMapsApiKey": process.env.IOS_GOOGLE_API_KEY
+      }
     },
     "android": {
       "adaptiveIcon": {
