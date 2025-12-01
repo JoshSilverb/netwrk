@@ -186,7 +186,6 @@ export default function mapScreen() {
               }}
               region={mapRegion}
               onRegionChangeComplete={setMapRegion}
-              provider={PROVIDER_GOOGLE}
             >
               {contacts.map((contact, index) => (
                 <View key={index}>
