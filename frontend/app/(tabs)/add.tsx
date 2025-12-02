@@ -972,8 +972,7 @@ export default function AddContactPage() {
                             variant="outlined"
                             onPress={() => {
                                 resetData();
-                                const contactViewLink = "/contact/" + id;
-                                router.push(contactViewLink);
+                                router.dismiss();
                             }}
                             fontSize={TYPOGRAPHY.sizes.md}
                             fontWeight={TYPOGRAPHY.weights.bold}

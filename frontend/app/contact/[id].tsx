@@ -105,14 +105,14 @@ export default function ContactPage() {
   if (errorReceived) {
     return (
       <View className="flex-1 bg-white">
-        <Stack.Screen options={{ title: "Error" }} />
+        <Stack.Screen options={{ title: "Error", headerBackTitle: 'Back' }} />
         <Paragraph>Could not find contact</Paragraph>
       </View>)
   }
 
   return (
     <View style={CONTAINER_STYLES.screen}>
-      <Stack.Screen options={{ title: "" }} />
+      <Stack.Screen options={{ title: "", headerBackTitle: 'Back' }} />
 
       <YStack flex={1} position="relative">
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
