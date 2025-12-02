@@ -427,9 +427,6 @@ export default function AddContactPage() {
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
             >
             <ScrollView
-                automaticallyAdjustKeyboardInsets={true}
-                keyboardShouldPersistTaps='always'
-                contentInsetAdjustmentBehavior="automatic"
                 contentContainerStyle={{ paddingBottom: 80 + (insets.bottom || 0) }}
             >
             <YStack space={SPACING.lg} padding={SPACING.lg}>
