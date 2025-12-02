@@ -670,22 +670,23 @@ export default function AddContactPage() {
                                 minHeight={44}
                                 justifyContent="center"
                             >
-                                <Text 
+                                <Text
                                     fontSize={TYPOGRAPHY.sizes.md}
                                     textAlign="center"
                                 >
                                     {date ? `${date.getDate()} ${Months[date.getMonth()]} ${date.getFullYear()}` : 'Select Date'}
                                 </Text>
-                                {show && (
-                                    <DateTimePicker
-                                        testID="dateTimePicker"
-                                        value={date}
-                                        mode="date"
-                                        onChange={onChange}
-                                    />
-                                )}
                             </View>
                         </Pressable>
+                        {show && (
+                            <DateTimePicker
+                                testID="dateTimePicker"
+                                value={date}
+                                mode="date"
+                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                onChange={onChange}
+                            />
+                        )}
                     </YStack>
                     
                     {/* Contact Frequency */}
