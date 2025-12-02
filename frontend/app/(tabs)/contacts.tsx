@@ -147,6 +147,11 @@ export default function contactsScreen() {
         return String(date) === String(minDate);
     }
 
+    function isDateToday(date: Date): boolean {
+        const todayDate = new Date(Date.now());
+        return String(date) === String(todayDate);
+    }
+
     const fetchTagsWithState = async () => {
         // Get Tags query to be sent
         const requestBody = {
@@ -498,7 +503,7 @@ export default function contactsScreen() {
                                     <Button 
                                         size="$2"
                                         variant="outlined"
-                                        disabled={isDateUnset(dateLowerBound)}
+                                        disabled={isDateToday(dateUpperBound)}
                                         onPress={() => setDateUpperBound(new Date(Date.now()))}
                                         fontSize={TYPOGRAPHY.sizes.xs}
                                     >
