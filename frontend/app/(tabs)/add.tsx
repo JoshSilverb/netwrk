@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import mime from 'mime';
 import { parse } from 'date-fns';
 import { formatDateForAPI } from '@/utils/utilfunctions';
+import { DatePickerModal } from '@/components/DatePickerModal';
 
 export default function AddContactPage() {
     const params = useLocalSearchParams<{ id?: string }>();
@@ -216,19 +217,15 @@ export default function AddContactPage() {
             const response = await axios.post(getContactByIdURL, requestBody);
             setDataFromContact(response.data);
             setLoading(false);
-            // setErrorReceived(false);
         } catch (error) {
             console.error('Error fetching data:', error.response.data);
             setErrorMessage("Error getting contact");
             setLoading(false);
-            // setErrorReceived(true);
         }
     };
 
-    const onChange = (event, selectedDate) => {
-        const currentDate = selectedDate;
-        setShow(false);
-        setDate(currentDate);
+    const onChange = (selectedDate) => {
+        setDate(selectedDate);
     };
 
     const showDatepicker = () => {
@@ -660,33 +657,10 @@ export default function AddContactPage() {
                         >
                             Last Contact
                         </Text>
-                        <Pressable onPress={showDatepicker}>
-                            <View
-                                padding={SPACING.sm}
-                                borderWidth={1}
-                                borderColor="$borderColor"
-                                borderRadius={BORDER_RADIUS.sm}
-                                backgroundColor="$background"
-                                minHeight={44}
-                                justifyContent="center"
-                            >
-                                <Text
-                                    fontSize={TYPOGRAPHY.sizes.md}
-                                    textAlign="center"
-                                >
-                                    {date ? `${date.getDate()} ${Months[date.getMonth()]} ${date.getFullYear()}` : 'Select Date'}
-                                </Text>
-                            </View>
-                        </Pressable>
-                        {show && (
-                            <DateTimePicker
-                                testID="dateTimePicker"
-                                value={date}
-                                mode="date"
-                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                                onChange={onChange}
-                            />
-                        )}
+                        <DatePickerModal
+                            value={date}
+                            onChange={onChange}
+                        />
                     </YStack>
                     
                     {/* Contact Frequency */}
