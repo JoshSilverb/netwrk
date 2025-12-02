@@ -8,12 +8,12 @@ import { Keyboard, Pressable, RefreshControl, Modal, TouchableOpacity } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Months } from '@/constants/Definitions';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { getCurrentLocation } from '@/utils/locationutil';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import { useFocusEffect } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { formatDateForAPI } from '@/utils/utilfunctions'
+import { DatePickerModal } from '@/components/DatePickerModal';
 
 import axios from 'axios';
 
@@ -51,8 +51,6 @@ export default function contactsScreen() {
     const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
     const [tagsDropdownOpen, setTagsDropdownOpen] = useState(false);
     const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
-    const [showDateLowerBound, setShowDateLowerBound] = useState(false);
-    const [showDateUpperBound, setShowDateUpperBound] = useState(false);
 
     // Load filter state from AsyncStorage and then fetch data
     useFocusEffect(
@@ -124,23 +122,6 @@ export default function contactsScreen() {
         saveFilterState();
     }, [searchQuery, selectedTags, selectedSortOption, dateLowerBound, dateUpperBound, filterStateLoaded]);
 
-    const showDateLowerBoundPicker = () => {
-        setShowDateLowerBound(true);
-    };
-    const showDateUpperBoundPicker = () => {
-        setShowDateUpperBound(true);
-    };
-
-    const onChangeDateLowerBound = (event, selectedDate) => {
-        const currentDate = selectedDate;
-        setShowDateLowerBound(false);
-        setDateLowerBound(currentDate);
-    };
-    const onChangeDateUpperBound = (event, selectedDate) => {
-        const currentDate = selectedDate;
-        setShowDateUpperBound(false);
-        setDateUpperBound(currentDate);
-    };
 
     function isDateUnset(date: Date): boolean {
         const minDate = new Date(0);
@@ -422,41 +403,20 @@ export default function contactsScreen() {
                                 </Text>
                                 <XStack space={SPACING.md}>
                                 <YStack space={SPACING.xs} flex={1}>
-                                    <Text 
+                                    <Text
                                         fontSize={TYPOGRAPHY.sizes.sm}
                                         fontWeight={TYPOGRAPHY.weights.medium}
                                         color="$gray10"
                                     >
                                         After
                                     </Text>
-                                    <Pressable onPress={showDateLowerBoundPicker}>
-                                        <View
-                                            padding={SPACING.sm}
-                                            borderWidth={1}
-                                            borderColor="$borderColor"
-                                            borderRadius={BORDER_RADIUS.sm}
-                                            backgroundColor="$background"
-                                            minHeight={44}
-                                            justifyContent="center"
-                                        >
-                                            <Text 
-                                                fontSize={TYPOGRAPHY.sizes.sm}
-                                                textAlign="center"
-                                                color={isDateUnset(dateLowerBound) ? "$gray9" : "$color"}
-                                            >
-                                                {isDateUnset(dateLowerBound) ? 'No lower bound' : `${dateLowerBound.getDate()} ${Months[dateLowerBound.getMonth()]} ${dateLowerBound.getFullYear()}`}
-                                            </Text>
-                                            {showDateLowerBound && (
-                                                <DateTimePicker
-                                                testID="dateTimePicker"
-                                                value={isDateUnset(dateLowerBound) ? dateUpperBound : dateLowerBound}
-                                                mode="date"
-                                                onChange={onChangeDateLowerBound}
-                                                />
-                                            )}
-                                        </View>
-                                    </Pressable>
-                                    <Button 
+                                    <DatePickerModal
+                                        value={isDateUnset(dateLowerBound) ? null : dateLowerBound}
+                                        onChange={setDateLowerBound}
+                                        placeholder="No lower bound"
+                                        textColor={isDateUnset(dateLowerBound) ? "$gray9" : "$color"}
+                                    />
+                                    <Button
                                         size="$2"
                                         variant="outlined"
                                         disabled={isDateUnset(dateLowerBound)}
@@ -467,40 +427,18 @@ export default function contactsScreen() {
                                     </Button>
                                 </YStack>
                                 <YStack space={SPACING.xs} flex={1}>
-                                    <Text 
+                                    <Text
                                         fontSize={TYPOGRAPHY.sizes.sm}
                                         fontWeight={TYPOGRAPHY.weights.medium}
                                         color="$gray10"
                                     >
                                         Before
                                     </Text>
-                                    <Pressable onPress={showDateUpperBoundPicker}>
-                                        <View
-                                            padding={SPACING.sm}
-                                            borderWidth={1}
-                                            borderColor="$borderColor"
-                                            borderRadius={BORDER_RADIUS.sm}
-                                            backgroundColor="$background"
-                                            minHeight={44}
-                                            justifyContent="center"
-                                        >
-                                            <Text 
-                                                fontSize={TYPOGRAPHY.sizes.sm}
-                                                textAlign="center"
-                                            >
-                                                {dateUpperBound.getDate()} {Months[dateUpperBound.getMonth()]} {dateUpperBound.getFullYear()}
-                                            </Text>
-                                            {showDateUpperBound && (
-                                                <DateTimePicker
-                                                testID="dateTimePicker"
-                                                value={dateUpperBound}
-                                                mode="date"
-                                                onChange={onChangeDateUpperBound}
-                                                />
-                                            )}
-                                        </View>
-                                    </Pressable>
-                                    <Button 
+                                    <DatePickerModal
+                                        value={dateUpperBound}
+                                        onChange={setDateUpperBound}
+                                    />
+                                    <Button
                                         size="$2"
                                         variant="outlined"
                                         disabled={isDateToday(dateUpperBound)}
