@@ -20,7 +20,6 @@ import axios from 'axios';
 const FILTER_STATE_KEY = '@contacts_filter_state';
 
 export default function contactsScreen() {
-    // const tags = ['Friends', 'Family', 'Work', 'Other']; // Example tag list
     const sortOptions = [
         'Date added', 
         'Last contacted (newest)', 
@@ -531,14 +530,29 @@ export default function contactsScreen() {
                                 borderRadius={BORDER_RADIUS.md}
                                 backgroundColor="$gray1"
                             >
-                                <Text 
-                                    fontSize={TYPOGRAPHY.sizes.md}
-                                    fontWeight={TYPOGRAPHY.weights.medium}
-                                    color="$gray11"
-                                    marginBottom={SPACING.xs}
-                                >
-                                    Select Tags
-                                </Text>
+                                <XStack alignItems="center" justifyContent="space-between">
+                                    <Text
+                                        fontSize={TYPOGRAPHY.sizes.md}
+                                        fontWeight={TYPOGRAPHY.weights.medium}
+                                        color="$gray11"
+                                    >
+                                        Select Tags
+                                    </Text>
+
+                                    <Button
+                                    size="$3"
+                                    variant="outlined"
+                                    onPress={() => {
+                                        setSelectedTags([]);
+                                        // setTagsDropdownOpen(false);
+                                        // setTimeout(() => setFilterDropdownOpen(true), 100);
+                                    }}
+                                    borderRadius={BORDER_RADIUS.md}
+                                    // flex={1}
+                                    >
+                                    Reset
+                                    </Button>
+                                </XStack>
                                 {tags.map((tag) => (
                                     <Pressable 
                                         key={tag}
