@@ -544,11 +544,8 @@ export default function contactsScreen() {
                                     variant="outlined"
                                     onPress={() => {
                                         setSelectedTags([]);
-                                        // setTagsDropdownOpen(false);
-                                        // setTimeout(() => setFilterDropdownOpen(true), 100);
                                     }}
                                     borderRadius={BORDER_RADIUS.md}
-                                    // flex={1}
                                     >
                                     Reset
                                     </Button>
