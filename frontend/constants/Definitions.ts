@@ -3,6 +3,8 @@
 // For simplicity of teaching, we're manually defining these types.
 // However, these types are generated automatically if you're using an ORM such as Prisma.
 
+import { Href } from "expo-router";
+
 export const Months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export type Contact = {
@@ -22,3 +24,5 @@ export type User = {
   email: string;
   password: string;
 };
+
+export const HomePageUrl: Href = "/(tabs)/contacts";

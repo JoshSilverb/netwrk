@@ -8,6 +8,7 @@ import { Check as CheckIcon } from '@tamagui/lucide-icons';
 import { saveToken, getToken } from '@/utils/tokenstore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAvoidingView, Platform } from 'react-native';
+import { HomePageUrl } from '@/constants/Definitions';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -28,7 +29,7 @@ export default function LoginScreen() {
     if (retrievedToken) {
       console.log("Retrieved saved token:", retrievedToken);
       setToken(retrievedToken);
-      router.replace('/(tabs)/dashboard');
+      router.replace(HomePageUrl);
     }
     else {
       console.log("No saved token");
@@ -52,7 +53,7 @@ export default function LoginScreen() {
         console.log("Saving token:", response.data['user_token']);
         await saveToken(response.data['user_token']);
       }
-      router.replace('/(tabs)/dashboard');
+      router.replace(HomePageUrl);
       
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {

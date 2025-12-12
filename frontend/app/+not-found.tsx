@@ -1,6 +1,7 @@
 import { Link, Stack } from 'expo-router';
 import { Text, View, Button } from 'tamagui';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES } from '@/constants/Styles';
+import { HomePageUrl } from '@/constants/Definitions';
 
 export default function NotFoundScreen() {
   return (
@@ -22,7 +23,7 @@ export default function NotFoundScreen() {
             This screen doesn't exist.
           </Text>
 
-          <Link href="/" asChild>
+          <Link href={HomePageUrl} asChild>
             <Button 
               size="$3"
               backgroundColor="$blue9"

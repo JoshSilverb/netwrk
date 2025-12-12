@@ -1,11 +1,12 @@
 import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
+import { ImageSourcePropType, Pressable } from 'react-native';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+import { Image } from 'tamagui';
 
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
@@ -13,6 +14,10 @@ function TabBarIcon(props: {
   color: string;
 }) {
   return <FontAwesome size={28} style={{ marginBottom: -3 }} {...props} />;
+}
+
+function TabBarImage(props: {icon: ImageSourcePropType, size: number}) {
+  return <Image source={props.icon} width={props.size} height={props.size} marginBottom={-15} {...props} />;
 }
 
 export default function TabLayout() {
@@ -26,7 +31,7 @@ export default function TabLayout() {
         // to prevent a hydration error in React Navigation v6.
         headerShown: useClientOnlyValue(false, true),
       }}>
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="dashboard"
         options={{
           title: 'Dashboard',
@@ -47,16 +52,10 @@ export default function TabLayout() {
             </Link>
           ),
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="add"
         options={{
-          // href: {
-          //   pathname: '/(tabs)/add',
-          //   params: {
-          //     'id': 0
-          //   }
-          // },
           title: 'Add Contact',
           tabBarIcon: ({ color }) => <TabBarIcon name="plus" color={color} />,
           headerRight: () => (
@@ -79,8 +78,9 @@ export default function TabLayout() {
       <Tabs.Screen
         name="contacts"
         options={{
-          title: 'Contacts',
-          tabBarIcon: ({ color }) => <TabBarIcon name="users" color={color} />,
+          title: '',
+          // tabBarIcon: ({ color }) => <TabBarIcon name="users" color={color} />,
+          tabBarIcon: () => <TabBarImage size={40} icon={require('../../assets/images/netwrk-icon-square.png')} />,
           headerRight: () => (
             <Link href="/account" asChild>
               <Pressable>

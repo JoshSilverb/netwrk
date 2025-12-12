@@ -15,7 +15,9 @@ import { useFocusEffect } from 'expo-router'
 import { formatDateForAPI } from '@/utils/utilfunctions';
 import { getCurrentLocation } from '@/utils/locationutil';
 
-export default function DashboardScreen() {
+
+// export default function DashboardScreen() {
+function DashboardScreen() {
 
     const [contacts, setContacts] = useState([]);
     const [nearbyContacts, setNearbyContacts] = useState([]);
