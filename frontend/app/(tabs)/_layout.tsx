@@ -1,7 +1,7 @@
 import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Tabs } from 'expo-router';
-import { ImageSourcePropType, Pressable } from 'react-native';
+import { ImageSourcePropType, Pressable, View } from 'react-native';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -18,6 +18,29 @@ function TabBarIcon(props: {
 
 function TabBarImage(props: {icon: ImageSourcePropType, size: number}) {
   return <Image source={props.icon} width={props.size} height={props.size} marginBottom={-15} {...props} />;
+}
+
+function RoundTabBarImage(props: {icon: ImageSourcePropType, size: number}) {
+  return (
+    <View style={{
+      width: props.size,
+      height: props.size,
+      borderRadius: props.size / 2,
+      borderWidth: 3,
+      borderColor: '#000',
+      overflow: 'hidden',
+      marginBottom: -10,
+      backgroundColor: '#fff',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }}>
+      <Image
+        source={props.icon}
+        width={props.size}
+        height={props.size}
+      />
+    </View>
+  );
 }
 
 export default function TabLayout() {
@@ -80,7 +103,7 @@ export default function TabLayout() {
         options={{
           title: '',
           // tabBarIcon: ({ color }) => <TabBarIcon name="users" color={color} />,
-          tabBarIcon: () => <TabBarImage size={40} icon={require('../../assets/images/netwrk-icon-square.png')} />,
+          tabBarIcon: () => <RoundTabBarImage size={70} icon={require('../../assets/images/netwrk-icon-square.png')} />,
           headerRight: () => (
             <Link href="/account" asChild>
               <Pressable>
