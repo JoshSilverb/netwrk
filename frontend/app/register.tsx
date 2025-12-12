@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { YStack, Input, Button, Text, XStack, Checkbox, Label, ScrollView, View } from 'tamagui';
+import { YStack, Input, Button, Text, XStack, Checkbox, Label, ScrollView, View, Image } from 'tamagui';
 import axios from 'axios';
 import { storeUserCredentialsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
@@ -77,10 +77,21 @@ export default function createAccountScreen() {
       alignItems="center"
       justifyContent="center"
       backgroundColor="$background"
-      paddingTop={20}
+      paddingTop={10}
       // px="$4"
       // space
     >
+      <XStack
+        backgroundColor={'#1473CBFF'} 
+        marginBottom={30}
+        alignItems="center"
+        justifyContent="center"
+      >
+        <Image width={100} height={100} source={require('../assets/images/netwrk-icon-square.png')} />
+        <Text marginRight={32} fontSize={32} color={'#FFFFFF'}>
+          Netwrk
+        </Text>
+      </XStack>
       <Text fontFamily="$heading" fontSize="$7" color="$color" mb="$4">
         Create Account
       </Text>

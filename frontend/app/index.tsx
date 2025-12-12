@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { YStack, Input, Button, Text, XStack, Checkbox, Label, ScrollView, View } from 'tamagui';
+import { YStack, Input, Button, Text, XStack, Checkbox, Label, ScrollView, View, Image } from 'tamagui';
 import axios from 'axios';
 import { validateUserCredentialsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
@@ -80,11 +80,22 @@ export default function LoginScreen() {
       alignItems="center"
       justifyContent="center"
       backgroundColor="$background"
-      paddingTop={20}
+      paddingTop={130}
     >
-      <Text fontFamily="$heading" fontSize="$7" color="$color" mb="$4">
+      <XStack
+        backgroundColor={'#1473CBFF'} 
+        marginBottom={30}
+        alignItems="center"
+        justifyContent="center"
+      >
+        <Image width={130} height={130} source={require('../assets/images/netwrk-icon-square.png')} />
+        <Text marginRight={40} fontSize={40} color={'#FFFFFF'}>
+          Netwrk
+        </Text>
+      </XStack>
+      {/* <Text fontFamily="$heading" fontSize="$7" color="$color" mb="$4">
         Welcome Back
-      </Text>
+      </Text> */}
       <Label htmlFor="username" mb="$2">
         Username
       </Label>
