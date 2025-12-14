@@ -5685,6 +5685,11 @@ expo-constants@^18.0.11, expo-constants@~18.0.11:
     "@expo/config" "~12.0.11"
     "@expo/env" "~2.0.8"
 
+expo-contacts@~15.0.11:
+  version "15.0.11"
+  resolved "https://registry.yarnpkg.com/expo-contacts/-/expo-contacts-15.0.11.tgz#f3164a1d8298d41b0bac9fcb3500bfa6027aa18b"
+  integrity sha512-buKkoQuWJgVSEvR1Yloa5SvGC/ud7T2YeYDe0R7Aa0oz8pwQpjk3W7OoL3QrXIfYcuKTrIz6ffqC8lc3peaAyg==
+
 expo-dev-client@~6.0.20:
   version "6.0.20"
   resolved "https://registry.yarnpkg.com/expo-dev-client/-/expo-dev-client-6.0.20.tgz#d5b65974785100ae7f2538e16701fa1ef55f5fad"
