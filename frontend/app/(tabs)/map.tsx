@@ -23,9 +23,11 @@ export default function mapScreen() {
 
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading]   = useState(true);
+  const [userLocation, setUserLocation] = useState(null);
+  const [isMapInteracting, setIsMapInteracting] = useState(false);
   const [mapRegion, setMapRegion] = useState({
     latitude: 40.7128,      // Default to NYC
-    longitude: -74.0060,    // Fixed longitude (was missing negative sign)
+    longitude: -74.0060,
     latitudeDelta: 50,
     longitudeDelta: 50,
   });
@@ -53,6 +55,10 @@ export default function mapScreen() {
       const location = await getCurrentLocation();
       if (location) {
         console.log("Setting initial map region to:", location);
+        setUserLocation({
+          latitude: location.latitude,
+          longitude: location.longitude,
+        });
         setMapRegion({
           latitude: location.latitude,
           longitude: location.longitude,
@@ -70,15 +76,12 @@ export default function mapScreen() {
     contactsByLocation.clear();
     console.log("Called fillContactLocationMap with", contacts.length, "contacts");
     for (const contact of contacts) {
-      console.log("Looking at a contact");
 
       const location:string = contact.location
       if (contactsByLocation.has(location)) {
-        console.log("appending location", location);
         contactsByLocation.get(location).push(contact);
       }
       else {
-        console.log("Adding location", location);
         contactsByLocation.set(location, [contact]);
       }
     }
@@ -140,6 +143,7 @@ export default function mapScreen() {
       <ScrollView
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
         contentInsetAdjustmentBehavior="automatic"
+        scrollEnabled={!isMapInteracting}
       >
       <YStack space={SPACING.lg} padding={SPACING.lg}>
         {/* Header */}
@@ -178,18 +182,21 @@ export default function mapScreen() {
           overflow="hidden"
         >
           <Loader loading={loading}>
-            <MapView 
+            <MapView
               style={{
-                width: '100%', 
+                width: '100%',
                 height: 400,
                 borderRadius: BORDER_RADIUS.md
               }}
               region={mapRegion}
               onRegionChangeComplete={setMapRegion}
+              onTouchStart={() => setIsMapInteracting(true)}
+              onTouchEnd={() => setIsMapInteracting(false)}
+              onTouchCancel={() => setIsMapInteracting(false)}
             >
               {contacts.map((contact, index) => (
                 <View key={index}>
-                  {contact.coordinate && contactsByLocation.has(contact.location) && 
+                  {contact.coordinate && contactsByLocation.has(contact.location) &&
                   <Marker
                   coordinate={getContactCoords(contact)}
                   title={contact.location}
@@ -198,13 +205,48 @@ export default function mapScreen() {
                 <Image
                   source={require('@/assets/images/mapmarker.png')}
                   style={{ height: 25, width: 25 }}
-                  resizeMode="contain" 
+                  resizeMode="contain"
                 />
               </Marker>
               }
               </View>
               ))}
-            
+
+              {/* User Location Marker - Blue Circle */}
+              {userLocation && (
+                <Marker
+                  coordinate={userLocation}
+                  anchor={{ x: 0.5, y: 0.5 }}
+                  flat
+                  zIndex={1000}
+                >
+                  <View style={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    {/* Outer accuracy circle - semi-transparent blue */}
+                    <View style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 20,
+                      backgroundColor: 'rgba(0, 122, 255, 0.15)',
+                      borderWidth: 1,
+                      borderColor: 'rgba(0, 122, 255, 0.3)',
+                      position: 'absolute',
+                    }} />
+                    {/* Inner location dot - solid blue with white border */}
+                    <View style={{
+                      width: 16,
+                      height: 16,
+                      borderRadius: 8,
+                      backgroundColor: '#007AFF',
+                      borderWidth: 3,
+                      borderColor: '#FFFFFF',
+                    }} />
+                  </View>
+                </Marker>
+              )}
+
             </MapView>
             </Loader>
         </YStack>
