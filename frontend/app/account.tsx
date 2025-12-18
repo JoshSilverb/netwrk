@@ -320,7 +320,7 @@ export default function AccountPage() {
 
     // Create a 2-second timeout promise
     const timeoutPromise = new Promise((resolve) => {
-      setTimeout(() => resolve({ timedOut: true }), 2000);
+      setTimeout(() => resolve({ timedOut: true }), 5000);
     });
 
     // Race between all uploads completing and the timeout
@@ -382,13 +382,13 @@ export default function AccountPage() {
     setSelectedContacts({});
   };
 
-  const handleConfirmContactSelection = async () => {
+  const handleConfirmContactSelection = () => {
     // Filter contacts based on selection
     const selectedContactsList = formattedContacts.filter((_, index) => selectedContacts[index]);
 
     console.log("Selected contacts to import:", selectedContactsList);
 
-    await uploadSelectedContacts(selectedContactsList);
+    uploadSelectedContacts(selectedContactsList);
 
     // Close modals and clear state
     setContactSelectionSheetActive(false);
