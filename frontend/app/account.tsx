@@ -10,7 +10,6 @@ import { removeToken } from '@/utils/tokenstore';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import * as Contacts from 'expo-contacts';
 import { formatDateForAPI } from '@/utils/utilfunctions';
-import * as FileSystem from 'expo-file-system';
 
 import mime from 'mime';
 import axios from 'axios';
@@ -22,6 +21,8 @@ export default function AccountPage() {
   const [username, setUsername] = useState('');
   const [numContacts, setNumContacts] = useState('');
   const [userBio, setUserBio] = useState('');
+
+
   const [errorMessage, setErrorMessage] = useState('');
 
   const [importSheetActive, setImportSheetActive] = useState(false);
@@ -32,12 +33,12 @@ export default function AccountPage() {
 
   const [formattedContacts, setFormattedContacts] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState<{[key: number]: boolean}>({});
-  const [uploadedContactsCount, setUploadedContactsCount] = useState(0);
 
   const [isLightMode, setIsLightMode] = useState(true);
 
   // Edit profile form state
-  const [editBio, setEditBio] = useState('');
+  const [editUsername,  setEditUsername]  = useState('');
+  const [editBio,       setEditBio]       = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   
   useEffect(() => {
@@ -128,6 +129,7 @@ export default function AccountPage() {
     // Details to update
     const requestBody = {
         user_token: token,
+        username: editUsername,
         bio: editBio,
         image_object_key: new_filename || ""
     }
@@ -280,6 +282,7 @@ export default function AccountPage() {
 
   const handleEditProfile = () => {
     // Initialize edit state with current data
+    setEditUsername(username);
     setEditBio(userBio);
     setSelectedImage(null); // Reset selected image
     setEditProfileSheetActive(true);
@@ -360,8 +363,6 @@ export default function AccountPage() {
           `Successfully uploaded all ${successCount} contacts!`
         );
       }
-
-      setUploadedContactsCount(successCount);
     }
   }
 
@@ -824,6 +825,32 @@ export default function AccountPage() {
                     </Text>
                 </YStack>
 
+                {/* Username Section */}
+                <YStack 
+                    space={SPACING.sm}
+                    padding={SPACING.md}
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius={BORDER_RADIUS.md}
+                    backgroundColor="$gray1"
+                >
+                    <Text 
+                        fontSize={TYPOGRAPHY.sizes.md}
+                        fontWeight={TYPOGRAPHY.weights.medium}
+                        color="$gray11"
+                        marginBottom={SPACING.xs}
+                    >
+                        Username
+                    </Text>
+                    <Input
+                        value={editUsername}
+                        onChangeText={setEditUsername}
+                        placeholder="New username"
+                        size="$4"
+                        textAlignVertical="top"
+                    />
+                </YStack>
+
                 {/* Bio Section */}
                 <YStack 
                     space={SPACING.sm}
@@ -844,7 +871,7 @@ export default function AccountPage() {
                     <Input
                         value={editBio}
                         onChangeText={setEditBio}
-                        placeholder="Add your bio"
+                        placeholder="New bio"
                         multiline
                         numberOfLines={4}
                         size="$4"

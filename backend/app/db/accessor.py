@@ -523,22 +523,28 @@ def get_user_details(user_token: str):
     return user_dict
 
 
-def update_user_details(user_token: str, bio: str, profile_pic_object_name: str):
+def update_user_details(user_token: str, username: str, bio: str, profile_pic_object_name: str):
     
     """
-    Add the specified 'bio' and 'profile_pic_object_name' to the database entry 
-    for the user with the specified 'user_token'.
+    Add the specified 'username', 'bio' and 'profile_pic_object_name' to the 
+    database entry  for the user with the specified 'user_token'.
     """
 
     logger.info(f"About to update user with token: '{user_token}' " + \
-                 f"to have bio: '{bio}'")
+                 f"to have new username: '{username}' and bio: '{bio}'")
 
     user = db.session.query(User).filter_by(user_token=user_token).first()
     if not user:
         raise Exception(f"No user with token {user_token} found")
     
-    logger.info(f"Got user with bio: '{user.bio}'")
+    users_with_username = db.session.query(User).filter_by(username=username).all()
+    
+    if (len(users_with_username) > 1) or (len(users_with_username) == 1 and users_with_username[0].user_token != user_token):
+        raise Exception(f"Username already taken")
 
+    logger.info(f"Got user with username: '{user.username}' and bio: '{user.bio}'")
+
+    user.username = username
     user.bio = bio
 
     # Only set new profile pic object name if one is given.

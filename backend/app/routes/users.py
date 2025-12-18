@@ -86,11 +86,12 @@ def update_user_details():
     data = request.get_json()
     logger.debug(f"Received update user request data: {data}")
     user_token: int             = data['user_token']
+    username: str               = data['username']
     bio: str                    = data['bio']
     profile_pic_object_key: str = data['image_object_key']
 
     logger.debug("Calling database update user function")
-    db_accessor.update_user_details(user_token, bio, profile_pic_object_key)
+    db_accessor.update_user_details(user_token, username, bio, profile_pic_object_key)
 
     return jsonify({})
 
