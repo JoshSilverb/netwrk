@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import { removeToken } from '@/utils/tokenstore';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
+import * as Contacts from 'expo-contacts';
 
 import * as FileSystem from 'expo-file-system';
 
@@ -22,9 +23,12 @@ export default function AccountPage() {
   const [numContacts, setNumContacts] = useState('');
   const [userBio, setUserBio] = useState('');
 
+  const [importSheetActive, setImportSheetActive] = useState(false);
   const [logoutSheetActive, setLogoutSheetActive] = useState(false);
   const [settingsSheetActive, setSettingsSheetActive] = useState(false);
   const [editProfileSheetActive, setEditProfileSheetActive] = useState(false);
+
+  const [tempImportContacts, setTempImportContacts] = useState([]);
 
   const [isLightMode, setIsLightMode] = useState(true);
 
@@ -140,6 +144,79 @@ export default function AccountPage() {
     router.replace('/');
   };
 
+  const createUserBio = (components: (string | undefined)[]): string => {
+    let outputStr = "";
+    components.map((s) => {
+      if (s !== undefined) {
+        outputStr += s;
+        outputStr += "; ";
+      }
+    });
+
+    return outputStr.slice(0, -2);
+  }
+
+  const formatPhoneNumbers = (phoneNumbers: Contacts.PhoneNumber[] | undefined): {label: string, address: string}[] => {
+    let formattedNumbers: {label: string, address: string}[] = [];
+    if (phoneNumbers === undefined) {
+      return formattedNumbers;
+    }
+
+    phoneNumbers.map((number) => {
+      formattedNumbers.push({label: number.label + " Phone", address: number.number});
+    })
+    return formattedNumbers;
+  };
+
+  const formatEmails = (emails: Contacts.Email[] | undefined): {label: string, address: string}[] => {
+    let formattedNumbers: {label: string, address: string}[] = [];
+    if (emails === undefined) {
+      return formattedNumbers;
+    }
+
+    emails.map((email) => {
+      formattedNumbers.push({label: email.label + " Email", address: email.email});
+    })
+    return formattedNumbers;
+  };
+
+  const importFromContactsApp = async () => {
+    const { status } = await Contacts.requestPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert("Permission Required", "You need to enable camera roll access to select a profile picture.");
+      return;
+    }
+    const { data } = await Contacts.getContactsAsync({});
+
+    console.log(data);
+
+    let contacts = [];
+    data.map((contact) => {
+      if (contact.imageAvailable) {
+
+      }
+      const formattedContact = {
+                          "fullname": contact.firstName + " " + contact.lastName,
+                          "location": contact.addresses,
+                          "userbio": createUserBio([contact.note, contact.jobTitle,contact.company]),
+                          "metthrough": "",
+                          "socials": [...formatPhoneNumbers(contact.phoneNumbers), ...formatEmails(contact.emails)],
+                          "lastcontact": new Date(),
+                          "reminderPeriod": {
+                              "weeks": null,
+                              "months": null
+                          },
+                          "image_object_key": null
+                      }
+      contacts.push(formattedContact);
+    });
+
+    console.log("Formatted:");
+
+    console.log(contacts);
+
+  }
+
   const selectImage = async () => {
     // Request permission
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -232,6 +309,10 @@ export default function AccountPage() {
               </Text>
             </Button>
           </Link>
+
+          <Button onPress={() => setImportSheetActive(true)}>
+            Import contacts
+          </Button>
           
         </YStack>
 
@@ -265,7 +346,99 @@ export default function AccountPage() {
           </XStack>
         </YStack>
       </YStack>
-      </ScrollView>       
+      </ScrollView>
+      
+      {/* Contact Import Modal */}
+      {importSheetActive && (
+      <Sheet native open={importSheetActive} onOpenChange={setImportSheetActive} dismissOnOverlayPress>
+          <Sheet.Frame 
+              backgroundColor="$background"
+              borderTopLeftRadius={BORDER_RADIUS.lg}
+              borderTopRightRadius={BORDER_RADIUS.lg}
+          >
+          <Sheet.Handle backgroundColor="$gray8" />
+          <YStack 
+              space={SPACING.lg} 
+              padding={SPACING.lg}
+          >
+              {/* Options */}
+              <YStack 
+                  space={SPACING.md}
+                  padding={SPACING.md}
+                  borderWidth={1}
+                  borderColor="$borderColor"
+                  borderRadius={BORDER_RADIUS.md}
+                  backgroundColor="$gray1"
+                  alignItems="center"
+              >
+                  <Text 
+                      fontSize={TYPOGRAPHY.sizes.lg}
+                      fontWeight={TYPOGRAPHY.weights.bold}
+                      color="$gray11"
+                      textAlign="center"
+                  >
+                      Import contacts
+                  </Text>
+                  <Text 
+                      fontSize={TYPOGRAPHY.sizes.md}
+                      color="$gray10"
+                      textAlign="center"
+                      lineHeight={20}
+                  >
+                      Import contacts from your phone's contacts app.
+                  </Text>
+              </YStack>
+          </YStack>
+          
+          {/* Action Buttons */}
+          <XStack 
+              padding={SPACING.md} 
+              justifyContent="flex-end" 
+              space={SPACING.sm}
+              borderTopWidth={1}
+              borderTopColor="$borderColor"
+              backgroundColor="$background"
+          >
+              <Button
+                  size="$3"
+                  variant="outlined"
+                  onPress={() => setImportSheetActive(false)}
+                  borderRadius={BORDER_RADIUS.md}
+                  flex={1}
+              >
+                  Cancel
+              </Button>
+              <Button
+                  size="$3"
+                  onPress={() => {
+                      setImportSheetActive(false);
+                      importFromContactsApp();
+                  }}
+                  backgroundColor="$blue9"
+                  color="white"
+                  borderRadius={BORDER_RADIUS.md}
+                  flex={1}
+              >
+                  From contacts app.
+              </Button>
+              <Button
+                  size="$3"
+                  onPress={() => {
+                      setImportSheetActive(false);
+                      // handleLogOut();
+                  }}
+                  backgroundColor="$blue9"
+                  color="white"
+                  borderRadius={BORDER_RADIUS.md}
+                  flex={1}
+              >
+                  From spreadsheet.
+              </Button>
+          </XStack>
+          </Sheet.Frame>
+      </Sheet>
+      )}
+
       {/* Logout Confirmation Modal */}
       {logoutSheetActive && (
       <Sheet native open={logoutSheetActive} onOpenChange={setLogoutSheetActive} dismissOnOverlayPress>
