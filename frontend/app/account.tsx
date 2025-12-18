@@ -1,15 +1,15 @@
 import { Stack, Link, router } from 'expo-router';
-import { View, Button, XStack, YStack, Avatar, ScrollView, Text, Sheet, Label, Switch, Separator, Input } from 'tamagui';
+import { View, Button, XStack, YStack, Avatar, ScrollView, Text, Sheet, Label, Switch, Separator, Input, Checkbox } from 'tamagui';
 import { Pressable, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon, User as UserIcon } from '@tamagui/lucide-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { getUserDetailsURL, updateUserDetailsURL, getS3UploadURL } from '@/constants/Apis';
+import { getUserDetailsURL, updateUserDetailsURL, getS3UploadURL, addContactForUserURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import { removeToken } from '@/utils/tokenstore';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import * as Contacts from 'expo-contacts';
-
+import { formatDateForAPI } from '@/utils/utilfunctions';
 import * as FileSystem from 'expo-file-system';
 
 import mime from 'mime';
@@ -22,13 +22,17 @@ export default function AccountPage() {
   const [username, setUsername] = useState('');
   const [numContacts, setNumContacts] = useState('');
   const [userBio, setUserBio] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const [importSheetActive, setImportSheetActive] = useState(false);
   const [logoutSheetActive, setLogoutSheetActive] = useState(false);
   const [settingsSheetActive, setSettingsSheetActive] = useState(false);
   const [editProfileSheetActive, setEditProfileSheetActive] = useState(false);
+  const [contactSelectionSheetActive, setContactSelectionSheetActive] = useState(false);
 
-  const [tempImportContacts, setTempImportContacts] = useState([]);
+  const [formattedContacts, setFormattedContacts] = useState([]);
+  const [selectedContacts, setSelectedContacts] = useState<{[key: number]: boolean}>({});
+  const [uploadedContactsCount, setUploadedContactsCount] = useState(0);
 
   const [isLightMode, setIsLightMode] = useState(true);
 
@@ -144,6 +148,31 @@ export default function AccountPage() {
     router.replace('/');
   };
 
+  const formatAddress = (addresses: Contacts.Address[] | undefined): string => {
+    if (addresses === undefined || addresses.length === 0) {
+      return "";
+    }
+    let addy = "";
+    if (addresses[0].street) {
+      addy += addresses[0].street;
+      addy += ", ";
+    }
+    if (addresses[0].city) {
+      addy += addresses[0].city;
+      addy += ", ";
+    }
+    if (addresses[0].region) {
+      addy += addresses[0].region;
+      addy += ", ";
+    }
+    if (addresses[0].country) {
+      addy += addresses[0].country;
+      addy += ", ";
+    }
+    
+    return addy.slice(0, -2);
+  }
+
   const createUserBio = (components: (string | undefined)[]): string => {
     let outputStr = "";
     components.map((s) => {
@@ -197,16 +226,17 @@ export default function AccountPage() {
       }
       const formattedContact = {
                           "fullname": contact.firstName + " " + contact.lastName,
-                          "location": contact.addresses,
+                          "location": formatAddress(contact.addresses),
                           "userbio": createUserBio([contact.note, contact.jobTitle,contact.company]),
                           "metthrough": "",
                           "socials": [...formatPhoneNumbers(contact.phoneNumbers), ...formatEmails(contact.emails)],
-                          "lastcontact": new Date(),
+                          "lastcontact": formatDateForAPI(new Date()),
                           "reminderPeriod": {
                               "weeks": null,
                               "months": null
                           },
-                          "image_object_key": null
+                          "image_object_key": null,
+                          "tags": []
                       }
       contacts.push(formattedContact);
     });
@@ -215,6 +245,16 @@ export default function AccountPage() {
 
     console.log(contacts);
 
+    // Store formatted contacts and initialize all as selected (checked)
+    setFormattedContacts(contacts);
+    const initialSelection = {};
+    contacts.forEach((_, index) => {
+      initialSelection[index] = true;
+    });
+    setSelectedContacts(initialSelection);
+
+    // Open contact selection modal
+    setContactSelectionSheetActive(true);
   }
 
   const selectImage = async () => {
@@ -258,6 +298,69 @@ export default function AccountPage() {
 
   const handleSaveSettings = async () => {
 
+  };
+
+  const uploadSelectedContacts = async (selectedContactsList: any[]) => {
+    let hadError = false;
+
+    selectedContactsList.forEach(async (contact) => {
+      const requestBody = {
+        user_token: token,
+        newContact: contact
+      };
+
+      try {
+        const response = await axios.post(addContactForUserURL, requestBody)
+        console.log(response.data)
+        if (response.status === 200) {
+          setUploadedContactsCount(uploadedContactsCount + 1);
+        }
+      }
+      catch (error) {
+        hadError = true;
+          console.error("Error during add contact POST request:", error);
+      }
+    });
+    
+    if (hadError) {
+      const failedCount = selectedContactsList.length - uploadedContactsCount;
+      setErrorMessage(`Failed to upload ${failedCount} out of ${selectedContactsList.length} new contacts`);
+    }
+    else {
+      setErrorMessage(`Successfully uploaded all ${uploadedContactsCount} out of ${selectedContactsList.length} new contacts`)
+    }
+  }
+
+  const toggleContactSelection = (index: number) => {
+    setSelectedContacts(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  const handleCancelContactSelection = () => {
+    // Close contact selection modal
+    setContactSelectionSheetActive(false);
+    // Close contact import modal
+    setImportSheetActive(false);
+    // Clear formatted contacts
+    setFormattedContacts([]);
+    setSelectedContacts({});
+  };
+
+  const handleConfirmContactSelection = async () => {
+    // Filter contacts based on selection
+    const selectedContactsList = formattedContacts.filter((_, index) => selectedContacts[index]);
+
+    console.log("Selected contacts to import:", selectedContactsList);
+
+    await uploadSelectedContacts(selectedContactsList);
+
+    // Close modals and clear state
+    setContactSelectionSheetActive(false);
+    setImportSheetActive(false);
+    setFormattedContacts([]);
+    setSelectedContacts({});
   };
 
 
@@ -313,6 +416,9 @@ export default function AccountPage() {
           <Button onPress={() => setImportSheetActive(true)}>
             Import contacts
           </Button>
+          <Text color="$red">
+            {errorMessage}
+          </Text>
           
         </YStack>
 
@@ -751,7 +857,145 @@ export default function AccountPage() {
           </Sheet.Frame>
       </Sheet>
       )}
- 
+
+      {/* Contact Selection Modal */}
+      {contactSelectionSheetActive && (
+      <Sheet native open={contactSelectionSheetActive} onOpenChange={setContactSelectionSheetActive} dismissOnOverlayPress={false}>
+          <Sheet.Frame
+              backgroundColor="$background"
+              borderTopLeftRadius={BORDER_RADIUS.lg}
+              borderTopRightRadius={BORDER_RADIUS.lg}
+          >
+          <Sheet.Handle backgroundColor="$gray8" />
+          <YStack
+              space={SPACING.lg}
+              padding={SPACING.lg}
+              flex={1}
+          >
+              {/* Header */}
+              <YStack
+                  space={SPACING.md}
+                  padding={SPACING.md}
+                  borderWidth={1}
+                  borderColor="$borderColor"
+                  borderRadius={BORDER_RADIUS.md}
+                  backgroundColor="$gray1"
+                  alignItems="center"
+              >
+                  <Text
+                      fontSize={TYPOGRAPHY.sizes.lg}
+                      fontWeight={TYPOGRAPHY.weights.bold}
+                      color="$gray11"
+                      textAlign="center"
+                  >
+                      Select Contacts to Import
+                  </Text>
+                  <Text
+                      fontSize={TYPOGRAPHY.sizes.md}
+                      color="$gray10"
+                      textAlign="center"
+                      lineHeight={20}
+                  >
+                      {Object.values(selectedContacts).filter(Boolean).length} of {formattedContacts.length} contacts selected
+                  </Text>
+              </YStack>
+
+              {/* Contacts List */}
+              <ScrollView flex={1}>
+                <YStack space={SPACING.sm}>
+                  {formattedContacts.map((contact, index) => (
+                    <Pressable
+                      key={index}
+                      onPress={() => toggleContactSelection(index)}
+                    >
+                      <XStack
+                        padding={SPACING.md}
+                        borderWidth={1}
+                        borderColor="$borderColor"
+                        borderRadius={BORDER_RADIUS.sm}
+                        backgroundColor="$background"
+                        alignItems="center"
+                        space={SPACING.md}
+                      >
+                        <Checkbox
+                          checked={selectedContacts[index]}
+                          onCheckedChange={() => toggleContactSelection(index)}
+                          size="$5"
+                        >
+                          <Checkbox.Indicator>
+                            <Text>✓</Text>
+                          </Checkbox.Indicator>
+                        </Checkbox>
+
+                        <YStack flex={1}>
+                          <Text
+                            fontSize={TYPOGRAPHY.sizes.md}
+                            fontWeight={TYPOGRAPHY.weights.medium}
+                            color="$gray12"
+                          >
+                            {contact.fullname}
+                          </Text>
+                          {contact.userbio && (
+                            <Text
+                              fontSize={TYPOGRAPHY.sizes.sm}
+                              color="$gray10"
+                              numberOfLines={1}
+                            >
+                              {contact.userbio}
+                            </Text>
+                          )}
+                          {contact.socials && contact.socials.length > 0 && (
+                            <Text
+                              fontSize={TYPOGRAPHY.sizes.sm}
+                              color="$gray9"
+                              numberOfLines={1}
+                            >
+                              {contact.socials[0].address}
+                            </Text>
+                          )}
+                        </YStack>
+                      </XStack>
+                    </Pressable>
+                  ))}
+                </YStack>
+              </ScrollView>
+          </YStack>
+
+          {/* Action Buttons */}
+          <XStack
+              padding={SPACING.md}
+              justifyContent="flex-end"
+              space={SPACING.sm}
+              borderTopWidth={1}
+              borderTopColor="$borderColor"
+              backgroundColor="$background"
+          >
+              <Button
+                  size="$3"
+                  variant="outlined"
+                  onPress={handleCancelContactSelection}
+                  borderRadius={BORDER_RADIUS.md}
+                  flex={1}
+              >
+                  Cancel
+              </Button>
+              <Button
+                  size="$3"
+                  onPress={handleConfirmContactSelection}
+                  backgroundColor="$blue9"
+                  color="white"
+                  borderRadius={BORDER_RADIUS.md}
+                  flex={1}
+              >
+                  <Text color="white">
+                      Confirm ({Object.values(selectedContacts).filter(Boolean).length})
+                  </Text>
+              </Button>
+          </XStack>
+          </Sheet.Frame>
+      </Sheet>
+      )}
+
     </View>
   );
 }
