@@ -301,33 +301,67 @@ export default function AccountPage() {
   };
 
   const uploadSelectedContacts = async (selectedContactsList: any[]) => {
-    let hadError = false;
-
-    selectedContactsList.forEach(async (contact) => {
+    // Create all upload promises for parallel execution
+    const uploadPromises = selectedContactsList.map(async (contact) => {
       const requestBody = {
         user_token: token,
         newContact: contact
       };
 
       try {
-        const response = await axios.post(addContactForUserURL, requestBody)
-        console.log(response.data)
-        if (response.status === 200) {
-          setUploadedContactsCount(uploadedContactsCount + 1);
-        }
-      }
-      catch (error) {
-        hadError = true;
-          console.error("Error during add contact POST request:", error);
+        const response = await axios.post(addContactForUserURL, requestBody);
+        console.log(response.data);
+        return { success: response.status === 200 };
+      } catch (error) {
+        console.error("Error during add contact POST request:", error);
+        return { success: false };
       }
     });
-    
-    if (hadError) {
-      const failedCount = selectedContactsList.length - uploadedContactsCount;
-      setErrorMessage(`Failed to upload ${failedCount} out of ${selectedContactsList.length} new contacts`);
-    }
-    else {
-      setErrorMessage(`Successfully uploaded all ${uploadedContactsCount} out of ${selectedContactsList.length} new contacts`)
+
+    // Create a 2-second timeout promise
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => resolve({ timedOut: true }), 2000);
+    });
+
+    // Race between all uploads completing and the timeout
+    const result = await Promise.race([
+      Promise.allSettled(uploadPromises).then(results => ({ results, timedOut: false })),
+      timeoutPromise
+    ]);
+
+    let successCount = 0;
+    let failedCount = 0;
+
+    if (result.timedOut) {
+      // Timeout occurred - show partial results
+      Alert.alert(
+        "Upload In Progress",
+        "Contact upload is taking longer than expected. Please check back later."
+      );
+    } else {
+      // All requests completed - count successes and failures
+      result.results.forEach((promiseResult) => {
+        if (promiseResult.status === 'fulfilled' && promiseResult.value.success) {
+          successCount++;
+        } else {
+          failedCount++;
+        }
+      });
+
+      // Show alert with results
+      if (failedCount > 0) {
+        Alert.alert(
+          "Upload Complete",
+          `Successfully uploaded ${successCount} out of ${selectedContactsList.length} contacts. ${failedCount} failed.`
+        );
+      } else {
+        Alert.alert(
+          "Upload Complete",
+          `Successfully uploaded all ${successCount} contacts!`
+        );
+      }
+
+      setUploadedContactsCount(successCount);
     }
   }
 
