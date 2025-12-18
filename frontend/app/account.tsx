@@ -525,29 +525,19 @@ export default function AccountPage() {
                       textAlign="center"
                       lineHeight={20}
                   >
-                      Import contacts from your phone's contacts app.
+                      Import contacts from one of these sources:
                   </Text>
               </YStack>
           </YStack>
           
           {/* Action Buttons */}
-          <XStack 
-              padding={SPACING.md} 
-              justifyContent="flex-end" 
+          <YStack
+              padding={SPACING.md}
               space={SPACING.sm}
               borderTopWidth={1}
               borderTopColor="$borderColor"
               backgroundColor="$background"
           >
-              <Button
-                  size="$3"
-                  variant="outlined"
-                  onPress={() => setImportSheetActive(false)}
-                  borderRadius={BORDER_RADIUS.md}
-                  flex={1}
-              >
-                  Cancel
-              </Button>
               <Button
                   size="$3"
                   onPress={() => {
@@ -557,11 +547,10 @@ export default function AccountPage() {
                   backgroundColor="$blue9"
                   color="white"
                   borderRadius={BORDER_RADIUS.md}
-                  flex={1}
               >
-                  From contacts app.
+                  From contacts app
               </Button>
-              <Button
+              {/* <Button
                   size="$3"
                   onPress={() => {
                       setImportSheetActive(false);
@@ -570,11 +559,18 @@ export default function AccountPage() {
                   backgroundColor="$blue9"
                   color="white"
                   borderRadius={BORDER_RADIUS.md}
-                  flex={1}
               >
-                  From spreadsheet.
+                  From spreadsheet
+              </Button> */}
+              <Button
+                  size="$3"
+                  variant="outlined"
+                  onPress={() => setImportSheetActive(false)}
+                  borderRadius={BORDER_RADIUS.md}
+              >
+                  Cancel
               </Button>
-          </XStack>
+          </YStack>
           </Sheet.Frame>
       </Sheet>
       )}
