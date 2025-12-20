@@ -983,7 +983,7 @@ export default function AccountPage() {
                         borderWidth={1}
                         borderColor="$borderColor"
                         borderRadius={BORDER_RADIUS.sm}
-                        backgroundColor="$background"
+                        backgroundColor={selectedContacts[index] ? "$gray3" : "$background"}
                         alignItems="center"
                         space={SPACING.md}
                       >
