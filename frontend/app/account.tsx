@@ -150,6 +150,18 @@ export default function AccountPage() {
     router.replace('/');
   };
 
+  const formatFullName = (firstName: string | undefined, lastName: string | undefined): string => {  
+    let outputStr = "";
+    if (firstName !== undefined) {
+      outputStr += firstName + " ";
+    }
+    if (lastName !== undefined) {
+      outputStr += lastName;
+    }
+
+    return outputStr;
+  }
+
   const formatAddress = (addresses: Contacts.Address[] | undefined): string => {
     if (addresses === undefined || addresses.length === 0) {
       return "";
@@ -227,7 +239,7 @@ export default function AccountPage() {
 
       }
       const formattedContact = {
-                          "fullname": contact.firstName + " " + contact.lastName,
+                          "fullname": formatFullName(contact.firstName, contact.lastName),
                           "location": formatAddress(contact.addresses),
                           "userbio": createUserBio([contact.note, contact.jobTitle,contact.company]),
                           "metthrough": "",
@@ -890,6 +902,7 @@ export default function AccountPage() {
               borderTopWidth={1}
               borderTopColor="$borderColor"
               backgroundColor="$background"
+              paddingBottom={80}
           >
               <Button
                   size="$3"
@@ -1026,6 +1039,7 @@ export default function AccountPage() {
               borderTopWidth={1}
               borderTopColor="$borderColor"
               backgroundColor="$background"
+              paddingBottom={80}
           >
               <Button
                   size="$3"
