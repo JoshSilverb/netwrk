@@ -259,13 +259,9 @@ export default function AccountPage() {
 
     console.log(contacts);
 
-    // Store formatted contacts and initialize all as selected (checked)
+    // Store formatted contacts and initialize all as deselected
     setFormattedContacts(contacts);
-    const initialSelection = {};
-    contacts.forEach((_, index) => {
-      initialSelection[index] = true;
-    });
-    setSelectedContacts(initialSelection);
+    setSelectedContacts({});
 
     // Open contact selection modal
     setContactSelectionSheetActive(true);
@@ -383,6 +379,16 @@ export default function AccountPage() {
       ...prev,
       [index]: !prev[index]
     }));
+  };
+
+  const handleToggleAllContacts = () => {
+    const selectedCount = Object.values(selectedContacts).filter(Boolean).length;
+    const allSelected = selectedCount === formattedContacts.length;
+    const newSelection = {};
+    formattedContacts.forEach((_, index) => {
+      newSelection[index] = !allSelected;
+    });
+    setSelectedContacts(newSelection);
   };
 
   const handleCancelContactSelection = () => {
@@ -969,6 +975,16 @@ export default function AccountPage() {
                       {Object.values(selectedContacts).filter(Boolean).length} of {formattedContacts.length} contacts selected
                   </Text>
               </YStack>
+
+              {/* Toggle All Button */}
+              <Button
+                  size="$3"
+                  onPress={handleToggleAllContacts}
+                  variant="outlined"
+                  borderRadius={BORDER_RADIUS.md}
+              >
+                  {Object.values(selectedContacts).filter(Boolean).length === formattedContacts.length ? "Deselect All" : "Select All"}
+              </Button>
 
               {/* Contacts List */}
               <ScrollView flex={1}>
