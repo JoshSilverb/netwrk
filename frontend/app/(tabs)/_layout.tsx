@@ -29,7 +29,6 @@ function RoundTabBarImage(props: {icon: ImageSourcePropType, size: number}) {
       borderWidth: 3,
       borderColor: '#000',
       overflow: 'hidden',
-      marginBottom: -10,
       backgroundColor: '#fff',
       justifyContent: 'center',
       alignItems: 'center',
@@ -80,7 +79,6 @@ export default function TabLayout() {
         name="contacts"
         options={{
           title: '',
-          // tabBarIcon: ({ color }) => <TabBarIcon name="users" color={color} />,
           tabBarIcon: () => <RoundTabBarImage size={70} icon={require('../../assets/images/netwrk-icon-square.png')} />,
           headerRight: () => (
             <Link href="/account" asChild>
