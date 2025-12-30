@@ -1,7 +1,8 @@
 import React from 'react';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 
-import { TextInput, ScrollView, Pressable, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { TextInput, Pressable, Alert } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Months } from '@/constants/Definitions';
 import { Text, View, Group, Separator, XStack, YStack, Button, Paragraph, Input, Avatar, Switch, Label } from 'tamagui';
@@ -418,13 +419,13 @@ export default function AddContactPage() {
                     headerBackButtonMenuEnabled: false,
                 }}
             />
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1 }}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-            >
-            <ScrollView
-                contentContainerStyle={{ paddingBottom: 80 + (insets.bottom || 0) }}
+            <KeyboardAwareScrollView
+                enableOnAndroid={true}
+                enableAutomaticScroll={true}
+                extraScrollHeight={20}
+                keyboardOpeningTime={0}
+                enableResetScrollToCoords={false}
+                contentContainerStyle={{ paddingBottom: SPACING.md }}
             >
             <YStack space={SPACING.lg} padding={SPACING.lg}>
                 {errorMessage && <Text color="red">errorMessage</Text>}
@@ -917,72 +918,64 @@ export default function AddContactPage() {
                 )}
                 </YStack>
 
-            </YStack>
-            </ScrollView>
-            </KeyboardAvoidingView>
-
-            {/* Floating Action Buttons */}
-            <View
-                position="absolute"
-                bottom={0}
-                left={0}
-                right={0}
-                padding={SPACING.md}
-                paddingBottom={insets.bottom || SPACING.md}
-                backgroundColor="$background"
-                borderTopWidth={1}
-                borderTopColor="$borderColor"
-                shadowColor="$shadowColor"
-                shadowOffset={{ width: 0, height: -2 }}
-                shadowOpacity={0.1}
-                shadowRadius={4}
-                elevation={4}
-            >
-                {id !== '0' ? (
-                    // Edit mode: show both Cancel and Update buttons
-                    <XStack space={SPACING.sm}>
+                {/* Action Buttons - Moved inside scroll view to rise above keyboard */}
+                <YStack
+                    paddingTop={SPACING.lg}
+                    paddingHorizontal={SPACING.md}
+                    paddingBottom={insets.bottom + SPACING.md}
+                    borderTopWidth={1}
+                    borderTopColor="$borderColor"
+                    backgroundColor="$background"
+                    marginTop={SPACING.xl}
+                >
+                    {id !== '0' ? (
+                        // Edit mode: show both Cancel and Update buttons
+                        <XStack space={SPACING.sm}>
+                            <Button
+                                size="$4"
+                                variant="outlined"
+                                onPress={() => {
+                                    resetData();
+                                    router.dismiss();
+                                }}
+                                fontSize={TYPOGRAPHY.sizes.md}
+                                fontWeight={TYPOGRAPHY.weights.bold}
+                                borderRadius={BORDER_RADIUS.md}
+                                flex={1}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                size="$4"
+                                onPress={updateContact}
+                                backgroundColor="$blue9"
+                                color="white"
+                                fontSize={TYPOGRAPHY.sizes.md}
+                                fontWeight={TYPOGRAPHY.weights.bold}
+                                borderRadius={BORDER_RADIUS.md}
+                                flex={1}
+                            >
+                                Update Contact
+                            </Button>
+                        </XStack>
+                    ) : (
+                        // Add mode: show only Add Contact button
                         <Button
                             size="$4"
-                            variant="outlined"
-                            onPress={() => {
-                                resetData();
-                                router.dismiss();
-                            }}
-                            fontSize={TYPOGRAPHY.sizes.md}
-                            fontWeight={TYPOGRAPHY.weights.bold}
-                            borderRadius={BORDER_RADIUS.md}
-                            flex={1}
-                        >
-                            Cancel
-                        </Button>
-                        <Button
-                            size="$4"
-                            onPress={updateContact}
+                            onPress={postNewContact}
                             backgroundColor="$blue9"
                             color="white"
                             fontSize={TYPOGRAPHY.sizes.md}
                             fontWeight={TYPOGRAPHY.weights.bold}
                             borderRadius={BORDER_RADIUS.md}
-                            flex={1}
                         >
-                            Update Contact
+                            Add Contact
                         </Button>
-                    </XStack>
-                ) : (
-                    // Add mode: show only Add Contact button
-                    <Button
-                        size="$4"
-                        onPress={postNewContact}
-                        backgroundColor="$blue9"
-                        color="white"
-                        fontSize={TYPOGRAPHY.sizes.md}
-                        fontWeight={TYPOGRAPHY.weights.bold}
-                        borderRadius={BORDER_RADIUS.md}
-                    >
-                        Add Contact
-                    </Button>
-                )}
-            </View>
+                    )}
+                </YStack>
+
+            </YStack>
+            </KeyboardAwareScrollView>
         </View>
     );
 }

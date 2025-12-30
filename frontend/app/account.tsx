@@ -1,6 +1,6 @@
 import { Stack, Link, router } from 'expo-router';
 import { View, Button, XStack, YStack, Avatar, ScrollView, Text, Sheet, Label, Switch, Separator, Input, Checkbox } from 'tamagui';
-import { Pressable, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { Pressable, Alert } from 'react-native';
 import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon, User as UserIcon } from '@tamagui/lucide-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { getUserDetailsURL, updateUserDetailsURL, getS3UploadURL, addContactForUserURL } from '@/constants/Apis';
@@ -8,6 +8,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
 import { removeToken } from '@/utils/tokenstore';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import * as Contacts from 'expo-contacts';
 import { formatDateForAPI } from '@/utils/utilfunctions';
 
@@ -16,6 +18,7 @@ import axios from 'axios';
 
 export default function AccountPage() {
   const { token, setToken } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const [profilePicUrl, setProfilePicUrl] = useState('');
   const [username, setUsername] = useState('');
@@ -771,11 +774,13 @@ export default function AccountPage() {
               borderTopRightRadius={BORDER_RADIUS.lg}
           >
           <Sheet.Handle backgroundColor="$gray8" />
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ flex: 1 }}
+          <KeyboardAwareScrollView
+            enableOnAndroid={true}
+            enableAutomaticScroll={true}
+            extraScrollHeight={30}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ flexGrow: 1 }}
           >
-          <ScrollView keyboardShouldPersistTaps="handled">
             <YStack 
                 space={SPACING.lg} 
                 padding={SPACING.lg}
@@ -897,8 +902,7 @@ export default function AccountPage() {
                     />
                 </YStack>
             </YStack>
-          </ScrollView>
-          </KeyboardAvoidingView>
+          </KeyboardAwareScrollView>
 
           {/* Action Buttons */}
           <XStack
@@ -908,7 +912,7 @@ export default function AccountPage() {
               borderTopWidth={1}
               borderTopColor="$borderColor"
               backgroundColor="$background"
-              paddingBottom={80}
+              paddingBottom={insets.bottom + SPACING.md}
           >
               <Button
                   size="$3"
@@ -1055,7 +1059,7 @@ export default function AccountPage() {
               borderTopWidth={1}
               borderTopColor="$borderColor"
               backgroundColor="$background"
-              paddingBottom={80}
+              paddingBottom={insets.bottom + SPACING.md}
           >
               <Button
                   size="$3"

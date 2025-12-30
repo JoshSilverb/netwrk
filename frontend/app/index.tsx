@@ -7,7 +7,7 @@ import { useAuth } from '@/components/AuthContext';
 import { Check as CheckIcon } from '@tamagui/lucide-icons';
 import { saveToken, getToken } from '@/utils/tokenstore';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { KeyboardAvoidingView, Platform } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { HomePageUrl } from '@/constants/Definitions';
 
 export default function LoginScreen() {
@@ -70,11 +70,13 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }} edges={['top', 'bottom']}>
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
+    <KeyboardAwareScrollView
+      enableOnAndroid={true}
+      enableAutomaticScroll={true}
+      extraScrollHeight={20}
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ flexGrow: 1 }}
     >
-    <ScrollView keyboardShouldPersistTaps="handled">
     <YStack
       f={1}
       alignItems="center"
@@ -157,8 +159,7 @@ export default function LoginScreen() {
         </Button>
       </XStack>
     </YStack>
-    </ScrollView>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
