@@ -403,7 +403,7 @@ def get_tags_for_user(user_token: str):
     return user_tags
 
 
-def create_user(username: str, password: str):
+def create_user(username: str, password: str, location: str | None = None):
     """
     Store the user credentials defined in the given args, and generate and store a new user token.
     Returns:
@@ -423,7 +423,8 @@ def create_user(username: str, password: str):
         username=username,
         password=hashed_password.decode('utf-8'),
         user_token=user_token,
-        num_contacts=0
+        num_contacts=0,
+        location=location
     )
 
     db.session.add(new_user)
@@ -517,16 +518,17 @@ def get_user_details(user_token: str):
         "username": user.username,
         "num_contacts": user.num_contacts,
         "bio": user.bio if user.bio else "",
-        "profile_pic_object_name": user.profile_pic_object_name if user.profile_pic_object_name else ""
+        "profile_pic_object_name": user.profile_pic_object_name if user.profile_pic_object_name else "",
+        "location": user.location if user.location else ""
     }
 
     return user_dict
 
 
-def update_user_details(user_token: str, username: str, bio: str, profile_pic_object_name: str):
-    
+def update_user_details(user_token: str, username: str, bio: str, profile_pic_object_name: str, location: str):
+
     """
-    Add the specified 'username', 'bio' and 'profile_pic_object_name' to the 
+    Add the specified 'username', 'bio', 'profile_pic_object_name', and 'location' to the
     database entry  for the user with the specified 'user_token'.
     """
 
@@ -546,6 +548,7 @@ def update_user_details(user_token: str, username: str, bio: str, profile_pic_ob
 
     user.username = username
     user.bio = bio
+    user.location = location
 
     # Only set new profile pic object name if one is given.
 

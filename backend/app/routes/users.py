@@ -51,8 +51,9 @@ def create_user():
     data = request.get_json()
     username: str = data['username']
     password: str = data['password']
+    location: str | None = data.get('location')
 
-    user_token = db_accessor.create_user(username=username, password=password)
+    user_token = db_accessor.create_user(username=username, password=password, location=location)
 
     return jsonify({'user_token': user_token})
 
@@ -89,9 +90,10 @@ def update_user_details():
     username: str               = data['username']
     bio: str                    = data['bio']
     profile_pic_object_key: str = data['image_object_key']
+    location: str               = data.get('location', '')
 
     logger.debug("Calling database update user function")
-    db_accessor.update_user_details(user_token, username, bio, profile_pic_object_key)
+    db_accessor.update_user_details(user_token, username, bio, profile_pic_object_key, location)
 
     return jsonify({})
 

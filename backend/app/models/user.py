@@ -10,6 +10,7 @@ class User(db.Model):
     num_contacts = db.Column(db.Integer, default=0)
     bio = db.Column(db.Text)
     profile_pic_object_name = db.Column(db.String(128))
+    location = db.Column(db.String(128))
 
     contacts = db.relationship("Contact", 
                                back_populates="user", 
