@@ -10,6 +10,7 @@ import { removeToken } from '@/utils/tokenstore';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import CustomPlacesAutocomplete from '@/components/CustomPlacesAutocomplete';
 import * as Contacts from 'expo-contacts';
 import { formatDateForAPI } from '@/utils/utilfunctions';
 
@@ -24,6 +25,7 @@ export default function AccountPage() {
   const [username, setUsername] = useState('');
   const [numContacts, setNumContacts] = useState('');
   const [userBio, setUserBio] = useState('');
+  const [userLocation, setUserLocation] = useState('');
 
 
   const [errorMessage, setErrorMessage] = useState('');
@@ -42,6 +44,7 @@ export default function AccountPage() {
   // Edit profile form state
   const [editUsername,  setEditUsername]  = useState('');
   const [editBio,       setEditBio]       = useState('');
+  const [editLocation,  setEditLocation]  = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   
   useEffect(() => {
@@ -61,6 +64,7 @@ export default function AccountPage() {
           setUsername(response.data["username"]);
           setNumContacts(response.data["num_contacts"]);
           setUserBio(response.data["bio"])
+          setUserLocation(response.data["location"] || "")
           // setLoading(false);
       } catch (error) {
           console.error('Error fetching data:', error);
@@ -134,7 +138,8 @@ export default function AccountPage() {
         user_token: token,
         username: editUsername,
         bio: editBio,
-        image_object_key: new_filename || ""
+        image_object_key: new_filename || "",
+        location: editLocation
     }
 
     axios.post(updateUserDetailsURL, requestBody)
@@ -295,6 +300,7 @@ export default function AccountPage() {
     // Initialize edit state with current data
     setEditUsername(username);
     setEditBio(userBio);
+    setEditLocation(userLocation);
     setSelectedImage(null); // Reset selected image
     setEditProfileSheetActive(true);
   };
@@ -442,19 +448,21 @@ export default function AccountPage() {
             )}
           </Avatar>
 
-          <Text 
+          <Text
             fontSize={TYPOGRAPHY.sizes.title}
             fontWeight={TYPOGRAPHY.weights.bold}
           >
             {username}
           </Text>
 
-          <Text 
-            fontSize={TYPOGRAPHY.sizes.md}
-            color="$gray10"
-          >
-            New York
-          </Text>
+          {userLocation && (
+            <Text
+              fontSize={TYPOGRAPHY.sizes.md}
+              color="$gray10"
+            >
+              {userLocation}
+            </Text>
+          )}
 
           <Link href='/(tabs)/contacts' asChild>
             <Button 
@@ -899,6 +907,32 @@ export default function AccountPage() {
                         numberOfLines={4}
                         size="$4"
                         textAlignVertical="top"
+                    />
+                </YStack>
+
+                {/* Location Section */}
+                <YStack
+                    space={SPACING.sm}
+                    padding={SPACING.md}
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius={BORDER_RADIUS.md}
+                    backgroundColor="$gray1"
+                >
+                    <Text
+                        fontSize={TYPOGRAPHY.sizes.md}
+                        fontWeight={TYPOGRAPHY.weights.medium}
+                        color="$gray11"
+                        marginBottom={SPACING.xs}
+                    >
+                        Location
+                    </Text>
+                    <CustomPlacesAutocomplete
+                        placeholder="Enter your location"
+                        onPress={(data) => {
+                            setEditLocation(data.description);
+                        }}
+                        disableScroll={true}
                     />
                 </YStack>
             </YStack>

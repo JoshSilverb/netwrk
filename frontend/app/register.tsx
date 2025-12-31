@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { YStack, Input, Button, Text, XStack, Checkbox, Label, ScrollView, View, Image } from 'tamagui';
 import axios from 'axios';
 import { storeUserCredentialsURL } from '@/constants/Apis';
+import CustomPlacesAutocomplete from '@/components/CustomPlacesAutocomplete';
 import { useAuth } from '@/components/AuthContext';
 import { Check as CheckIcon } from '@tamagui/lucide-icons';
 import { saveToken, getToken } from '@/utils/tokenstore';
@@ -15,6 +16,7 @@ export default function createAccountScreen() {
   const [email, setEmail] = useState('');
   const [phonenumber, setphonenumber] = useState('');
   const [password, setPassword] = useState('');
+  const [location, setLocation] = useState('');
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -43,7 +45,8 @@ export default function createAccountScreen() {
     // Login form data to be sent
     const requestBody = {
       username: username,
-      password: password
+      password: password,
+      location: location || null
     }
 
     try {
@@ -134,6 +137,18 @@ export default function createAccountScreen() {
         secureTextEntry
         borderWidth="$0.5"
       />
+      <Label htmlFor="location" mt="$3" mb="$2">
+        Location (optional)
+      </Label>
+      <View width="$12">
+        <CustomPlacesAutocomplete
+          placeholder="Enter your location"
+          onPress={(data) => {
+            setLocation(data.description);
+          }}
+          disableScroll={true}
+        />
+      </View>
       {error && (
         <Text color="$red9" mt="$3">
           {error}
