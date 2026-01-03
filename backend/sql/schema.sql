@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TABLE users(
     user_id    SERIAL PRIMARY KEY UNIQUE,
-    user_token CHAR(33), -- UUID populated upon successful login. Used for identity verification
+    user_token CHAR(32), -- UUID populated upon successful login. Used for identity verification
     username VARCHAR(128) NOT NULL,
     password TEXT NOT NULL,  -- hash of the password plaintext
     num_contacts INTEGER DEFAULT 0,  -- number of contacts user has

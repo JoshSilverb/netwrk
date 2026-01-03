@@ -541,7 +541,8 @@ def update_user_details(user_token: str, username: str, bio: str, profile_pic_ob
     
     users_with_username = db.session.query(User).filter_by(username=username).all()
     
-    if (len(users_with_username) > 1) or (len(users_with_username) == 1 and users_with_username[0].user_token != user_token):
+    if (len(users_with_username) > 0 and users_with_username[0].user_token != user_token):
+        logger.error(f"Got {len(users_with_username)} results with this username, and its token is '{users_with_username[0].user_token}'")
         raise Exception(f"Username already taken")
 
     logger.info(f"Got user with username: '{user.username}' and bio: '{user.bio}'")
