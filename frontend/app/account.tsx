@@ -39,6 +39,7 @@ export default function AccountPage() {
 
   const [formattedContacts, setFormattedContacts] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState<{[key: number]: boolean}>({});
+  const [contactSearchQuery, setContactSearchQuery] = useState('');
 
   const [isLightMode, setIsLightMode] = useState(true);
 
@@ -420,6 +421,7 @@ export default function AccountPage() {
     // Clear formatted contacts
     setFormattedContacts([]);
     setSelectedContacts({});
+    setContactSearchQuery('');
   };
 
   const handleConfirmContactSelection = () => {
@@ -435,6 +437,7 @@ export default function AccountPage() {
     setImportSheetActive(false);
     setFormattedContacts([]);
     setSelectedContacts({});
+    setContactSearchQuery('');
   };
 
 
@@ -1037,10 +1040,25 @@ export default function AccountPage() {
                   {Object.values(selectedContacts).filter(Boolean).length === formattedContacts.length ? "Deselect All" : "Select All"}
               </Button>
 
+              {/* Search Bar */}
+              <Input
+                  value={contactSearchQuery}
+                  onChangeText={setContactSearchQuery}
+                  placeholder="Search contacts by name..."
+                  size="$4"
+                  borderRadius={BORDER_RADIUS.md}
+              />
+
               {/* Contacts List */}
               <ScrollView flex={1}>
                 <YStack space={SPACING.sm}>
-                  {formattedContacts.map((contact, index) => (
+                  {formattedContacts
+                    .map((contact, index) => ({ contact, index }))
+                    .filter(({ contact }) =>
+                      contactSearchQuery === '' ||
+                      contact.fullname.toLowerCase().includes(contactSearchQuery.toLowerCase())
+                    )
+                    .map(({ contact, index }) => (
                     <Pressable
                       key={index}
                       onPress={() => toggleContactSelection(index)}
