@@ -10,7 +10,8 @@ import { removeToken } from '@/utils/tokenstore';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import CustomPlacesAutocomplete from '@/components/CustomPlacesAutocomplete';
+import CustomPlacesAutocomplete, { CustomPlacesAutocompleteRef } from '@/components/CustomPlacesAutocomplete';
+import * as React from 'react';
 import * as Contacts from 'expo-contacts';
 import { formatDateForAPI } from '@/utils/utilfunctions';
 
@@ -46,10 +47,21 @@ export default function AccountPage() {
   const [editBio,       setEditBio]       = useState('');
   const [editLocation,  setEditLocation]  = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const locationRef = React.useRef<CustomPlacesAutocompleteRef>(null);
   
   useEffect(() => {
       fetchUserDetails();
   }, []);
+
+  useEffect(() => {
+    if (editProfileSheetActive && userLocation) {
+      // Small delay to ensure the ref is available after modal renders
+      const timer = setTimeout(() => {
+        locationRef.current?.setAddressText(userLocation);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [editProfileSheetActive, userLocation]);
 
   const fetchUserDetails = async () => {
       // Search query to be sent
@@ -933,6 +945,7 @@ export default function AccountPage() {
                             setEditLocation(data.description);
                         }}
                         disableScroll={true}
+                        ref={locationRef}
                     />
                 </YStack>
             </YStack>
