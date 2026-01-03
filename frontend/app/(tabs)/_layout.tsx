@@ -32,6 +32,7 @@ function RoundTabBarImage(props: {icon: ImageSourcePropType, size: number}) {
       backgroundColor: '#fff',
       justifyContent: 'center',
       alignItems: 'center',
+      marginBottom: 20
     }}>
       <Image
         source={props.icon}
