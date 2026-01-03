@@ -31,6 +31,8 @@ CREATE TABLE contacts(
 );
 -- Index on contacts.coordinates to make location lookup quicker
 CREATE INDEX locations_gix ON contacts USING GIST (coordinates);
+-- Index on contacts.embedding for fast similarity search
+CREATE INDEX IF NOT EXISTS contacts_embedding_idx ON contacts USING hnsw (embedding vector_cosine_ops);
 
 -- do search just on userbio for now
 

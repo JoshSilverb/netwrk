@@ -18,6 +18,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Semantic search configuration
+SEMANTIC_SEARCH_TOP_N = 25  # Number of top similar contacts for non-RELEVANCE sorts
+
 
 class SortOptions(Enum):
     DATE_ADDED = 'Date added'
@@ -563,36 +566,8 @@ def update_user_details(user_token: str, username: str, bio: str, profile_pic_ob
     db.session.commit()
 
 
-def search_contacts_and_sort(
-    user_token:        str,
-    query_string:      str,
-    embedding_string:  str | None,
-    sort_option:       str, # this should probably come from an enum later
-    tags:              list[str],
-    lower_bound_date:  date  | None,
-    upper_bound_date:  date  | None,
-    user_latitude:     float | None,
-    user_longitude:    float | None
-):
-    """
-    Search the database for contacts matching the requirements in the given 
-        args and sorted by the given sort operation.
-    Returns:
-        A list of contacts matching the given args
-    """
-
-    sort_option_enum = get_sort_option(sort_option)
-
-    # Fallbacks for invalid sorting
-    if sort_option_enum == SortOptions.RELEVANCE and not embedding_string:
-        logger.error("Search failed: Cannot search by relevance without an embedding")
-        sort_option_enum = SortOptions.DATE_ADDED
-
-    if sort_option_enum == SortOptions.DISTANCE and (not user_latitude or not user_longitude):
-        logger.error("Search failed: Cannot sort by distance without coordinates")
-        sort_option_enum = SortOptions.DATE_ADDED
-
-    # Base query
+def _build_base_query_no_search(user_token, lower_bound_date, upper_bound_date, tags):
+    """Build base query without semantic search filtering."""
     query = (
         db.session.query(
             Contact.contact_id.label("contact_id"),
@@ -608,17 +583,34 @@ def search_contacts_and_sort(
         .filter(Contact.lastcontact <= upper_bound_date)
     )
 
-    # If sorting by relevance, ignore entries without embeddings
-    if sort_option_enum == SortOptions.RELEVANCE:
-        query = query.filter(Contact.embedding.isnot(None))
+    # Add tag filter if needed
+    if tags:
+        query = query.join(Tag, Tag.contact_id == Contact.contact_id)
+        query = query.join(TagLabel, Tag.tag_id == TagLabel.id)
+        query = query.filter(TagLabel.label.in_(tags))
 
-    # Add search filter if not sorting by relevance
-    if sort_option_enum != SortOptions.RELEVANCE and query_string:
-        like_term = f"%{query_string}%"
-        query = query.filter(or_(
-            Contact.userbio.ilike(like_term),
-            Contact.fullname.ilike(like_term)
-        ))
+    return query
+
+
+def _build_relevance_query(user_token, embedding_string, lower_bound_date, upper_bound_date, tags):
+    """Build query for RELEVANCE sorting - returns ALL contacts sorted by similarity."""
+    vector_str = '[' + ','.join(map(str, embedding_string)) + ']'
+
+    query = (
+        db.session.query(
+            Contact.contact_id.label("contact_id"),
+            Contact.fullname,
+            Contact.location,
+            func.ST_AsText(Contact.coordinates).label("coordinate"),
+            Contact.userbio,
+            Contact.profile_pic_object_name
+        )
+        .join(User, Contact.user_id == User.user_id)
+        .filter(User.user_token == user_token)
+        .filter(Contact.lastcontact >= lower_bound_date)
+        .filter(Contact.lastcontact <= upper_bound_date)
+        .filter(Contact.embedding.isnot(None))  # Only contacts with embeddings
+    )
 
     # Add tag filter if needed
     if tags:
@@ -626,9 +618,14 @@ def search_contacts_and_sort(
         query = query.join(TagLabel, Tag.tag_id == TagLabel.id)
         query = query.filter(TagLabel.label.in_(tags))
 
-    logging.info(f"Embedding string: {embedding_string}")
+    # Sort by similarity (no limit for RELEVANCE)
+    query = query.order_by(text(f"embedding <-> '{vector_str}'"))
 
-    # Add ordering
+    return query
+
+
+def _apply_sort_order(query, sort_option_enum, user_latitude, user_longitude):
+    """Apply the specified sort order to a query."""
     if sort_option_enum == SortOptions.DATE_ADDED:
         query = query.order_by(Contact.contact_id.desc())
     elif sort_option_enum == SortOptions.LAST_CONTACT_NEWEST:
@@ -640,12 +637,138 @@ def search_contacts_and_sort(
     elif sort_option_enum == SortOptions.DISTANCE:
         user_point = func.ST_MakePoint(user_longitude, user_latitude)
         query = query.order_by(Contact.coordinates.distance_centroid(user_point))
-    elif sort_option_enum == SortOptions.RELEVANCE:
-        vector_str = '[' + ','.join(map(str, embedding_string)) + ']'
-        query = query.order_by(text(f"embedding <-> '{vector_str}'")).limit(15)
     elif sort_option_enum == SortOptions.NEXT_CONTACT_DATE:
         query = query.filter(Contact.nextcontact.isnot(None))
         query = query.order_by(Contact.nextcontact.asc())
+
+    return query
+
+
+def _build_semantic_filtered_query(
+    user_token,
+    embedding_string,
+    sort_option_enum,
+    tags,
+    lower_bound_date,
+    upper_bound_date,
+    user_latitude,
+    user_longitude
+):
+    """
+    Build query using CTE to get top-N similar contacts, then re-sort.
+    This is used for all non-RELEVANCE sorts when a query string exists.
+    """
+    vector_str = '[' + ','.join(map(str, embedding_string)) + ']'
+
+    # CTE: Get top-N most semantically similar contacts
+    similar_contacts_cte = (
+        db.session.query(Contact.contact_id)
+        .join(User, Contact.user_id == User.user_id)
+        .filter(User.user_token == user_token)
+        .filter(Contact.lastcontact >= lower_bound_date)
+        .filter(Contact.lastcontact <= upper_bound_date)
+        .filter(Contact.embedding.isnot(None))
+        .order_by(text(f"embedding <-> '{vector_str}'"))
+        .limit(SEMANTIC_SEARCH_TOP_N)
+        .cte('similar_contacts')
+    )
+
+    # Main query: Get full contact details for the top-N similar contacts
+    query = (
+        db.session.query(
+            Contact.contact_id.label("contact_id"),
+            Contact.fullname,
+            Contact.location,
+            func.ST_AsText(Contact.coordinates).label("coordinate"),
+            Contact.userbio,
+            Contact.profile_pic_object_name
+        )
+        .join(similar_contacts_cte, Contact.contact_id == similar_contacts_cte.c.contact_id)
+    )
+
+    # Add tag filter if needed
+    if tags:
+        query = query.join(Tag, Tag.contact_id == Contact.contact_id)
+        query = query.join(TagLabel, Tag.tag_id == TagLabel.id)
+        query = query.filter(TagLabel.label.in_(tags))
+
+    # Apply the requested sort order to the filtered results
+    query = _apply_sort_order(query, sort_option_enum, user_latitude, user_longitude)
+
+    return query
+
+
+def search_contacts_and_sort(
+    user_token:        str,
+    query_string:      str,
+    embedding_string:  str | None,
+    sort_option:       str, # this should probably come from an enum later
+    tags:              list[str],
+    lower_bound_date:  date  | None,
+    upper_bound_date:  date  | None,
+    user_latitude:     float | None,
+    user_longitude:    float | None
+):
+    """
+    Search the database for contacts matching the requirements using semantic similarity,
+    then sorted by the given sort operation.
+
+    When query_string is provided:
+    - All sort options use semantic similarity filtering
+    - RELEVANCE: Returns ALL contacts sorted by similarity (unlimited)
+    - Other sorts: Returns top-N most similar contacts, then applies secondary sort
+
+    When query_string is empty:
+    - Returns all contacts (no semantic filtering)
+    - Applies only the selected sort option
+
+    Returns:
+        A list of contacts matching the given args
+    """
+
+    sort_option_enum = get_sort_option(sort_option)
+
+    # Fallbacks for invalid sorting
+    if sort_option_enum == SortOptions.RELEVANCE and not embedding_string:
+        logger.error("Search failed: Cannot search by relevance without an embedding")
+        sort_option_enum = SortOptions.DATE_ADDED
+
+    if sort_option_enum == SortOptions.DISTANCE and (not user_latitude or not user_longitude):
+        logger.error("Search failed: Cannot sort by distance without coordinates")
+        sort_option_enum = SortOptions.DATE_ADDED
+
+    # === CASE 1: No query string - return all contacts ===
+    if not query_string or not embedding_string:
+        query = _build_base_query_no_search(
+            user_token,
+            lower_bound_date,
+            upper_bound_date,
+            tags
+        )
+        query = _apply_sort_order(query, sort_option_enum, user_latitude, user_longitude)
+
+    # === CASE 2: Query string with RELEVANCE sort ===
+    elif sort_option_enum == SortOptions.RELEVANCE:
+        query = _build_relevance_query(
+            user_token,
+            embedding_string,
+            lower_bound_date,
+            upper_bound_date,
+            tags
+        )
+
+    # === CASE 3: Query string with other sorts (top-N + re-sort) ===
+    else:
+        query = _build_semantic_filtered_query(
+            user_token,
+            embedding_string,
+            sort_option_enum,
+            tags,
+            lower_bound_date,
+            upper_bound_date,
+            user_latitude,
+            user_longitude
+        )
 
     logger.info(f"Executing contact search - Sort: {sort_option_enum}, Query: '{query_string}'")
     logger.info(f"Generated SQL query:\n{str(query.statement.compile(compile_kwargs={'literal_binds': True}))}")

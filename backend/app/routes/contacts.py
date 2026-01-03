@@ -264,12 +264,13 @@ def search_contacts():
     user_lat = search_params['user_lat'] if 'user_lat' in search_params else None
     user_lon = search_params['user_lon'] if 'user_lon' in search_params else None
 
-    if order_by == 'Relevance' and len(query_string) > 0:
+    # Generate embedding for any query string (used for semantic filtering across all sort options)
+    if len(query_string) > 0:
         embedding_vector = _get_query_string_embedding(query_string)
         logger.info("Generated embedding vector for search query")
     else:
         embedding_vector = None
-        logger.info("No embedding vector generated for search query")
+        logger.info("No embedding vector generated - will return all contacts")
 
     contacts = db_accessor.search_contacts_and_sort(
         user_token=user_token,
