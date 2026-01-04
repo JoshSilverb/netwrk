@@ -14,6 +14,8 @@
         "gradleCommand": ":app:assembleRelease"
       }
     },
-    "production": {}
+    "production": {
+      "autoIncrement": true
+    }
   }
 }

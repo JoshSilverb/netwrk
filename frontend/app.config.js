@@ -13,6 +13,7 @@ export default {
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "buildNumber": "1",
       "supportsTablet": true,
       "bundleIdentifier": "com.joshsilv.netwrk",
       "config": {
@@ -20,13 +21,15 @@ export default {
       }
     },
     "android": {
+      "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/netwrk-icon-square.png",
         "backgroundColor": "#ffffff"
       },
       "permissions": [
         "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA"
       ],
       "package": "com.joshsilv.netwrk",
       "config": {
