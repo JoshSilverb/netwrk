@@ -32,3 +32,24 @@ Requests come to endpoints on my domain 'mynetwrk.com' and are routed through an
 Auth is implemented by verifying a token sent with each request that is associated with a user in the database.
 
 Semantic search is implemented on the backend through a vector similarity search using pgvector + OpenAI embeddings. Geographic sorting is implemented with PostGIS distance queries. And images are served to users as secure presigned S3 opject URLs.
+
+## User experience
+
+In the video below I walk through the main features of the Netwrk app, namely:
+- Logging in (0:00)
+- Semantic search of contacts (0:28)
+- Filtering contacts by tags (0:42)
+- Viewing a contact's details (0:55)
+- Sorting by different rules (1:18)
+- Viewing contacts on a map (2:07)
+- Adding a new contact (2:20)
+- Editing a contact (3:38)
+- Viewing/editing the user's profile (4:00)
+- Importing contacts from the phone's contacts app (4:06)
+- Filtering contacts by date added (4:49)
+- Logging out (5:00)
+
+
+<video src="./readme-resources/netwrk-app-walkthrough.mov" controls width="200">
+  Your browser does not support the video tag.
+</video>
