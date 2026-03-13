@@ -50,6 +50,4 @@ In the video below I walk through the main features of the Netwrk app, namely:
 - Logging out (5:00)
 
 
-<video src="./readme-resources/netwrk-app-walkthrough.mov" controls width="200">
-  Your browser does not support the video tag.
-</video>
+[![Watch the demo](https://img.youtube.com/vi/ZIzpCaY7odY/maxresdefault.jpg)](https://youtu.be/ZIzpCaY7odY)
