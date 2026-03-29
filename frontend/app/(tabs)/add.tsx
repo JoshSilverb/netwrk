@@ -9,6 +9,8 @@ import { Text, View, Group, Separator, XStack, YStack, Button, Paragraph, Input,
 import { addContactForUserURL, getContactByIdURL, updateContactForUserURL, getS3UploadURL } from '@/constants/Apis';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/constants/QueryKeys';
 import { useAuth } from '@/components/AuthContext';
 import CustomPlacesAutocomplete, { CustomPlacesAutocompleteRef } from '@/components/CustomPlacesAutocomplete';
 import CustomTagsAutocomplete, { CustomTagsAutocompleteRef } from '@/components/CustomTagsAutocomplete';
@@ -25,9 +27,8 @@ export default function AddContactPage() {
     const params = useLocalSearchParams<{ id?: string }>();
     const id = params.id ?? "0";
 
-    const [loading,       setLoading]       = React.useState(true);
-    const [submitting,    setSubmitting]    = React.useState(false);
     const [errorMessage, setErrorMessage] = React.useState('');
+    const queryClient = useQueryClient();
 
     // Basic data 
     const [fullname,   onChangeFullname]   = React.useState('');
@@ -176,41 +177,32 @@ export default function AddContactPage() {
         setRemindPeriodMos(months);
     }
 
-    // If id isn't set, then this is in pure add mode, not edit, so don't need 
-    // loading and error flags.
-    const [resolvedId, setResolvedId] = React.useState<string | undefined>(undefined);
-
     const router = useRouter();
 
+    const { data: existingContact, isLoading: loadingContact } = useQuery({
+        queryKey: queryKeys.contact(id as string),
+        queryFn: async () => {
+            const response = await axios.post(getContactByIdURL, {
+                user_token: token,
+                contact_id: id,
+            });
+            return response.data;
+        },
+        enabled: id !== '0',
+    });
+
+    // Populate form fields when existing contact data arrives
     React.useEffect(() => {
-        if (id === '0') {
-            setLoading(false);
-        }
-        else {
-            setResolvedId(id as string);
-            fetchContactById(id as string);
+        if (existingContact) {
+            setDataFromContact(existingContact);
         }
         return () => {
             resetData();
         };
+    }, [existingContact]);
 
-    }, [id, router]);
-
-    const fetchContactById = async (id: string) => {
-        const requestBody = {
-            user_token: token,
-            contact_id: id
-        }
-        try {
-            const response = await axios.post(getContactByIdURL, requestBody);
-            setDataFromContact(response.data);
-            setLoading(false);
-        } catch (error) {
-            console.error('Error fetching data:', error.response.data);
-            setErrorMessage("Error getting contact");
-            setLoading(false);
-        }
-    };
+    // Set loading=false immediately for add mode (no fetch needed)
+    const loading = id !== '0' ? loadingContact : false;
 
     const onChange = (selectedDate) => {
         setDate(selectedDate);
@@ -284,95 +276,77 @@ export default function AddContactPage() {
     // Sending this contact to backend
     //================================
 
-    // Send data to backend and redirect to contact page
+    const buildContactPayload = (imageObjectKey: string) => ({
+        fullname,
+        location,
+        userbio: bio,
+        metthrough: metThrough,
+        socials,
+        lastcontact: formatDateForAPI(date),
+        reminderPeriod: {
+            weeks: enableContactFrequency ? remindPeriodWks : null,
+            months: enableContactFrequency ? remindPeriodMos : null,
+        },
+        tags,
+        image_object_key: imageObjectKey,
+    });
 
-    const postNewContact = async () => {
+    const createMutation = useMutation({
+        mutationFn: async () => {
+            const imageObjectKey = await uploadContactPicture();
+            const response = await axios.post(addContactForUserURL, {
+                user_token: token,
+                newContact: buildContactPayload(imageObjectKey),
+            });
+            return response.data;
+        },
+        onSuccess: async (newId) => {
+            await resetData();
+            queryClient.invalidateQueries({ queryKey: ['contacts'] });
+            router.push(`/contact/${newId}`);
+        },
+        onError: () => {
+            setErrorMessage("Failed to upload new contact details");
+        },
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: async () => {
+            const imageObjectKey = await uploadContactPicture();
+            const response = await axios.post(updateContactForUserURL, {
+                user_token: token,
+                newContact: { contact_id: id as string, ...buildContactPayload(imageObjectKey) },
+            });
+            return response.data;
+        },
+        onSuccess: async () => {
+            await resetData();
+            queryClient.invalidateQueries({ queryKey: ['contacts'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.contact(id as string) });
+            router.dismiss();
+        },
+        onError: () => {
+            setErrorMessage("Failed to update contact details");
+        },
+    });
+
+    const submitting = createMutation.isPending || updateMutation.isPending;
+
+    const postNewContact = () => {
         if (!fullname) {
             setErrorMessage("Cannot create a contact without a name");
             return;
         }
+        createMutation.mutate();
+    };
 
-        setSubmitting(true);
-        try {
-            // First upload the contact image if one is selected
-            const imageObjectKey = await uploadContactPicture();
-            
-            // Contact data to be sent
-            const requestBody = {
-                user_token: token,
-                newContact: {
-                    "fullname": fullname,
-                    "location": location,
-                    "userbio": bio,
-                    "metthrough": metThrough,
-                    "socials": socials,
-                    "lastcontact": formatDateForAPI(date),
-                    "reminderPeriod": {
-                        "weeks": enableContactFrequency ? remindPeriodWks : null,
-                        "months": enableContactFrequency ? remindPeriodMos : null
-                    },
-                    "tags": tags,
-                    "image_object_key": imageObjectKey
-                }
-            }
-
-            const response = await axios.post(addContactForUserURL, requestBody);
-            if (response.status == 200) {
-                await resetData();
-                const redirectLink = "/contact/" + response.data;
-                router.push(redirectLink);
-            }
-        } catch (error) {
-            setErrorMessage("Failed to upload new contact details");
-        } finally {
-            setSubmitting(false);
-        }
-    }
-
-    // Update contact API call
-
-    const updateContact = async () => {
+    const updateContact = () => {
         if (!fullname) {
             setErrorMessage("Cannot update a contact without a name");
             return;
         }
-
-        setSubmitting(true);
-        try {
-            // First upload the contact image if one is selected
-            const imageObjectKey = await uploadContactPicture();
-            
-            // Contact data to be sent
-            const requestBody = {
-                user_token: token,
-                newContact: {
-                    "contact_id": id as string,
-                    "fullname": fullname,
-                    "location": location,
-                    "userbio": bio,
-                    "metthrough": metThrough,
-                    "socials": socials,
-                    "lastcontact": formatDateForAPI(date),
-                    "reminderPeriod": {
-                        "weeks": enableContactFrequency ? remindPeriodWks : null,
-                        "months": enableContactFrequency ? remindPeriodMos : null
-                    },
-                    "tags": tags,
-                    "image_object_key": imageObjectKey
-                }
-            }
-            
-            const response = await axios.post(updateContactForUserURL, requestBody);
-            if (response.status == 200) {
-                await resetData();
-                router.dismiss();
-            }
-        } catch (error) {
-            setErrorMessage("Failed to update contact details");
-        } finally {
-            setSubmitting(false);
-        }
-    }
+        updateMutation.mutate();
+    };
 
     return (
         <View style={CONTAINER_STYLES.screen} backgroundColor="$background">

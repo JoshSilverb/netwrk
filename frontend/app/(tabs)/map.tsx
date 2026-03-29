@@ -1,18 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Sheet } from '@tamagui/sheet';
 import { Text, YStack, Button, XStack, View, Image, Avatar, SizableText } from 'tamagui';
 import { ScrollView, RefreshControl, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { User as UserIcon, ChevronRight } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 import { Loader } from '@/components/Loader';
 import { searchContactsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
-import { RotateCw } from '@tamagui/lucide-icons';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import { getCurrentLocation } from '@/utils/locationutil';
 import { formatDateForAPI } from '@/utils/utilfunctions';
+import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/constants/QueryKeys';
 
 import axios from 'axios';
 
@@ -21,10 +21,7 @@ export default function MapScreen() {
 
   const [isSheetOpen,    setIsSheetOpen]    = useState(false);
   const [activeLocation, setActiveLocation] = useState('');
-  const [refreshing,     setRefreshing]     = useState(false);
 
-  const [contacts, setContacts] = useState([]);
-  const [loading, setLoading]   = useState(true);
   const [userLocation, setUserLocation] = useState(null);
   const [isMapInteracting, setIsMapInteracting] = useState(false);
   const [mapRegion, setMapRegion] = useState({
@@ -33,9 +30,35 @@ export default function MapScreen() {
     latitudeDelta: 50,
     longitudeDelta: 50,
   });
-  const { token, setToken }     = useAuth();
+  const { token } = useAuth();
 
-  const [contactsByLocation, _]   = useState(new Map<string, string[]>());
+  const mapParams = {
+    lower_bound_date: formatDateForAPI(new Date(0)),
+    upper_bound_date: formatDateForAPI(new Date()),
+    order_by: 'Date added',
+    query_string: '',
+    tags: [],
+  };
+
+  const { data: contacts = [], isFetching, refetch } = useQuery({
+    queryKey: queryKeys.contacts(mapParams),
+    queryFn: async () => {
+      const response = await axios.post(searchContactsURL, {
+        user_token: token,
+        search_params: mapParams,
+      });
+      return response.data;
+    },
+  });
+
+  const contactsByLocation = useMemo(() => {
+    const map = new Map<string, any[]>();
+    for (const contact of contacts) {
+      if (!map.has(contact.location)) map.set(contact.location, []);
+      map.get(contact.location)!.push(contact);
+    }
+    return map;
+  }, [contacts]);
 
   // Function to open the modal sheet
   const handleMarkerPress = (location:string) => {
@@ -46,7 +69,6 @@ export default function MapScreen() {
   };
 
   useEffect(() => {
-      fetchContacts();
       setInitialMapRegion();
   }, []);
 
@@ -71,52 +93,9 @@ export default function MapScreen() {
     }
   };
 
-  function fillContactLocationMap(contacts) {
-    contactsByLocation.clear();
-    for (const contact of contacts) {
-
-      const location:string = contact.location
-      if (contactsByLocation.has(location)) {
-        contactsByLocation.get(location).push(contact);
-      }
-      else {
-        contactsByLocation.set(location, [contact]);
-      }
-    }
-  }
-
-  const fetchContacts = async () => {
-
-    const dateLowerBound = new Date(0);
-    const dateUpperBound = new Date(Date.now());
-
-    // Contact data to be sent
-    const requestBody = {
-        user_token: token,
-        search_params: {
-          "lower_bound_date": formatDateForAPI(dateLowerBound), 
-          "upper_bound_date": formatDateForAPI(dateUpperBound),
-          "order_by": "Date added",
-          "query_string": "",
-          "tags": []
-        }
-    }
-
-    try {
-        const response = await axios.post(searchContactsURL, requestBody);
-        setContacts(response.data);
-        fillContactLocationMap(response.data);
-        setLoading(false);
-    } catch (error) {
-        console.error('Error fetching data:', error);
-    }
-        
-  };
-
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
     setIsSheetOpen(false);
-    setLoading(true);
-    fetchContacts();
+    refetch();
   }
 
   function getContactCoords(contact) {
@@ -136,7 +115,7 @@ export default function MapScreen() {
   return (
     <View style={CONTAINER_STYLES.screen}>
       <ScrollView
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
+        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={handleRefresh} />}
         contentInsetAdjustmentBehavior="automatic"
         scrollEnabled={!isMapInteracting}
       >
@@ -176,7 +155,7 @@ export default function MapScreen() {
           backgroundColor="$gray1"
           overflow="hidden"
         >
-          <Loader loading={loading}>
+          <Loader loading={isFetching && contacts.length === 0}>
             <MapView
               style={{
                 width: '100%',

@@ -1,19 +1,19 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import ContactsList from '@/components/ContactsList'
 import { ScrollView, YStack, Input, Button, XStack, Sheet, Text, View } from 'tamagui';
 import { Loader } from '@/components/Loader';
 import { searchContactsURL, getTagsForUserURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
 import { Keyboard, Pressable, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ChevronDown } from '@tamagui/lucide-icons';
 import { getCurrentLocation } from '@/utils/locationutil';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
-import { useFocusEffect } from 'expo-router'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { formatDateForAPI } from '@/utils/utilfunctions'
 import { DatePickerModal } from '@/components/DatePickerModal';
+import { useQuery } from '@tanstack/react-query';
+import { queryKeys } from '@/constants/QueryKeys';
 
 import axios from 'axios';
 
@@ -32,12 +32,6 @@ export default function ContactsScreen() {
 
     const { token } = useAuth();
 
-    const [searchError, setSearchError] = useState<string>('');
-    const [tags, setTags] = useState<string[]>([]);
-    const [contacts, setContacts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
-
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
     const [selectedSortOption, setSelectedSortOption] = useState(sortOptions[0]);
@@ -49,67 +43,80 @@ export default function ContactsScreen() {
     const [sortExpanded, setSortExpanded] = useState(false);
     const [tagSearch, setTagSearch] = useState('');
 
-    useFocusEffect(
-        useCallback(() => {
-            const loadAndFetch = async () => {
-                try {
-                    const savedState = await AsyncStorage.getItem(FILTER_STATE_KEY);
-
-                    let filterState = {
-                        searchQuery: '',
-                        selectedTags: [] as string[],
-                        selectedSortOption: sortOptions[0],
-                        dateLowerBound: new Date(0),
-                        dateUpperBound: new Date(Date.now()),
-                    };
-
-                    if (savedState) {
-                        const parsed = JSON.parse(savedState);
-                        filterState = {
-                            searchQuery: parsed.searchQuery || '',
-                            selectedTags: parsed.selectedTags || [],
-                            selectedSortOption: parsed.selectedSortOption || sortOptions[0],
-                            dateLowerBound: parsed.dateLowerBound ? new Date(parsed.dateLowerBound) : new Date(0),
-                            dateUpperBound: parsed.dateUpperBound ? new Date(parsed.dateUpperBound) : new Date(Date.now()),
-                        };
-                    }
-
-                    setSearchQuery(filterState.searchQuery);
-                    setSelectedTags(filterState.selectedTags);
-                    setSelectedSortOption(filterState.selectedSortOption);
-                    setDateLowerBound(filterState.dateLowerBound);
-                    setDateUpperBound(filterState.dateUpperBound);
-                    setFilterStateLoaded(true);
-
-                    await fetchTagsWithState();
-                    await fetchContactsWithState(filterState);
-                } catch (error) {
-                    if (__DEV__) console.error('Error in loadAndFetch:', error);
+    // Load saved filter state once on mount
+    useEffect(() => {
+        const loadFilterState = async () => {
+            try {
+                const savedState = await AsyncStorage.getItem(FILTER_STATE_KEY);
+                if (savedState) {
+                    const parsed = JSON.parse(savedState);
+                    setSearchQuery(parsed.searchQuery || '');
+                    setSelectedTags(parsed.selectedTags || []);
+                    setSelectedSortOption(parsed.selectedSortOption || sortOptions[0]);
+                    setDateLowerBound(parsed.dateLowerBound ? new Date(parsed.dateLowerBound) : new Date(0));
+                    setDateUpperBound(parsed.dateUpperBound ? new Date(parsed.dateUpperBound) : new Date(Date.now()));
                 }
-            };
-            loadAndFetch();
-        }, [token])
-    );
+            } catch (error) {
+                if (__DEV__) console.error('Error loading filter state:', error);
+            } finally {
+                setFilterStateLoaded(true);
+            }
+        };
+        loadFilterState();
+    }, []);
 
+    // Persist filter state whenever it changes
     useEffect(() => {
         if (!filterStateLoaded) return;
-
         const saveFilterState = async () => {
             try {
-                const stateToSave = {
+                await AsyncStorage.setItem(FILTER_STATE_KEY, JSON.stringify({
                     searchQuery,
                     selectedTags,
                     selectedSortOption,
                     dateLowerBound: dateLowerBound.toISOString(),
                     dateUpperBound: dateUpperBound.toISOString(),
-                };
-                await AsyncStorage.setItem(FILTER_STATE_KEY, JSON.stringify(stateToSave));
+                }));
             } catch (error) {
                 if (__DEV__) console.error('Error saving filter state:', error);
             }
         };
         saveFilterState();
     }, [searchQuery, selectedTags, selectedSortOption, dateLowerBound, dateUpperBound, filterStateLoaded]);
+
+    const filterParams = {
+        query_string: searchQuery,
+        order_by: selectedSortOption,
+        tags: selectedTags,
+        lower_bound_date: formatDateForAPI(dateLowerBound),
+        upper_bound_date: formatDateForAPI(dateUpperBound),
+    };
+
+    const { data: contacts = [], isFetching, refetch, isError } = useQuery({
+        queryKey: queryKeys.contacts(filterParams),
+        queryFn: async () => {
+            const location = await getCurrentLocation();
+            const response = await axios.post(searchContactsURL, {
+                user_token: token,
+                search_params: {
+                    ...filterParams,
+                    user_lat: location.latitude,
+                    user_lon: location.longitude,
+                },
+            });
+            return response.data;
+        },
+        enabled: filterStateLoaded,
+    });
+
+    const { data: tags = [] } = useQuery({
+        queryKey: queryKeys.tags(),
+        queryFn: async () => {
+            const response = await axios.post(getTagsForUserURL, { user_token: token });
+            return response.data;
+        },
+        enabled: filterStateLoaded,
+    });
 
     function isDateUnset(date: Date): boolean {
         return String(date) === String(new Date(0));
@@ -119,74 +126,13 @@ export default function ContactsScreen() {
         return String(date) === String(new Date(Date.now()));
     }
 
-    const fetchTagsWithState = async () => {
-        try {
-            const response = await axios.post(getTagsForUserURL, { user_token: token });
-            setTags(response.data);
-        } catch (error) {
-            if (__DEV__) console.error('Error fetching tags:', error);
-        }
-    };
-
-    const fetchContactsWithState = async (filterState: any) => {
-        const location = await getCurrentLocation();
-
-        const requestBody = {
-            user_token: token,
-            search_params: {
-                query_string: filterState.searchQuery,
-                order_by: filterState.selectedSortOption,
-                tags: filterState.selectedTags,
-                lower_bound_date: formatDateForAPI(filterState.dateLowerBound),
-                upper_bound_date: formatDateForAPI(filterState.dateUpperBound),
-                user_lat: location.latitude,
-                user_lon: location.longitude,
-            },
-        };
-
-        try {
-            setLoading(true);
-            const response = await axios.post(searchContactsURL, requestBody);
-            setContacts(response.data);
-            setLoading(false);
-            setSearchError('');
-        } catch (error) {
-            if (axios.isAxiosError(error) && error.response) {
-                if (error.response.status === 401) {
-                    setSearchError('Invalid user token, try logging in again.');
-                } else {
-                    setSearchError(`Server error: ${error.response.status}`);
-                }
-            } else {
-                setSearchError('Network error');
-            }
-            setContacts([]);
-            setLoading(false);
-        }
-    };
-
-    const fetchContacts = async () => {
-        await fetchContactsWithState({
-            searchQuery,
-            selectedTags,
-            selectedSortOption,
-            dateLowerBound,
-            dateUpperBound,
-        });
-    };
-
-    const fetchAll = async () => {
-        await fetchTagsWithState();
-        await fetchContacts();
-    };
-
     const toggleTag = (tag: string) => {
         setSelectedTags((prev) =>
             prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
         );
     };
 
-    const filteredTags = tags.filter(t =>
+    const filteredTags = tags.filter((t: string) =>
         t.toLowerCase().includes(tagSearch.toLowerCase())
     );
 
@@ -199,7 +145,7 @@ export default function ContactsScreen() {
     return (
         <View style={CONTAINER_STYLES.screen} backgroundColor="$background">
             <ScrollView
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAll} />}
+                refreshControl={<RefreshControl refreshing={isFetching} onRefresh={refetch} />}
                 contentInsetAdjustmentBehavior="automatic"
             >
                 <YStack>
@@ -234,10 +180,7 @@ export default function ContactsScreen() {
                                 placeholder="Search contacts..."
                                 value={searchQuery}
                                 onChangeText={setSearchQuery}
-                                onSubmitEditing={() => {
-                                    Keyboard.dismiss();
-                                    fetchContacts();
-                                }}
+                                onSubmitEditing={() => Keyboard.dismiss()}
                                 returnKeyType="search"
                                 borderWidth={0}
                                 backgroundColor="transparent"
@@ -274,7 +217,6 @@ export default function ContactsScreen() {
                                             Sort by
                                         </Text>
 
-                                        {/* Trigger */}
                                         <Pressable onPress={() => setSortExpanded(v => !v)}>
                                             <XStack
                                                 alignItems="center"
@@ -296,7 +238,6 @@ export default function ContactsScreen() {
                                             </XStack>
                                         </Pressable>
 
-                                        {/* Options list */}
                                         {sortExpanded && (
                                             <YStack
                                                 borderWidth={1}
@@ -404,7 +345,7 @@ export default function ContactsScreen() {
                                                         gap={SPACING.xs}
                                                         padding={SPACING.sm}
                                                     >
-                                                        {filteredTags.map((tag) => (
+                                                        {filteredTags.map((tag: string) => (
                                                             <Pressable key={tag} onPress={() => toggleTag(tag)}>
                                                                 <View
                                                                     paddingHorizontal={SPACING.sm}
@@ -507,10 +448,7 @@ export default function ContactsScreen() {
                                         </Button>
                                         <Button
                                             size="$3"
-                                            onPress={() => {
-                                                setFilterSheetOpen(false);
-                                                fetchContacts();
-                                            }}
+                                            onPress={() => setFilterSheetOpen(false)}
                                             backgroundColor="$blue9"
                                             color="white"
                                             borderRadius={BORDER_RADIUS.md}
@@ -526,10 +464,10 @@ export default function ContactsScreen() {
                     </Sheet>
 
                     <View style={{ paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md }}>
-                        <Loader loading={loading}>
-                            {searchError ? (
+                        <Loader loading={isFetching && contacts.length === 0}>
+                            {isError ? (
                                 <Text color="$red9" marginTop={SPACING.sm}>
-                                    {searchError}
+                                    Could not load contacts
                                 </Text>
                             ) : null}
                             <ContactsList contacts={contacts} prefix="searchlist" />

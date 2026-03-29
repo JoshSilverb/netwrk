@@ -1,73 +1,56 @@
 import { Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { Contact } from '@/constants/Definitions';
 import { View, Text, Button, Paragraph, XStack, YStack, Avatar, ScrollView } from 'tamagui';
 import { User as UserIcon } from '@tamagui/lucide-icons'
-import { removeContactForUserURL } from '@/constants/Apis';
+import { removeContactForUserURL, getContactByIdURL } from '@/constants/Apis';
 import { Alert } from 'react-native';
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import { Loader } from '@/components/Loader';
-import { getContactByIdURL } from '@/constants/Apis';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/components/AuthContext';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/constants/QueryKeys';
 
 
 export default function ContactPage() {
   const { id } = useLocalSearchParams();
-
-  const [contact, setContact] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const [errorReceived, setErrorReceived] = useState(false);
-
-  const { token, setToken } = useAuth();
+  const { token } = useAuth();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const queryClient = useQueryClient();
 
-  // Refetch contact data whenever the page comes into focus
-  // This ensures the page shows updated data after editing and on initial load
+  const { data: contact = {}, isLoading, isError, refetch } = useQuery({
+    queryKey: queryKeys.contact(id as string),
+    queryFn: async () => {
+      const response = await axios.post(getContactByIdURL, {
+        user_token: token,
+        contact_id: id,
+      });
+      return response.data;
+    },
+  });
+
+  // Refetch on screen focus only if the query was invalidated (no-op when fresh)
   useFocusEffect(
     useCallback(() => {
-      fetchContactById();
-    }, [id, token])
+      refetch();
+    }, [])
   );
 
-  const fetchContactById = async () => {
-    const requestBody = {
-        user_token: token,
-        contact_id: id
-    }
-
-      try {
-          const response = await axios.post(getContactByIdURL, requestBody);
-          setContact(response.data);
-          setLoading(false);
-          setErrorReceived(false);
-      } catch (error) {
-          console.error('Error fetching data:', error);
-          setLoading(false);
-          setErrorReceived(true);
-      }
-  };
-
-  const router = useRouter();
-
-  const removeContact = async () => {
-    const requestBody = {
-        user_token: token,
-        contact_id: id
-    }
-
-    try {
-        const response = await axios.post(removeContactForUserURL, requestBody);
-        if (response.status == 200) {
-            router.replace("/(tabs)/contacts/");
-        }
-    } catch (error) {
-        if (__DEV__) console.error("Error during remove contact POST request:", error);
-    }
-  }
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      await axios.post(removeContactForUserURL, { user_token: token, contact_id: id });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      router.replace('/(tabs)/contacts/');
+    },
+    onError: () => {
+      if (__DEV__) console.error('Error deleting contact');
+    },
+  });
 
   const confirmAndRemoveContact = () => {
     Alert.alert(
@@ -75,7 +58,7 @@ export default function ContactPage() {
       `Are you sure you want to delete ${contact.fullname || 'this contact'}? This cannot be undone.`,
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Delete", style: "destructive", onPress: removeContact },
+        { text: "Delete", style: "destructive", onPress: () => deleteMutation.mutate() },
       ]
     );
   };
@@ -84,9 +67,9 @@ export default function ContactPage() {
     router.push({ pathname: '/(tabs)/add', params: { id: id } });
   }
 
-  if (errorReceived) {
+  if (isError) {
     return (
-      <View className="flex-1 bg-white">
+      <View style={{ flex: 1 }}>
         <Stack.Screen options={{ title: "Error", headerBackTitle: 'Back' }} />
         <Paragraph>Could not find contact</Paragraph>
       </View>)
@@ -99,7 +82,7 @@ export default function ContactPage() {
       <YStack flex={1} position="relative">
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}>
       <YStack space={SPACING.xl} padding={SPACING.lg}>
-        <Loader loading={loading}>
+        <Loader loading={isLoading}>
         {/* Header */}
         <YStack 
           alignSelf="center" 

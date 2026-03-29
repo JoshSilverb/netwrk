@@ -6,6 +6,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { getUserDetailsURL, updateUserDetailsURL, getS3UploadURL, addContactForUserURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/constants/QueryKeys';
 import { removeToken } from '@/utils/tokenstore';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,13 +23,7 @@ import axios from 'axios';
 export default function AccountPage() {
   const { token, setToken } = useAuth();
   const insets = useSafeAreaInsets();
-
-  const [profilePicUrl, setProfilePicUrl] = useState('');
-  const [username, setUsername] = useState('');
-  const [numContacts, setNumContacts] = useState('');
-  const [userBio, setUserBio] = useState('');
-  const [userLocation, setUserLocation] = useState('');
-
+  const queryClient = useQueryClient();
 
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -49,39 +45,29 @@ export default function AccountPage() {
   const [editLocation,  setEditLocation]  = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const locationRef = React.useRef<CustomPlacesAutocompleteRef>(null);
-  
-  useEffect(() => {
-      fetchUserDetails();
-  }, []);
+
+  const { data: userData } = useQuery({
+    queryKey: queryKeys.user(),
+    queryFn: async () => {
+      const response = await axios.post(getUserDetailsURL, { user_token: token });
+      return response.data;
+    },
+  });
+
+  const profilePicUrl = userData?.profile_pic_url || '';
+  const username = userData?.username || '';
+  const numContacts = userData?.num_contacts || '';
+  const userBio = userData?.bio || '';
+  const userLocation = userData?.location || '';
 
   useEffect(() => {
     if (editProfileSheetActive && userLocation) {
-      // Small delay to ensure the ref is available after modal renders
       const timer = setTimeout(() => {
         locationRef.current?.setAddressText(userLocation);
       }, 100);
       return () => clearTimeout(timer);
     }
   }, [editProfileSheetActive, userLocation]);
-
-  const fetchUserDetails = async () => {
-      // Search query to be sent
-      const requestBody = {
-          user_token: token
-      }
-
-      try {
-          const response = await axios.post(getUserDetailsURL, requestBody);
-          setProfilePicUrl(response.data["profile_pic_url"])
-          setUsername(response.data["username"]);
-          setNumContacts(response.data["num_contacts"]);
-          setUserBio(response.data["bio"])
-          setUserLocation(response.data["location"] || "")
-          // setLoading(false);
-      } catch (error) {
-          console.error('Error fetching data:', error);
-      }
-  };
   
   const uploadUserPicture = async () => {
     // Send updated profile picture
@@ -129,26 +115,25 @@ export default function AccountPage() {
     return new_filename
   }
 
-  const sendUpdateUserDetailsRequest = async (new_filename) => {
-    // Send updated bio and socials
-
-    // Details to update
-    const requestBody = {
+  const updateProfileMutation = useMutation({
+    mutationFn: async () => {
+      const new_filename = await uploadUserPicture();
+      await axios.post(updateUserDetailsURL, {
         user_token: token,
         username: editUsername,
         bio: editBio,
-        image_object_key: new_filename || "",
-        location: editLocation
-    }
-
-    axios.post(updateUserDetailsURL, requestBody)
-    .then(response => {
-    })
-    .then(() => { fetchUserDetails() })
-    .catch(error => {
-      console.error("Error sending update user request:", error);
-    });
-  };
+        image_object_key: new_filename || '',
+        location: editLocation,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.user() });
+      setEditProfileSheetActive(false);
+    },
+    onError: (error) => {
+      console.error('Error saving profile:', error);
+    },
+  });
   
   const handleLogOut = async () => {
     setToken('');
@@ -297,10 +282,8 @@ export default function AccountPage() {
     setEditProfileSheetActive(true);
   };
 
-  const handleSaveProfile = async () => {
-    uploadUserPicture()
-    .then((new_filename) => { sendUpdateUserDetailsRequest(new_filename); })
-    .then(() => { setEditProfileSheetActive(false); });
+  const handleSaveProfile = () => {
+    updateProfileMutation.mutate();
   };
 
   const handleSaveSettings = async () => {
@@ -339,13 +322,11 @@ export default function AccountPage() {
     let failedCount = 0;
 
     if (result.timedOut) {
-      // Timeout occurred - show partial results
       Alert.alert(
         "Upload In Progress",
         "Contact upload is taking longer than expected. Please check back later."
       );
     } else {
-      // All requests completed - count successes and failures
       result.results.forEach((promiseResult) => {
         if (promiseResult.status === 'fulfilled' && promiseResult.value.success) {
           successCount++;
@@ -354,7 +335,8 @@ export default function AccountPage() {
         }
       });
 
-      // Show alert with results
+      queryClient.invalidateQueries({ queryKey: ['contacts'] });
+
       if (failedCount > 0) {
         Alert.alert(
           "Upload Complete",
