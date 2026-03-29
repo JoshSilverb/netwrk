@@ -25,9 +25,8 @@ export default function AddContactPage() {
     const params = useLocalSearchParams<{ id?: string }>();
     const id = params.id ?? "0";
 
-    console.log("Rendering add page with ID param =", id);
-
     const [loading,       setLoading]       = React.useState(true);
+    const [submitting,    setSubmitting]    = React.useState(false);
     const [errorMessage, setErrorMessage] = React.useState('');
 
     // Basic data 
@@ -129,7 +128,6 @@ export default function AddContactPage() {
 
     const uploadContactPicture = async () => {
         if (!selectedImage) {
-            console.log("No image selected for contact");
             return "";
         }
 
@@ -142,26 +140,20 @@ export default function AddContactPage() {
             filetype: contentType
         }
 
-        console.log("sending request to get s3 upload url for contact image with body: " + JSON.stringify(requestBody))
 
         const response = await axios.post(getS3UploadURL, requestBody);
         
         if (response.status != 200) {
-            console.log(`Failed to get signed S3 upload url for contact - ${JSON.stringify(response.data)}`)
             return "";
         }
 
         const upload_url = response.data["upload_url"]
         const new_filename = response.data["filename"]
 
-        console.log("got upload url for contact: " + upload_url)
-        console.log("got new filename for contact: " + new_filename)
 
         // Read file into a blob
         const localFileRes = await fetch(newImageUri);
         const blob = await localFileRes.blob();
-
-        console.log("About to upload contact image to s3");
         // Upload with PUT to S3 - use the same content type as sent to backend
         const uploadRes = await fetch(upload_url, {
             method: "PUT",
@@ -170,7 +162,6 @@ export default function AddContactPage() {
         });
 
         if (uploadRes.ok) {
-            console.log("Uploaded contact image successfully to S3!");
             return new_filename;
         } else {
             console.error("Contact image upload failed", uploadRes.status, await uploadRes.text());
@@ -183,7 +174,6 @@ export default function AddContactPage() {
     const onChangeRemindPeriod = (weeks, months) => {
         setRemindPeriodWks(weeks);
         setRemindPeriodMos(months);
-        console.log(`[ADD] remind period: wks=${remindPeriodWks} mos=${remindPeriodMos}`)
     }
 
     // If id isn't set, then this is in pure add mode, not edit, so don't need 
@@ -194,16 +184,13 @@ export default function AddContactPage() {
 
     React.useEffect(() => {
         if (id === '0') {
-            console.log("Id is 0, not fetching a contact");
             setLoading(false);
         }
         else {
-            console.log("ID is non-0, fetching cause ID=", id);
             setResolvedId(id as string);
             fetchContactById(id as string);
         }
         return () => {
-            console.log("Cleaning up");
             resetData();
         };
 
@@ -253,7 +240,6 @@ export default function AddContactPage() {
     }
 
     const setDataFromContact = (contact) => {
-        console.log("Editing contact:", contact)
         onChangeFullname(contact.fullname);
         onChangeLocation(contact.location);
         ref.current?.setAddressText(contact.location);
@@ -268,35 +254,28 @@ export default function AddContactPage() {
         setRemindPeriodWks(contact.remind_in_weeks || 0);
         setRemindPeriodMos(contact.remind_in_months || 1);
 
-        console.log(`Weeks: ${contact.remind_in_weeks}, months: ${contact.remind_in_months}, months?: ${Boolean(contact.remind_in_months)}`)
 
         // Set initial frequency type based on which value is given
         if (contact.remind_in_weeks && !contact.remind_in_months) {
-            console.log("Setting frequency to weeks");
             setInitialFrequencyType('weeks');
             setInitialFrequencyValue(contact.remind_in_weeks);
         } else if (contact.remind_in_months && !contact.remind_in_weeks) {
-            console.log("Setting frequency to months");
             setInitialFrequencyType('months');
             setInitialFrequencyValue(contact.remind_in_months);
         } else {
-            console.log("Setting frequency to default (months)");
             setInitialFrequencyType('months'); // Default to months
         }
 
         setTags(contact.tags);
         let dateStr = contact.lastcontact.replace(',', '');  // "17 Apr 2025"
-        console.log(`Setting last contact date from value=${dateStr} with type=${typeof dateStr}`)
         // const newDate = new Date(dateStr);
         const newDate = parse(dateStr, 'dd MMM yyyy', new Date());
-        console.log(`Casting that to date gives ${newDate}`)
         if (!isNaN(newDate.getTime())) {
             setDate(newDate);
         } else {
             console.error('Invalid date, using today as fallback');
             setDate(new Date());
         }
-        console.log(`Set last contact date to value=${date}`)
         setSelectedImage(null); 
         setProfileImageURI(contact.profile_pic_url);
     }
@@ -310,11 +289,10 @@ export default function AddContactPage() {
     const postNewContact = async () => {
         if (!fullname) {
             setErrorMessage("Cannot create a contact without a name");
-            console.error("Cannot create a contact without a name");
-
             return;
         }
 
+        setSubmitting(true);
         try {
             // First upload the contact image if one is selected
             const imageObjectKey = await uploadContactPicture();
@@ -338,21 +316,16 @@ export default function AddContactPage() {
                 }
             }
 
-            console.log("Adding new user with details:", requestBody.newContact);
-
-            const response = await axios.post(addContactForUserURL, requestBody)
-            console.log(response.data)
+            const response = await axios.post(addContactForUserURL, requestBody);
             if (response.status == 200) {
                 await resetData();
-                // For new contacts, navigate to the contact page
                 const redirectLink = "/contact/" + response.data;
                 router.push(redirectLink);
             }
-
-        }
-        catch (error) {
-            console.error("Error during add contact POST request:", error);
+        } catch (error) {
             setErrorMessage("Failed to upload new contact details");
+        } finally {
+            setSubmitting(false);
         }
     }
 
@@ -361,11 +334,10 @@ export default function AddContactPage() {
     const updateContact = async () => {
         if (!fullname) {
             setErrorMessage("Cannot update a contact without a name");
-            console.error("Cannot update a contact without a name");
-
             return;
         }
 
+        setSubmitting(true);
         try {
             // First upload the contact image if one is selected
             const imageObjectKey = await uploadContactPicture();
@@ -390,25 +362,20 @@ export default function AddContactPage() {
                 }
             }
             
-            console.log("Updating user to new details:", requestBody.newContact);
-
-            const response = await axios.post(updateContactForUserURL, requestBody)
-            console.log(response.data)
+            const response = await axios.post(updateContactForUserURL, requestBody);
             if (response.status == 200) {
                 await resetData();
-                // Just dismiss - the contact page will auto-refresh on focus
                 router.dismiss();
             }
-
-        }
-        catch (error) {
-            console.error("Error during update contact POST request:", error);
-            setErrorMessage("Failed to update contact details")
+        } catch (error) {
+            setErrorMessage("Failed to update contact details");
+        } finally {
+            setSubmitting(false);
         }
     }
 
     return (
-        <View style={CONTAINER_STYLES.screen}>
+        <View style={CONTAINER_STYLES.screen} backgroundColor="$background">
             <Stack.Screen
                 options={{
                     title: id === '0' ? 'Add Contact' : 'Edit Contact',
@@ -428,7 +395,7 @@ export default function AddContactPage() {
                 contentContainerStyle={{ paddingBottom: SPACING.md }}
             >
             <YStack space={SPACING.lg} padding={SPACING.lg}>
-                {errorMessage && <Text color="red">errorMessage</Text>}
+                {errorMessage ? <Text color="$red9">{errorMessage}</Text> : null}
                 {/* Full Name Input */}
                 <YStack 
                     space={SPACING.sm}
@@ -452,9 +419,7 @@ export default function AddContactPage() {
                         onChangeText={onChangeFullname}
                         placeholder="Enter full name"
                         textContentType='name'
-                        fontSize={TYPOGRAPHY.sizes.lg}
-                        fontWeight={TYPOGRAPHY.weights.bold}
-                        textAlign='center'
+                        fontSize={TYPOGRAPHY.sizes.md}
                         borderRadius={BORDER_RADIUS.md}
                     />
                 </YStack>
@@ -568,7 +533,6 @@ export default function AddContactPage() {
                             placeholder='Enter location'
                             onPress={(data, details = null) => {
                                 onChangeLocation(data.description);
-                                console.log(data);
                             }}
                             disableScroll={true}
                             ref={ref}
@@ -800,7 +764,7 @@ export default function AddContactPage() {
                     borderRadius={BORDER_RADIUS.md}
                     backgroundColor="$gray1"
                 >
-                    <Text 
+                    <Text
                         fontSize={TYPOGRAPHY.sizes.md}
                         fontWeight={TYPOGRAPHY.weights.medium}
                         color="$gray11"
@@ -929,7 +893,6 @@ export default function AddContactPage() {
                     marginTop={SPACING.xl}
                 >
                     {id !== '0' ? (
-                        // Edit mode: show both Cancel and Update buttons
                         <XStack space={SPACING.sm}>
                             <Button
                                 size="$4"
@@ -938,6 +901,7 @@ export default function AddContactPage() {
                                     resetData();
                                     router.dismiss();
                                 }}
+                                disabled={submitting}
                                 fontSize={TYPOGRAPHY.sizes.md}
                                 fontWeight={TYPOGRAPHY.weights.bold}
                                 borderRadius={BORDER_RADIUS.md}
@@ -948,6 +912,7 @@ export default function AddContactPage() {
                             <Button
                                 size="$4"
                                 onPress={updateContact}
+                                disabled={submitting}
                                 backgroundColor="$blue9"
                                 color="white"
                                 fontSize={TYPOGRAPHY.sizes.md}
@@ -955,21 +920,21 @@ export default function AddContactPage() {
                                 borderRadius={BORDER_RADIUS.md}
                                 flex={1}
                             >
-                                Update Contact
+                                {submitting ? 'Saving...' : 'Update Contact'}
                             </Button>
                         </XStack>
                     ) : (
-                        // Add mode: show only Add Contact button
                         <Button
                             size="$4"
                             onPress={postNewContact}
+                            disabled={submitting}
                             backgroundColor="$blue9"
                             color="white"
                             fontSize={TYPOGRAPHY.sizes.md}
                             fontWeight={TYPOGRAPHY.weights.bold}
                             borderRadius={BORDER_RADIUS.md}
                         >
-                            Add Contact
+                            {submitting ? 'Adding...' : 'Add Contact'}
                         </Button>
                     )}
                 </YStack>

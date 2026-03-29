@@ -1,124 +1,96 @@
-import React from "react";
-
+import React from 'react';
 import { Contact } from '@/constants/Definitions';
-import { Link, useRouter } from 'expo-router';
-import { ChevronDown, User as UserIcon } from '@tamagui/lucide-icons'
-import { Accordion, Paragraph, Square, Avatar, XStack, YStack, SizableText, View, Button } from 'tamagui'
-import { SPACING, TYPOGRAPHY, CONTAINER_STYLES } from '@/constants/Styles';
+import { useRouter } from 'expo-router';
+import { ChevronRight, User as UserIcon } from '@tamagui/lucide-icons';
+import { Avatar, XStack, YStack, SizableText, View } from 'tamagui';
+import { Pressable } from 'react-native';
+import { SPACING, TYPOGRAPHY, BORDER_RADIUS } from '@/constants/Styles';
 
-const ProfileCard = ({ 
-    contact, 
-    keyNum, 
-    onMorePressCallback 
-} : { 
-    contact: Contact, 
-    keyNum: number, 
-    onMorePressCallback?: () => void
+const ProfileCard = ({
+    contact,
+}: {
+    contact: Contact & { tags?: string[]; lastcontact?: string };
 }) => {
-
-    const contactLinkUrl = "/contact/" + contact.contact_id;
-
     const router = useRouter();
-    
-    const callCallbackAndRedirect = async () => {
-        // Call parent-provided callback if given.
-        onMorePressCallback?.();
 
-        // Redirect to contact page
-        router.push(contactLinkUrl);
-    }
+    const handlePress = () => {
+        router.push(`/contact/${contact.contact_id}`);
+    };
 
     return (
-        <Accordion
-            overflow="hidden"
-            type="multiple"
-            marginBottom={SPACING.sm}
-            borderRadius={SPACING.sm}
-            borderWidth={1}
-            borderColor="$borderColor"
-            backgroundColor="$background"
-            collapsable={false}
-        >
-            <Accordion.Item value={String(keyNum)}>
-                <Accordion.Trigger 
-                    flexDirection="row" 
-                    justifyContent="space-between"
-                    padding={SPACING.md}
+        <Pressable onPress={handlePress}>
+            {({ pressed }) => (
+                <XStack
+                    alignItems="center"
+                    space={SPACING.md}
+                    marginBottom={SPACING.sm}
+                    paddingHorizontal={SPACING.md}
+                    paddingVertical={SPACING.sm}
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius={BORDER_RADIUS.md}
+                    backgroundColor={pressed ? '$gray2' : '$background'}
                 >
-                    {({
-                    open,
-                    }: {
-                    open: boolean
-                    }) => (
-                    <>
-                        <XStack alignItems="center" gap={SPACING.md} flex={1}>
-                            <Avatar circular size="$4">
-                                {contact.profile_pic_url ? (
-                                <Avatar.Image
-                                    accessibilityLabel={contact.fullname}
-                                    src={contact.profile_pic_url}
-                                />
-                                ) : (
-                                <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">
-                                    <UserIcon size={24} color="gray" />
-                                </Avatar.Fallback>
-                                )}
-                            </Avatar>
-                            
-                            <YStack flex={1} alignItems="flex-start">
-                                <SizableText 
-                                    fontSize={TYPOGRAPHY.sizes.md}
-                                    fontWeight={TYPOGRAPHY.weights.bold}
-                                    numberOfLines={1}
-                                >
-                                    {contact.fullname}
-                                </SizableText>
-                                <SizableText 
-                                    fontSize={TYPOGRAPHY.sizes.sm}
-                                    color="$gray10"
-                                    numberOfLines={1}
-                                >
-                                    {contact.location}
-                                </SizableText>
-                            </YStack>
-                        </XStack>
+                    <Avatar circular size="$4">
+                        {contact.profile_pic_url ? (
+                            <Avatar.Image
+                                accessibilityLabel={contact.fullname}
+                                src={contact.profile_pic_url}
+                            />
+                        ) : (
+                            <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">
+                                <UserIcon size={20} color="$gray9" />
+                            </Avatar.Fallback>
+                        )}
+                    </Avatar>
 
-                        <Square rotate={open ? '180deg' : '0deg'}>
-                            <ChevronDown size="$1" />
-                        </Square>
-                    </>
-                    )}
-                </Accordion.Trigger>
-                <Accordion.Content 
-                    exitStyle={{ opacity: 0 }}
-                    padding={SPACING.md}
-                    paddingTop={0}
-                >
-                    <YStack space={SPACING.sm}>
-                        <Paragraph 
-                            fontSize={TYPOGRAPHY.sizes.sm}
-                            color="$gray11"
-                            numberOfLines={3}
+                    <YStack flex={1} space={SPACING.xs}>
+                        <SizableText
+                            fontSize={TYPOGRAPHY.sizes.md}
+                            fontWeight={TYPOGRAPHY.weights.bold}
+                            numberOfLines={1}
                         >
-                            {contact.userbio}
-                        </Paragraph>
-                            <Button
-                                size="$2"
-                                backgroundColor="$blue9"
-                                color="white"
-                                alignSelf="flex-start"
-                                onPress={callCallbackAndRedirect}
-                                pressStyle={{ opacity: 0.8, backgroundColor: '$blue10' }}
-                                focusStyle={{ backgroundColor: '$blue10' }}
+                            {contact.fullname}
+                        </SizableText>
+
+                        {contact.location ? (
+                            <SizableText
+                                fontSize={TYPOGRAPHY.sizes.sm}
+                                color="$gray10"
+                                numberOfLines={1}
                             >
-                                More...
-                            </Button>
-                        {/* </Link> */}
+                                {contact.location}
+                            </SizableText>
+                        ) : null}
+
+                        {contact.tags && contact.tags.length > 0 ? (
+                            <XStack flexWrap="wrap" gap={SPACING.xs} marginTop={2}>
+                                {contact.tags.slice(0, 3).map((tag) => (
+                                    <View
+                                        key={tag}
+                                        backgroundColor="$blue3"
+                                        borderRadius={BORDER_RADIUS.xs}
+                                        paddingHorizontal={SPACING.xs}
+                                        paddingVertical={2}
+                                    >
+                                        <SizableText fontSize={TYPOGRAPHY.sizes.xs} color="$blue11">
+                                            {tag}
+                                        </SizableText>
+                                    </View>
+                                ))}
+                            </XStack>
+                        ) : contact.lastcontact ? (
+                            <SizableText fontSize={TYPOGRAPHY.sizes.xs} color="$gray9">
+                                Last contacted {contact.lastcontact}
+                            </SizableText>
+                        ) : null}
                     </YStack>
-                </Accordion.Content>
-            </Accordion.Item>
-        </Accordion>
+
+                    <ChevronRight size={16} color="$gray8" />
+                </XStack>
+            )}
+        </Pressable>
     );
 };
 
-export default ProfileCard
+export default ProfileCard;

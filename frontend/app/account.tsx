@@ -72,7 +72,6 @@ export default function AccountPage() {
 
       try {
           const response = await axios.post(getUserDetailsURL, requestBody);
-          console.log(response.data);
           setProfilePicUrl(response.data["profile_pic_url"])
           setUsername(response.data["username"]);
           setNumContacts(response.data["num_contacts"]);
@@ -88,7 +87,6 @@ export default function AccountPage() {
     // Send updated profile picture
 
     if (!selectedImage) {
-      console.log("No image selected");
       return;
     }
 
@@ -102,29 +100,20 @@ export default function AccountPage() {
         filetype: contentType
     }
 
-    console.log("sending request to get s3 upload url with body: " + JSON.stringify(requestBody))
 
     const response = await axios.post(getS3UploadURL, requestBody);
     
     if (response.status != 200) {
-      console.log(`Failed to get signed S3 upload url - ${JSON.stringify(response.data)}`)
       return;
     }
 
     const upload_url = response.data["upload_url"]
     const new_filename = response.data["filename"]
 
-    console.log("got upload url: " + upload_url)
-    console.log("got new filename: " + new_filename)
-
-    console.log("Getting file handle");
 
     // Step 2: Read file into a blob (React Native fetch doesn't accept local URIs directly)
     const localFileRes = await fetch(newImageUri);
-    console.log("Getting file blob");
     const blob = await localFileRes.blob();
-
-    console.log("About to upload image to s3");
     // Step 3: Upload with PUT to S3 - use the same content type as sent to backend
     const uploadRes = await fetch(upload_url, {
       method: "PUT",
@@ -132,10 +121,7 @@ export default function AccountPage() {
       body: blob,
     });
 
-    console.log("Got response");
-
     if (uploadRes.ok) {
-      console.log("Uploaded successfully to S3!");
     } else {
       console.error("Upload failed", uploadRes.status, await uploadRes.text());
     }
@@ -157,7 +143,6 @@ export default function AccountPage() {
 
     axios.post(updateUserDetailsURL, requestBody)
     .then(response => {
-      console.log(`Got UpdateUserDetails response: ${response.data}`);
     })
     .then(() => { fetchUserDetails() })
     .catch(error => {
@@ -252,8 +237,6 @@ export default function AccountPage() {
     }
     const { data } = await Contacts.getContactsAsync({});
 
-    console.log(data);
-
     let contacts = [];
     data.map((contact) => {
       if (contact.imageAvailable) {
@@ -275,10 +258,6 @@ export default function AccountPage() {
                       }
       contacts.push(formattedContact);
     });
-
-    console.log("Formatted:");
-
-    console.log(contacts);
 
     // Store formatted contacts and initialize all as deselected
     setFormattedContacts(contacts);
@@ -319,11 +298,6 @@ export default function AccountPage() {
   };
 
   const handleSaveProfile = async () => {
-    console.log('Saving profile:', { 
-      bio: editBio, 
-      profileImage: selectedImage 
-    });
-
     uploadUserPicture()
     .then((new_filename) => { sendUpdateUserDetailsRequest(new_filename); })
     .then(() => { setEditProfileSheetActive(false); });
@@ -343,7 +317,6 @@ export default function AccountPage() {
 
       try {
         const response = await axios.post(addContactForUserURL, requestBody);
-        console.log(response.data);
         return { success: response.status === 200 };
       } catch (error) {
         console.error("Error during add contact POST request:", error);
@@ -428,8 +401,6 @@ export default function AccountPage() {
     // Filter contacts based on selection
     const selectedContactsList = formattedContacts.filter((_, index) => selectedContacts[index]);
 
-    console.log("Selected contacts to import:", selectedContactsList);
-
     uploadSelectedContacts(selectedContactsList);
 
     // Close modals and clear state
@@ -442,7 +413,7 @@ export default function AccountPage() {
 
 
   return (
-    <View style={CONTAINER_STYLES.screen}>
+    <View style={CONTAINER_STYLES.screen} backgroundColor="$background">
       <Stack.Screen options={{ title: "" }} />
 
       <ScrollView>
@@ -492,7 +463,12 @@ export default function AccountPage() {
             </Button>
           </Link>
 
-          <Button onPress={() => setImportSheetActive(true)}>
+          <Button
+            onPress={() => setImportSheetActive(true)}
+            size="$3"
+            variant="outlined"
+            borderRadius={BORDER_RADIUS.md}
+          >
             Import contacts
           </Button>
           <Text color="$red">
@@ -524,11 +500,35 @@ export default function AccountPage() {
             </View>
           </YStack>
 
-          <XStack space={SPACING.md} marginTop={SPACING.lg}>
-            <Button onPress={() => {setLogoutSheetActive(true)}} backgroundColor="$red9" color="white">Log Out</Button>
-            <Button onPress={handleEditProfile} variant="outlined">Edit Profile</Button>
-            <Button onPress={() => {setSettingsSheetActive(true)}} variant="outlined">Settings</Button>
-          </XStack>
+          <YStack space={SPACING.sm} marginTop={SPACING.lg} width="100%">
+            <Button
+              onPress={handleEditProfile}
+              size="$3"
+              backgroundColor="$blue9"
+              color="white"
+              borderRadius={BORDER_RADIUS.md}
+            >
+              Edit Profile
+            </Button>
+            <Button
+              onPress={() => setSettingsSheetActive(true)}
+              size="$3"
+              variant="outlined"
+              borderRadius={BORDER_RADIUS.md}
+            >
+              Settings
+            </Button>
+            <Button
+              onPress={() => setLogoutSheetActive(true)}
+              size="$3"
+              variant="outlined"
+              borderColor="$red9"
+              color="$red9"
+              borderRadius={BORDER_RADIUS.md}
+            >
+              Log Out
+            </Button>
+          </YStack>
         </YStack>
       </YStack>
       </ScrollView>
@@ -702,88 +702,45 @@ export default function AccountPage() {
       {/* Settings Modal */}
       {settingsSheetActive && (
       <Sheet native open={settingsSheetActive} onOpenChange={setSettingsSheetActive} dismissOnOverlayPress>
-          <Sheet.Frame 
+          <Sheet.Frame
               backgroundColor="$background"
               borderTopLeftRadius={BORDER_RADIUS.lg}
               borderTopRightRadius={BORDER_RADIUS.lg}
           >
           <Sheet.Handle backgroundColor="$gray8" />
-          <YStack 
-              space={SPACING.lg} 
-              padding={SPACING.lg}
-          >
-              {/* Content Section */}
-              <YStack 
-                  space={SPACING.md}
+          <YStack space={SPACING.lg} padding={SPACING.lg}>
+              <Text
+                  fontSize={TYPOGRAPHY.sizes.lg}
+                  fontWeight={TYPOGRAPHY.weights.bold}
+                  color="$gray11"
+              >
+                  Settings
+              </Text>
+              <XStack
+                  justifyContent="space-between"
+                  alignItems="center"
                   padding={SPACING.md}
                   borderWidth={1}
                   borderColor="$borderColor"
                   borderRadius={BORDER_RADIUS.md}
                   backgroundColor="$gray1"
-                  alignItems="center"
               >
-                  <Text 
-                      fontSize={TYPOGRAPHY.sizes.lg}
-                      fontWeight={TYPOGRAPHY.weights.bold}
-                      color="$gray11"
-                      textAlign="center"
-                  >
-                      Style
+                  <Text fontSize={TYPOGRAPHY.sizes.md} color="$gray11">
+                      Dark mode
                   </Text>
-                  <XStack>
-                    <Label
-                      color="$gray10"
-                      textAlign="center"
-                      lineHeight={20}
-                      paddingRight="$0"
-                      minWidth={90}
-                      justifyContent="flex-end"
-                      size={TYPOGRAPHY.sizes.md}
-                      htmlFor="lightModeToggle"
-                    >
-                      {isLightMode ? "Light mode" : "Dark mode"}
-                    </Label>
-                    <Separator minHeight={20} vertical />
-                    <Switch id="lightModeToggle" size="$2" defaultChecked={false}>
-                      <Switch.Thumb animation="quicker" />
-                    </Switch>
-
-                  </XStack>
-              </YStack>
-          </YStack>
-          
-          {/* Action Buttons */}
-          <XStack 
-              padding={SPACING.md} 
-              justifyContent="flex-end" 
-              space={SPACING.sm}
-              borderTopWidth={1}
-              borderTopColor="$borderColor"
-              backgroundColor="$background"
-          >
+                  <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray9">
+                      Coming soon
+                  </Text>
+              </XStack>
               <Button
                   size="$3"
                   variant="outlined"
                   onPress={() => setSettingsSheetActive(false)}
                   borderRadius={BORDER_RADIUS.md}
-                  flex={1}
               >
-                  Cancel
+                  Close
               </Button>
-              <Button
-                  size="$3"
-                  onPress={() => {
-                      setSettingsSheetActive(false);
-                      handleSaveSettings();
-                  }}
-                  backgroundColor="$blue9"
-                  color="white"
-                  borderRadius={BORDER_RADIUS.md}
-                  flex={1}
-              >
-                  Save
-              </Button>
-          </XStack>
+          </YStack>
           </Sheet.Frame>
       </Sheet>
       )}

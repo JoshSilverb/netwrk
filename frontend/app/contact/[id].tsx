@@ -1,8 +1,9 @@
 import { Stack, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { Contact } from '@/constants/Definitions';
-import { View, Text, Group, Button, Paragraph, XStack, YStack, Avatar, ScrollView, Accordion, Square } from 'tamagui';
-import { ChevronUp, ChevronDown, User as UserIcon } from '@tamagui/lucide-icons'
+import { View, Text, Button, Paragraph, XStack, YStack, Avatar, ScrollView } from 'tamagui';
+import { User as UserIcon } from '@tamagui/lucide-icons'
 import { removeContactForUserURL } from '@/constants/Apis';
+import { Alert } from 'react-native';
 import { useState, useCallback } from 'react';
 import { Loader } from '@/components/Loader';
 import { getContactByIdURL } from '@/constants/Apis';
@@ -28,7 +29,6 @@ export default function ContactPage() {
   // This ensures the page shows updated data after editing and on initial load
   useFocusEffect(
     useCallback(() => {
-      console.log("Contact page focused, refetching data");
       fetchContactById();
     }, [id, token])
   );
@@ -39,11 +39,8 @@ export default function ContactPage() {
         contact_id: id
     }
 
-    console.log("Sending FetchContactById request to", getContactByIdURL, "with body:", requestBody);
-
       try {
           const response = await axios.post(getContactByIdURL, requestBody);
-          console.log(response.data);
           setContact(response.data);
           setLoading(false);
           setErrorReceived(false);
@@ -54,7 +51,6 @@ export default function ContactPage() {
       }
   };
 
-  // Send data to backend and redirect to contact page
   const router = useRouter();
 
   const removeContact = async () => {
@@ -63,43 +59,29 @@ export default function ContactPage() {
         contact_id: id
     }
 
-    console.log("Removing contact with ID:", id);
-
-      try {
-          const response = await axios.post(removeContactForUserURL, requestBody)
-          console.log(response.data)
-          // setContactId(response.data)
-          if (response.status == 200) {
-              const redirectLink = "/(tabs)/contacts/";
-              router.replace(redirectLink);
-          }
-
-      }
-      catch (error) {
-          console.error("Error during remove contact POST request:", error);
-      }
+    try {
+        const response = await axios.post(removeContactForUserURL, requestBody);
+        if (response.status == 200) {
+            router.replace("/(tabs)/contacts/");
+        }
+    } catch (error) {
+        if (__DEV__) console.error("Error during remove contact POST request:", error);
+    }
   }
+
+  const confirmAndRemoveContact = () => {
+    Alert.alert(
+      "Delete Contact",
+      `Are you sure you want to delete ${contact.fullname || 'this contact'}? This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: removeContact },
+      ]
+    );
+  };
   
   const editContact = async () => {
     router.push({ pathname: '/(tabs)/add', params: { id: id } });
-  }
-
-  function getDateString(date: Date) {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const day = date.getDate();
-
-    return `${year}-${month}-${day}`
-  }
-
-  function nextContactDate(lastcontact: string, weeks: number, months: number) {
-    console.log(`Calculating next contact date with lastcontact=${lastcontact}, weeks=${weeks}, months=${months}`)
-    const lastContactDate = new Date(lastcontact);
-    let nextContactDate = new Date(lastContactDate);
-    nextContactDate.setMonth(lastContactDate.getMonth() + months);
-    nextContactDate.setDate(lastContactDate.getDate() + (weeks * 7));
-
-    return getDateString(nextContactDate)
   }
 
   if (errorReceived) {
@@ -111,11 +93,11 @@ export default function ContactPage() {
   }
 
   return (
-    <View style={CONTAINER_STYLES.screen}>
+    <View style={CONTAINER_STYLES.screen} backgroundColor="$background">
       <Stack.Screen options={{ title: "", headerBackTitle: 'Back' }} />
 
       <YStack flex={1} position="relative">
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}>
       <YStack space={SPACING.xl} padding={SPACING.lg}>
         <Loader loading={loading}>
         {/* Header */}
@@ -390,16 +372,15 @@ export default function ContactPage() {
           borderRadius={BORDER_RADIUS.md}
           backgroundColor="$gray1"
         >
-          <Text 
+          <Text
             fontSize={TYPOGRAPHY.sizes.md}
             fontWeight={TYPOGRAPHY.weights.medium}
             color="$gray11"
             marginBottom={SPACING.xs}
           >
-            Social Media
+            Contact Info
           </Text>
           
-          {console.log("contact", contact)}
           {contact.socials && contact.socials.length > 0 ? (
             contact.socials.map((social, index) => (
               <XStack 
@@ -460,10 +441,11 @@ export default function ContactPage() {
       >
         <XStack space={SPACING.sm}>
           <Button
-            onPress={removeContact}
+            onPress={confirmAndRemoveContact}
             size="$4"
-            backgroundColor="$red9"
-            color="white"
+            variant="outlined"
+            borderColor="$red9"
+            color="$red9"
             fontSize={TYPOGRAPHY.sizes.md}
             fontWeight={TYPOGRAPHY.weights.bold}
             borderRadius={BORDER_RADIUS.md}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { YStack, Input, Button, Text, XStack, Checkbox, Label, ScrollView, View, Image } from 'tamagui';
+import { YStack, Input, Button, Text, XStack, Checkbox, Label, View, Image } from 'tamagui';
 import axios from 'axios';
 import { validateUserCredentialsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
@@ -9,6 +9,7 @@ import { saveToken, getToken } from '@/utils/tokenstore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { HomePageUrl } from '@/constants/Definitions';
+import { SPACING, TYPOGRAPHY, COLORS } from '@/constants/Styles';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -27,34 +28,26 @@ export default function LoginScreen() {
   const handleRetrieveSavedToken = async () => {
     const retrievedToken = await getToken();
     if (retrievedToken) {
-      console.log("Retrieved saved token:", retrievedToken);
       setToken(retrievedToken);
       router.replace(HomePageUrl);
-    }
-    else {
-      console.log("No saved token");
     }
   }
 
   const handleLogin = async () => {
-    // Login form data to be sent
     const requestBody = {
       username: username,
       password: password
     }
-
-    console.log(`sending login request with body=${JSON.stringify(requestBody)} to URL=${validateUserCredentialsURL}`)
 
     try {
       const response = await axios.post(validateUserCredentialsURL, requestBody);
       setLoginError('');
       setToken(response.data['user_token']);
       if (rememberMe) {
-        console.log("Saving token:", response.data['user_token']);
         await saveToken(response.data['user_token']);
       }
       router.replace(HomePageUrl);
-      
+
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         if (error.response.status === 401) {
@@ -69,97 +62,126 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }} edges={['top', 'bottom']}>
-    <KeyboardAwareScrollView
-      enableOnAndroid={true}
-      enableAutomaticScroll={true}
-      extraScrollHeight={20}
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={{ flexGrow: 1 }}
-    >
-    <YStack
-      f={1}
-      alignItems="center"
-      justifyContent="center"
-      backgroundColor="$background"
-      paddingTop={130}
-    >
-      <XStack
-        backgroundColor={'#1473CBFF'} 
-        marginBottom={30}
-        alignItems="center"
-        justifyContent="center"
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+      <KeyboardAwareScrollView
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        extraScrollHeight={20}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ flexGrow: 1 }}
       >
-        <Image width={130} height={130} source={require('../assets/images/netwrk-icon-square.png')} />
-        <Text marginRight={40} fontSize={40} color={'#FFFFFF'}>
-          Netwrk
-        </Text>
-      </XStack>
-      {/* <Text fontFamily="$heading" fontSize="$7" color="$color" mb="$4">
-        Welcome Back
-      </Text> */}
-      <Label htmlFor="username" mb="$2">
-        Username
-      </Label>
-      <Input
-        id="username"
-        placeholder="Enter username"
-        value={username}
-        onChangeText={setUsername}
-        width="$12"
-        size="$4"
-        borderWidth="$0.5"
-      />
-      <Label htmlFor="password" mt="$3" mb="$2">
-        Password
-      </Label>
-      <Input
-        id="password"
-        placeholder="Enter password"
-        value={password}
-        onChangeText={setPassword}
-        width="$12"
-        size="$4"
-        secureTextEntry
-        borderWidth="$0.5"
-      />
-      {loginError && (
-        <Text color="$red9" mt="$3">
-          {loginError}
-        </Text>
-      )}
+        <YStack
+          flex={1}
+          alignItems="center"
+          justifyContent="center"
+          backgroundColor="$background"
+          paddingHorizontal={SPACING.lg}
+          paddingVertical={SPACING.xxl}
+        >
+          {/* Brand block */}
+          <YStack alignItems="center" marginBottom={SPACING.xxl}>
+            <Image
+              width={80}
+              height={80}
+              borderRadius={16}
+              source={require('../assets/images/netwrk-icon-square.png')}
+              marginBottom={SPACING.sm}
+            />
+            <Text
+              fontSize={TYPOGRAPHY.sizes.title}
+              fontWeight={TYPOGRAPHY.weights.bold}
+              color="$blue9"
+            >
+              Netwrk
+            </Text>
+          </YStack>
 
-      <Button
-        mt="$4"
-        width="$12"
-        size="$4"
-        onPress={handleLogin}
-      >
-        Login
-      </Button>
-      <XStack mt="$4" jc="center" ai="center" space="$2">
-        <Checkbox 
-          id="rememberMeCheckBox"
-          onCheckedChange={(checked) => setRememberMe(checked)}
-        >
-          <Checkbox.Indicator>
-            <CheckIcon />
-          </Checkbox.Indicator>  
-        </Checkbox>
-        <Label htmlFor="rememberMeCheckBox">Remember me</Label>
-      </XStack>
-      
-      <XStack mt="$4" jc="center" ai="center" space="$5">
-        <Text>Don't have an account?</Text>
-        <Button
-          variant="link"
-          onPress={() => router.push('/register')}
-        >
-          Sign Up
-        </Button>
-      </XStack>
-    </YStack>
-    </KeyboardAwareScrollView>
+          {/* Form */}
+          <YStack width="100%" space={SPACING.xs}>
+            <Text
+              fontSize={TYPOGRAPHY.sizes.sm}
+              fontWeight={TYPOGRAPHY.weights.medium}
+              color="$gray11"
+              marginBottom={SPACING.xs}
+            >
+              Username
+            </Text>
+            <Input
+              id="username"
+              placeholder="Enter username"
+              value={username}
+              onChangeText={setUsername}
+              size="$4"
+              width="100%"
+              autoCapitalize="none"
+            />
+
+            <Text
+              fontSize={TYPOGRAPHY.sizes.sm}
+              fontWeight={TYPOGRAPHY.weights.medium}
+              color="$gray11"
+              marginTop={SPACING.md}
+              marginBottom={SPACING.xs}
+            >
+              Password
+            </Text>
+            <Input
+              id="password"
+              placeholder="Enter password"
+              value={password}
+              onChangeText={setPassword}
+              size="$4"
+              width="100%"
+              secureTextEntry
+            />
+
+            {loginError ? (
+              <Text color="$red9" marginTop={SPACING.sm} textAlign="center">
+                {loginError}
+              </Text>
+            ) : null}
+
+            <Button
+              marginTop={SPACING.lg}
+              width="100%"
+              size="$4"
+              backgroundColor="$blue9"
+              color="white"
+              onPress={handleLogin}
+              fontWeight={TYPOGRAPHY.weights.bold}
+            >
+              Log In
+            </Button>
+
+            <XStack marginTop={SPACING.md} justifyContent="center" alignItems="center" space={SPACING.sm}>
+              <Checkbox
+                id="rememberMeCheckBox"
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+              >
+                <Checkbox.Indicator>
+                  <CheckIcon />
+                </Checkbox.Indicator>
+              </Checkbox>
+              <Label htmlFor="rememberMeCheckBox" fontSize={TYPOGRAPHY.sizes.sm}>
+                Remember me
+              </Label>
+            </XStack>
+
+            <XStack marginTop={SPACING.lg} justifyContent="center" alignItems="center" space={SPACING.sm}>
+              <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray10">
+                Don't have an account?
+              </Text>
+              <Button
+                variant="link"
+                onPress={() => router.push('/register')}
+                fontSize={TYPOGRAPHY.sizes.sm}
+              >
+                Sign Up
+              </Button>
+            </XStack>
+          </YStack>
+        </YStack>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

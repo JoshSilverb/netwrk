@@ -1,13 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
-import  ContactsList from '@/components/ContactsList'
-import { RadioGroup, ScrollView, YStack, Paragraph, Input, Button, XStack, Sheet, Switch, Label, Text, View } from 'tamagui';
+import ContactsList from '@/components/ContactsList'
+import { ScrollView, YStack, Input, Button, XStack, Sheet, Text, View } from 'tamagui';
 import { Loader } from '@/components/Loader';
 import { searchContactsURL, getTagsForUserURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
-import { Keyboard, Pressable, RefreshControl, Modal, TouchableOpacity } from 'react-native';
+import { Keyboard, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Months } from '@/constants/Definitions';
+import { ChevronDown } from '@tamagui/lucide-icons';
 import { getCurrentLocation } from '@/utils/locationutil';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import { useFocusEffect } from 'expo-router'
@@ -19,68 +19,61 @@ import axios from 'axios';
 
 const FILTER_STATE_KEY = '@contacts_filter_state';
 
-export default function contactsScreen() {
+export default function ContactsScreen() {
     const sortOptions = [
-        'Date added', 
-        'Last contacted (newest)', 
-        'Last contacted (oldest)', 
+        'Date added',
+        'Last contacted (newest)',
+        'Last contacted (oldest)',
         'Alphabetical',
         'Distance',
         'Relevance',
-        'Next contact date'];
+        'Next contact date',
+    ];
 
-    const { token, setToken } = useAuth();
+    const { token } = useAuth();
 
     const [searchError, setSearchError] = useState<string>('');
-
-    const [tags, setTags] = useState([]);
-
+    const [tags, setTags] = useState<string[]>([]);
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
-    // Initialize with defaults - will be updated from AsyncStorage
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
-    const [selectedSortOption, setSelectedSortOption] = useState(String(sortOptions[0]));
+    const [selectedSortOption, setSelectedSortOption] = useState(sortOptions[0]);
     const [dateLowerBound, setDateLowerBound] = useState(new Date(0));
     const [dateUpperBound, setDateUpperBound] = useState(new Date(Date.now()));
     const [filterStateLoaded, setFilterStateLoaded] = useState(false);
 
-    const [filterDropdownOpen, setFilterDropdownOpen] = useState(false);
-    const [tagsDropdownOpen, setTagsDropdownOpen] = useState(false);
-    const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+    const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+    const [sortExpanded, setSortExpanded] = useState(false);
+    const [tagSearch, setTagSearch] = useState('');
 
-    // Load filter state from AsyncStorage and then fetch data
     useFocusEffect(
         useCallback(() => {
             const loadAndFetch = async () => {
                 try {
-                    // First, load the saved filter state
                     const savedState = await AsyncStorage.getItem(FILTER_STATE_KEY);
-                    console.log('Raw saved state from AsyncStorage:', savedState);
 
                     let filterState = {
                         searchQuery: '',
-                        selectedTags: [],
-                        selectedSortOption: String(sortOptions[0]),
+                        selectedTags: [] as string[],
+                        selectedSortOption: sortOptions[0],
                         dateLowerBound: new Date(0),
-                        dateUpperBound: new Date(Date.now())
+                        dateUpperBound: new Date(Date.now()),
                     };
 
                     if (savedState) {
                         const parsed = JSON.parse(savedState);
-                        console.log('Loading filter state from AsyncStorage:', parsed);
                         filterState = {
                             searchQuery: parsed.searchQuery || '',
                             selectedTags: parsed.selectedTags || [],
-                            selectedSortOption: parsed.selectedSortOption || String(sortOptions[0]),
+                            selectedSortOption: parsed.selectedSortOption || sortOptions[0],
                             dateLowerBound: parsed.dateLowerBound ? new Date(parsed.dateLowerBound) : new Date(0),
-                            dateUpperBound: parsed.dateUpperBound ? new Date(parsed.dateUpperBound) : new Date(Date.now())
+                            dateUpperBound: parsed.dateUpperBound ? new Date(parsed.dateUpperBound) : new Date(Date.now()),
                         };
                     }
 
-                    // Update state with loaded values
                     setSearchQuery(filterState.searchQuery);
                     setSelectedTags(filterState.selectedTags);
                     setSelectedSortOption(filterState.selectedSortOption);
@@ -88,20 +81,18 @@ export default function contactsScreen() {
                     setDateUpperBound(filterState.dateUpperBound);
                     setFilterStateLoaded(true);
 
-                    // Now fetch data using the loaded filter state
                     await fetchTagsWithState();
                     await fetchContactsWithState(filterState);
                 } catch (error) {
-                    console.error('Error in loadAndFetch:', error);
+                    if (__DEV__) console.error('Error in loadAndFetch:', error);
                 }
             };
             loadAndFetch();
         }, [token])
     );
 
-    // Save filter state to AsyncStorage whenever it changes (but only after initial load)
     useEffect(() => {
-        if (!filterStateLoaded) return; // Don't save until we've loaded the initial state
+        if (!filterStateLoaded) return;
 
         const saveFilterState = async () => {
             try {
@@ -110,53 +101,36 @@ export default function contactsScreen() {
                     selectedTags,
                     selectedSortOption,
                     dateLowerBound: dateLowerBound.toISOString(),
-                    dateUpperBound: dateUpperBound.toISOString()
+                    dateUpperBound: dateUpperBound.toISOString(),
                 };
-                console.log('Saving filter state to AsyncStorage:', stateToSave);
                 await AsyncStorage.setItem(FILTER_STATE_KEY, JSON.stringify(stateToSave));
             } catch (error) {
-                console.error('Error saving filter state:', error);
+                if (__DEV__) console.error('Error saving filter state:', error);
             }
         };
         saveFilterState();
     }, [searchQuery, selectedTags, selectedSortOption, dateLowerBound, dateUpperBound, filterStateLoaded]);
 
-
     function isDateUnset(date: Date): boolean {
-        const minDate = new Date(0);
-        return String(date) === String(minDate);
+        return String(date) === String(new Date(0));
     }
 
     function isDateToday(date: Date): boolean {
-        const todayDate = new Date(Date.now());
-        return String(date) === String(todayDate);
+        return String(date) === String(new Date(Date.now()));
     }
 
     const fetchTagsWithState = async () => {
-        // Get Tags query to be sent
-        const requestBody = {
-            user_token: token
-        }
-
-        console.log("Sending get tags request with body:", requestBody);
-
         try {
-            setLoading(true);
-            const response = await axios.post(getTagsForUserURL, requestBody);
+            const response = await axios.post(getTagsForUserURL, { user_token: token });
             setTags(response.data);
-            console.log(tags);
-            setLoading(false);
         } catch (error) {
-            console.error('Error fetching tags data:', error);
+            if (__DEV__) console.error('Error fetching tags:', error);
         }
     };
 
     const fetchContactsWithState = async (filterState: any) => {
         const location = await getCurrentLocation();
 
-        console.log(`Using filter state:`, filterState);
-
-        // Search query to be sent
         const requestBody = {
             user_token: token,
             search_params: {
@@ -167,19 +141,15 @@ export default function contactsScreen() {
                 upper_bound_date: formatDateForAPI(filterState.dateUpperBound),
                 user_lat: location.latitude,
                 user_lon: location.longitude,
-            }
-        }
-
-        console.log("Sending search request with body:", requestBody);
+            },
+        };
 
         try {
             setLoading(true);
             const response = await axios.post(searchContactsURL, requestBody);
             setContacts(response.data);
-            console.log(contacts);
             setLoading(false);
             setSearchError('');
-        
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
                 if (error.response.status === 401) {
@@ -191,604 +161,382 @@ export default function contactsScreen() {
                 setSearchError('Network error');
             }
             setContacts([]);
+            setLoading(false);
         }
     };
 
-    // These functions use current state (for when user manually applies filters)
-    const fetchTags = async () => {
-        await fetchTagsWithState();
-    };
-
     const fetchContacts = async () => {
-        const filterState = {
+        await fetchContactsWithState({
             searchQuery,
             selectedTags,
             selectedSortOption,
             dateLowerBound,
-            dateUpperBound
-        };
-        await fetchContactsWithState(filterState);
+            dateUpperBound,
+        });
     };
 
     const fetchAll = async () => {
-        await fetchTags();
+        await fetchTagsWithState();
         await fetchContacts();
-    }
+    };
 
     const toggleTag = (tag: string) => {
-        setSelectedTags((prevTags) =>
-            prevTags.includes(tag) ? prevTags.filter((t) => t !== tag) : [...prevTags, tag]
+        setSelectedTags((prev) =>
+            prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
         );
     };
-    
+
+    const filteredTags = tags.filter(t =>
+        t.toLowerCase().includes(tagSearch.toLowerCase())
+    );
+
+    const activeFilterCount =
+        (selectedTags.length > 0 ? 1 : 0) +
+        (!isDateUnset(dateLowerBound) ? 1 : 0) +
+        (!isDateToday(dateUpperBound) ? 1 : 0) +
+        (selectedSortOption !== sortOptions[0] ? 1 : 0);
+
     return (
-        <View style={CONTAINER_STYLES.screen}>
+        <View style={CONTAINER_STYLES.screen} backgroundColor="$background">
             <ScrollView
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchAll} />}
-                contentInsetAdjustmentBehavior="automatic">
+                contentInsetAdjustmentBehavior="automatic"
+            >
                 <YStack>
-                    {/* Search Bar and Tag Selector */}
-                    <XStack 
-                        alignItems="center" 
-                        space={SPACING.sm} 
-                        width="100%" 
+                    {/* Search Bar Row */}
+                    <XStack
+                        alignItems="center"
+                        space={SPACING.sm}
+                        width="100%"
                         padding={SPACING.md}
                     >
-                    {/* Dropdown Menu */}
-                    <Button
-                        size="$3"
-                        onPress={() => setFilterDropdownOpen(true)}
-                        iconAfter={<Ionicons name={filterDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />}
-                        variant="outlined"
-                        width={120}
-                        fontSize={TYPOGRAPHY.sizes.sm}
-                    >
-                        Filter by...
-                    </Button>
+                        <Button
+                            size="$3"
+                            onPress={() => setFilterSheetOpen(true)}
+                            icon={<Ionicons name="options-outline" size={16} />}
+                            variant="outlined"
+                            fontSize={TYPOGRAPHY.sizes.sm}
+                        >
+                            {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : 'Filters'}
+                        </Button>
 
-                    {/* Search Bar */}
-                    <XStack 
-                        flex={1} 
-                        alignItems="center" 
-                        borderWidth={1} 
-                        borderColor="$borderColor" 
-                        borderRadius={BORDER_RADIUS.md}
-                        backgroundColor="$background"
+                        <XStack
+                            flex={1}
+                            alignItems="center"
+                            borderWidth={1}
+                            borderColor="$borderColor"
+                            borderRadius={BORDER_RADIUS.md}
+                            backgroundColor="$background"
+                        >
+                            <Input
+                                size="$3"
+                                flex={1}
+                                placeholder="Search contacts..."
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                                onSubmitEditing={() => {
+                                    Keyboard.dismiss();
+                                    fetchContacts();
+                                }}
+                                returnKeyType="search"
+                                borderWidth={0}
+                                backgroundColor="transparent"
+                            />
+                        </XStack>
+                    </XStack>
+
+                    {/* Unified Filter Sheet */}
+                    <Sheet
+                        modal
+                        open={filterSheetOpen}
+                        onOpenChange={setFilterSheetOpen}
+                        dismissOnOverlayPress
+                        snapPoints={[75]}
+                        zIndex={100000}
                     >
-                        <Input
-                        size="$3"
-                        flex={1}
-                        placeholder="Search contacts..."
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        onSubmitEditing={() => {
-                            Keyboard.dismiss();
-                            fetchContacts();
-                        }}
-                        returnKeyType="search"
-                        borderWidth={0}
-                        backgroundColor="transparent"
+                        <Sheet.Overlay
+                            animation="lazy"
+                            enterStyle={{ opacity: 0 }}
+                            exitStyle={{ opacity: 0 }}
                         />
-                    </XStack>
-                    </XStack>
+                        <Sheet.Frame backgroundColor="$background" padding="$2" flex={1}>
+                            <Sheet.Handle backgroundColor="$gray8" />
+                            <ScrollView>
+                                <YStack space={SPACING.lg} padding={SPACING.lg}>
 
-                    {/* Filter Selection Modal */}
-                    <Modal 
-                        visible={filterDropdownOpen}
-                        transparent={true}
-                        animationType="slide"
-                        onRequestClose={() => setFilterDropdownOpen(false)}
-                    >
-                        <View style={{
-                            flex: 1,
-                            backgroundColor: 'rgba(0,0,0,0.5)',
-                            justifyContent: 'flex-end'
-                        }}>
-                            <View style={{
-                                backgroundColor: 'white',
-                                borderTopLeftRadius: 20,
-                                borderTopRightRadius: 20,
-                                maxHeight: '80%',
-                                minHeight: '70%'
-                            }}>
-                                <View style={{
-                                    height: 4,
-                                    width: 40,
-                                    backgroundColor: '#ccc',
-                                    borderRadius: 2,
-                                    alignSelf: 'center',
-                                    marginTop: 8,
-                                    marginBottom: 16
-                                }} />
-                                <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
-                            <YStack 
-                                space={SPACING.lg} 
-                                padding={SPACING.lg}
-                            >
-                            {/* Sort by section */}
-                            <YStack 
-                                space={SPACING.sm}
-                                padding={SPACING.md}
-                                borderWidth={1}
-                                borderColor="$borderColor"
-                                borderRadius={BORDER_RADIUS.md}
-                                backgroundColor="$gray1"
-                            >
-                                <Text 
-                                    fontSize={TYPOGRAPHY.sizes.md}
-                                    fontWeight={TYPOGRAPHY.weights.medium}
-                                    color="$gray11"
-                                    marginBottom={SPACING.xs}
-                                >
-                                    Sort by
-                                </Text>
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        setFilterDropdownOpen(false);
-                                        setTimeout(() => setSortDropdownOpen(true), 100);
-                                    }}
-                                    style={{
-                                        borderWidth: 1,
-                                        borderColor: '#ddd',
-                                        borderRadius: 8,
-                                        padding: 12,
-                                        backgroundColor: 'white',
-                                        flexDirection: 'row',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center'
-                                    }}
-                                >
-                                    <Text style={{ fontSize: 14 }}>{selectedSortOption}</Text>
-                                    <Ionicons name={sortDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />
-                                </TouchableOpacity>
-                            </YStack>
-
-                            {/* Filter by tags section */}
-                            <YStack 
-                                space={SPACING.sm}
-                                padding={SPACING.md}
-                                borderWidth={1}
-                                borderColor="$borderColor"
-                                borderRadius={BORDER_RADIUS.md}
-                                backgroundColor="$gray1"
-                            >
-                                <Text 
-                                    fontSize={TYPOGRAPHY.sizes.md}
-                                    fontWeight={TYPOGRAPHY.weights.medium}
-                                    color="$gray11"
-                                    marginBottom={SPACING.xs}
-                                >
-                                    Filter by tags
-                                </Text>
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        setFilterDropdownOpen(false);
-                                        setTimeout(() => setTagsDropdownOpen(true), 100);
-                                    }}
-                                    style={{
-                                        borderWidth: 1,
-                                        borderColor: '#ddd',
-                                        borderRadius: 8,
-                                        padding: 12,
-                                        backgroundColor: 'white',
-                                        flexDirection: 'row',
-                                        justifyContent: 'space-between',
-                                        alignItems: 'center'
-                                    }}
-                                >
-                                    <Text style={{ fontSize: 14 }}>
-                                        {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : 'Select Tags'}
-                                    </Text>
-                                    <Ionicons name={tagsDropdownOpen ? 'chevron-up' : 'chevron-down'} size={16} />
-                                </TouchableOpacity>
-                            </YStack>
-
-                            {/* Date range section */}
-                            <YStack 
-                                space={SPACING.md}
-                                padding={SPACING.md}
-                                borderWidth={1}
-                                borderColor="$borderColor"
-                                borderRadius={BORDER_RADIUS.md}
-                                backgroundColor="$gray1"
-                            >
-                                <Text 
-                                    fontSize={TYPOGRAPHY.sizes.md}
-                                    fontWeight={TYPOGRAPHY.weights.medium}
-                                    color="$gray11"
-                                    marginBottom={SPACING.xs}
-                                >
-                                    Last contact date range
-                                </Text>
-                                <XStack space={SPACING.md}>
-                                <YStack space={SPACING.xs} flex={1}>
-                                    <Text
-                                        fontSize={TYPOGRAPHY.sizes.sm}
-                                        fontWeight={TYPOGRAPHY.weights.medium}
-                                        color="$gray10"
-                                    >
-                                        After
-                                    </Text>
-                                    <DatePickerModal
-                                        value={isDateUnset(dateLowerBound) ? null : dateLowerBound}
-                                        onChange={setDateLowerBound}
-                                        placeholder="No lower bound"
-                                        textColor={isDateUnset(dateLowerBound) ? "$gray9" : "$color"}
-                                    />
-                                    <Button
-                                        size="$2"
-                                        variant="outlined"
-                                        disabled={isDateUnset(dateLowerBound)}
-                                        onPress={() => setDateLowerBound(new Date(0))}
-                                        fontSize={TYPOGRAPHY.sizes.xs}
-                                    >
-                                        Reset
-                                    </Button>
-                                </YStack>
-                                <YStack space={SPACING.xs} flex={1}>
-                                    <Text
-                                        fontSize={TYPOGRAPHY.sizes.sm}
-                                        fontWeight={TYPOGRAPHY.weights.medium}
-                                        color="$gray10"
-                                    >
-                                        Before
-                                    </Text>
-                                    <DatePickerModal
-                                        value={dateUpperBound}
-                                        onChange={setDateUpperBound}
-                                    />
-                                    <Button
-                                        size="$2"
-                                        variant="outlined"
-                                        disabled={isDateToday(dateUpperBound)}
-                                        onPress={() => setDateUpperBound(new Date(Date.now()))}
-                                        fontSize={TYPOGRAPHY.sizes.xs}
-                                    >
-                                        Reset
-                                    </Button>
-                                </YStack>
-                                </XStack>
-                            </YStack>
-                            </YStack>
-                                </ScrollView>
-                                <XStack 
-                                    padding={SPACING.md} 
-                                    justifyContent="flex-end" 
-                                    space={SPACING.sm}
-                                    borderTopWidth={1}
-                                    borderTopColor="$borderColor"
-                                    backgroundColor="$background"
-                                >
-                                    <Button
-                                    size="$3"
-                                    variant="outlined"
-                                    onPress={() => setFilterDropdownOpen(false)}
-                                    borderRadius={BORDER_RADIUS.md}
-                                    flex={1}
-                                    >
-                                    Cancel
-                                    </Button>
-                                    <Button
-                                    size="$3"
-                                    onPress={() => {
-                                        setFilterDropdownOpen(false);
-                                        fetchContacts();
-                                    }}
-                                    backgroundColor="$blue9"
-                                    color="white"
-                                    borderRadius={BORDER_RADIUS.md}
-                                    flex={1}
-                                    >
-                                    Apply
-                                    </Button>
-                                </XStack>
-                            </View>
-                        </View>
-                    </Modal>
-
-                    {/* Tag Selection Modal */}
-                    <Modal 
-                        visible={tagsDropdownOpen}
-                        transparent={true}
-                        animationType="slide"
-                        onRequestClose={() => {
-                            setTagsDropdownOpen(false);
-                            setTimeout(() => setFilterDropdownOpen(true), 100);
-                        }}
-                    >
-                        <View style={{
-                            flex: 1,
-                            backgroundColor: 'rgba(0,0,0,0.5)',
-                            justifyContent: 'flex-end'
-                        }}>
-                            <View style={{
-                                backgroundColor: 'white',
-                                borderTopLeftRadius: 20,
-                                borderTopRightRadius: 20,
-                                maxHeight: '80%',
-                                minHeight: '70%'
-                            }}>
-                                <View style={{
-                                    height: 4,
-                                    width: 40,
-                                    backgroundColor: '#ccc',
-                                    borderRadius: 2,
-                                    alignSelf: 'center',
-                                    marginTop: 8,
-                                    marginBottom: 16
-                                }} />
-                                <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
-                            <YStack 
-                                space={SPACING.lg} 
-                                padding={SPACING.lg}
-                            >
-                            <YStack 
-                                space={SPACING.md}
-                                padding={SPACING.md}
-                                borderWidth={1}
-                                borderColor="$borderColor"
-                                borderRadius={BORDER_RADIUS.md}
-                                backgroundColor="$gray1"
-                            >
-                                <XStack alignItems="center" justifyContent="space-between">
-                                    <Text
-                                        fontSize={TYPOGRAPHY.sizes.md}
-                                        fontWeight={TYPOGRAPHY.weights.medium}
-                                        color="$gray11"
-                                    >
-                                        Select Tags
-                                    </Text>
-
-                                    <Button
-                                    size="$3"
-                                    variant="outlined"
-                                    onPress={() => {
-                                        setSelectedTags([]);
-                                    }}
-                                    borderRadius={BORDER_RADIUS.md}
-                                    >
-                                    Reset
-                                    </Button>
-                                </XStack>
-                                {tags.map((tag) => (
-                                    <Pressable 
-                                        key={tag}
-                                        onPress={() => toggleTag(tag)}
-                                    >
-                                        <XStack 
-                                            alignItems="center" 
-                                            space={SPACING.sm}
-                                            padding={SPACING.sm}
-                                            borderRadius={BORDER_RADIUS.md}
-                                            backgroundColor={selectedTags.includes(tag) ? "$blue2" : "$background"}
-                                            borderWidth={1}
-                                            borderColor={selectedTags.includes(tag) ? "$blue6" : "$borderColor"}
+                                    {/* Sort by — collapsible dropdown */}
+                                    <YStack space={SPACING.sm}>
+                                        <Text
+                                            fontSize={TYPOGRAPHY.sizes.md}
+                                            fontWeight={TYPOGRAPHY.weights.medium}
+                                            color="$gray11"
                                         >
-                                            <View
-                                                width={20}
-                                                height={20}
-                                                borderRadius={4}
-                                                borderWidth={2}
-                                                borderColor={selectedTags.includes(tag) ? "$blue9" : "$gray8"}
-                                                backgroundColor={selectedTags.includes(tag) ? "$blue9" : "transparent"}
+                                            Sort by
+                                        </Text>
+
+                                        {/* Trigger */}
+                                        <Pressable onPress={() => setSortExpanded(v => !v)}>
+                                            <XStack
                                                 alignItems="center"
-                                                justifyContent="center"
+                                                justifyContent="space-between"
+                                                padding={SPACING.sm}
+                                                borderWidth={1}
+                                                borderColor="$borderColor"
+                                                borderRadius={BORDER_RADIUS.md}
+                                                backgroundColor="$gray1"
                                             >
-                                                {selectedTags.includes(tag) && (
-                                                    <Text 
-                                                        color="white"
-                                                        fontSize={12}
-                                                        fontWeight="bold"
+                                                <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray11">
+                                                    {selectedSortOption}
+                                                </Text>
+                                                <ChevronDown
+                                                    size={16}
+                                                    color="$gray8"
+                                                    style={{ transform: [{ rotate: sortExpanded ? '180deg' : '0deg' }] }}
+                                                />
+                                            </XStack>
+                                        </Pressable>
+
+                                        {/* Options list */}
+                                        {sortExpanded && (
+                                            <YStack
+                                                borderWidth={1}
+                                                borderColor="$borderColor"
+                                                borderRadius={BORDER_RADIUS.md}
+                                                backgroundColor="$gray1"
+                                                overflow="hidden"
+                                            >
+                                                {sortOptions.map((option, index) => (
+                                                    <Pressable
+                                                        key={option}
+                                                        onPress={() => {
+                                                            setSelectedSortOption(option);
+                                                            setSortExpanded(false);
+                                                        }}
                                                     >
-                                                        ✓
-                                                    </Text>
-                                                )}
-                                            </View>
-                                            <Text 
-                                                fontSize={TYPOGRAPHY.sizes.sm}
-                                                fontWeight={selectedTags.includes(tag) ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}
-                                                color={selectedTags.includes(tag) ? "$blue11" : "$color"}
-                                                flex={1}
-                                            >
-                                                {tag}
-                                            </Text>
-                                        </XStack>
-                                    </Pressable>
-                                ))}
-                            </YStack>
-                            </YStack>
-                                </ScrollView>
-                                <XStack 
-                                    padding={SPACING.md} 
-                                    justifyContent="flex-end" 
-                                    space={SPACING.sm}
-                                    borderTopWidth={1}
-                                    borderTopColor="$borderColor"
-                                    backgroundColor="$background"
-                                >
-                                    <Button
-                                    size="$3"
-                                    variant="outlined"
-                                    onPress={() => {
-                                        setTagsDropdownOpen(false);
-                                        setTimeout(() => setFilterDropdownOpen(true), 100);
-                                    }}
-                                    borderRadius={BORDER_RADIUS.md}
-                                    flex={1}
-                                    >
-                                    Cancel
-                                    </Button>
-                                    <Button
-                                    size="$3"
-                                    onPress={() => {
-                                        setTagsDropdownOpen(false);
-                                        setTimeout(() => setFilterDropdownOpen(true), 100);
-                                    }}
-                                    backgroundColor="$blue9"
-                                    color="white"
-                                    borderRadius={BORDER_RADIUS.md}
-                                    flex={1}
-                                    >
-                                    Apply
-                                    </Button>
-                                </XStack>
-                            </View>
-                        </View>
-                    </Modal>
+                                                        <XStack
+                                                            alignItems="center"
+                                                            space={SPACING.sm}
+                                                            paddingHorizontal={SPACING.md}
+                                                            paddingVertical={SPACING.sm}
+                                                            backgroundColor={selectedSortOption === option ? '$blue2' : 'transparent'}
+                                                            borderBottomWidth={index < sortOptions.length - 1 ? 1 : 0}
+                                                            borderBottomColor="$borderColor"
+                                                        >
+                                                            <View
+                                                                width={18}
+                                                                height={18}
+                                                                borderRadius={9}
+                                                                borderWidth={2}
+                                                                borderColor={selectedSortOption === option ? '$blue9' : '$gray7'}
+                                                                backgroundColor={selectedSortOption === option ? '$blue9' : 'transparent'}
+                                                                alignItems="center"
+                                                                justifyContent="center"
+                                                            >
+                                                                {selectedSortOption === option && (
+                                                                    <View
+                                                                        width={7}
+                                                                        height={7}
+                                                                        borderRadius={4}
+                                                                        backgroundColor="white"
+                                                                    />
+                                                                )}
+                                                            </View>
+                                                            <Text
+                                                                fontSize={TYPOGRAPHY.sizes.sm}
+                                                                fontWeight={selectedSortOption === option ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}
+                                                                color={selectedSortOption === option ? '$blue11' : '$color'}
+                                                            >
+                                                                {option}
+                                                            </Text>
+                                                        </XStack>
+                                                    </Pressable>
+                                                ))}
+                                            </YStack>
+                                        )}
+                                    </YStack>
 
-                    {/* Sort Option Selection Modal */}
-                    <Modal 
-                        visible={sortDropdownOpen}
-                        transparent={true}
-                        animationType="slide"
-                        onRequestClose={() => {
-                            setSortDropdownOpen(false);
-                            setTimeout(() => setFilterDropdownOpen(true), 100);
-                        }}
-                    >
-                        <View style={{
-                            flex: 1,
-                            backgroundColor: 'rgba(0,0,0,0.5)',
-                            justifyContent: 'flex-end'
-                        }}>
-                            <View style={{
-                                backgroundColor: 'white',
-                                borderTopLeftRadius: 20,
-                                borderTopRightRadius: 20,
-                                maxHeight: '80%',
-                                minHeight: '70%'
-                            }}>
-                                <View style={{
-                                    height: 4,
-                                    width: 40,
-                                    backgroundColor: '#ccc',
-                                    borderRadius: 2,
-                                    alignSelf: 'center',
-                                    marginTop: 8,
-                                    marginBottom: 16
-                                }} />
-                                <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }}>
-                            <YStack 
-                                space={SPACING.lg} 
-                                padding={SPACING.lg}
-                            >
-                            <YStack 
-                                space={SPACING.md}
-                                padding={SPACING.md}
-                                borderWidth={1}
-                                borderColor="$borderColor"
-                                borderRadius={BORDER_RADIUS.md}
-                                backgroundColor="$gray1"
-                            >
-                                <Text 
-                                    fontSize={TYPOGRAPHY.sizes.md}
-                                    fontWeight={TYPOGRAPHY.weights.medium}
-                                    color="$gray11"
-                                    marginBottom={SPACING.xs}
-                                >
-                                    Sort by
-                                </Text>
-                                <YStack space={SPACING.xs}>
-                                {sortOptions.map((sortOption, index) => (
-                                    <Pressable 
-                                        key={`sortoptions-${index}`}
-                                        onPress={() => setSelectedSortOption(sortOption)}
-                                    >
-                                        <XStack 
-                                            alignItems="center" 
-                                            space={SPACING.sm}
-                                            padding={SPACING.sm}
-                                            borderRadius={BORDER_RADIUS.md}
-                                            backgroundColor={selectedSortOption === sortOption ? "$blue2" : "$background"}
-                                            borderWidth={1}
-                                            borderColor={selectedSortOption === sortOption ? "$blue6" : "$borderColor"}
+                                    {/* Filter by tags — search + capped chip area */}
+                                    {tags.length > 0 && (
+                                        <YStack space={SPACING.sm}>
+                                            <XStack justifyContent="space-between" alignItems="center">
+                                                <Text
+                                                    fontSize={TYPOGRAPHY.sizes.md}
+                                                    fontWeight={TYPOGRAPHY.weights.medium}
+                                                    color="$gray11"
+                                                >
+                                                    Filter by tags
+                                                </Text>
+                                                {selectedTags.length > 0 && (
+                                                    <Button
+                                                        size="$2"
+                                                        variant="outlined"
+                                                        onPress={() => setSelectedTags([])}
+                                                        borderRadius={BORDER_RADIUS.md}
+                                                    >
+                                                        Clear
+                                                    </Button>
+                                                )}
+                                            </XStack>
+                                            <YStack
+                                                borderWidth={1}
+                                                borderColor="$borderColor"
+                                                borderRadius={BORDER_RADIUS.md}
+                                                backgroundColor="$gray1"
+                                                overflow="hidden"
+                                            >
+                                                <Input
+                                                    size="$3"
+                                                    placeholder="Search tags..."
+                                                    value={tagSearch}
+                                                    onChangeText={setTagSearch}
+                                                    borderWidth={0}
+                                                    borderBottomWidth={1}
+                                                    borderBottomColor="$borderColor"
+                                                    borderRadius={0}
+                                                    backgroundColor="transparent"
+                                                />
+                                                <ScrollView
+                                                    style={{ maxHeight: 108 }}
+                                                    nestedScrollEnabled
+                                                >
+                                                    <XStack
+                                                        flexWrap="wrap"
+                                                        gap={SPACING.xs}
+                                                        padding={SPACING.sm}
+                                                    >
+                                                        {filteredTags.map((tag) => (
+                                                            <Pressable key={tag} onPress={() => toggleTag(tag)}>
+                                                                <View
+                                                                    paddingHorizontal={SPACING.sm}
+                                                                    paddingVertical={SPACING.xs}
+                                                                    borderRadius={99}
+                                                                    borderWidth={1}
+                                                                    borderColor={selectedTags.includes(tag) ? '$blue9' : '$borderColor'}
+                                                                    backgroundColor={selectedTags.includes(tag) ? '$blue9' : '$background'}
+                                                                >
+                                                                    <Text
+                                                                        fontSize={TYPOGRAPHY.sizes.sm}
+                                                                        color={selectedTags.includes(tag) ? 'white' : '$gray11'}
+                                                                        fontWeight={selectedTags.includes(tag) ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}
+                                                                    >
+                                                                        {tag}
+                                                                    </Text>
+                                                                </View>
+                                                            </Pressable>
+                                                        ))}
+                                                    </XStack>
+                                                </ScrollView>
+                                            </YStack>
+                                        </YStack>
+                                    )}
+
+                                    {/* Date range section */}
+                                    <YStack space={SPACING.sm}>
+                                        <Text
+                                            fontSize={TYPOGRAPHY.sizes.md}
+                                            fontWeight={TYPOGRAPHY.weights.medium}
+                                            color="$gray11"
                                         >
-                                            <View
-                                                width={20}
-                                                height={20}
-                                                borderRadius={10}
-                                                borderWidth={2}
-                                                borderColor={selectedSortOption === sortOption ? "$blue9" : "$gray8"}
-                                                backgroundColor={selectedSortOption === sortOption ? "$blue9" : "transparent"}
-                                                alignItems="center"
-                                                justifyContent="center"
-                                            >
-                                                {selectedSortOption === sortOption && (
-                                                    <View
-                                                        width={8}
-                                                        height={8}
-                                                        borderRadius={4}
-                                                        backgroundColor="white"
-                                                    />
-                                                )}
-                                            </View>
-                                      
-                                            <Text 
-                                                fontSize={TYPOGRAPHY.sizes.sm}
-                                                fontWeight={selectedSortOption === sortOption ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}
-                                                color={selectedSortOption === sortOption ? "$blue11" : "$color"}
-                                                flex={1}
-                                            >
-                                              {sortOption}
-                                            </Text>
+                                            Last contact date range
+                                        </Text>
+                                        <XStack space={SPACING.md}>
+                                            <YStack space={SPACING.xs} flex={1}>
+                                                <Text
+                                                    fontSize={TYPOGRAPHY.sizes.sm}
+                                                    fontWeight={TYPOGRAPHY.weights.medium}
+                                                    color="$gray10"
+                                                >
+                                                    After
+                                                </Text>
+                                                <DatePickerModal
+                                                    value={isDateUnset(dateLowerBound) ? null : dateLowerBound}
+                                                    onChange={setDateLowerBound}
+                                                    placeholder="No lower bound"
+                                                    textColor={isDateUnset(dateLowerBound) ? '$gray9' : '$color'}
+                                                />
+                                                <Button
+                                                    size="$2"
+                                                    variant="outlined"
+                                                    disabled={isDateUnset(dateLowerBound)}
+                                                    onPress={() => setDateLowerBound(new Date(0))}
+                                                    fontSize={TYPOGRAPHY.sizes.xs}
+                                                >
+                                                    Reset
+                                                </Button>
+                                            </YStack>
+                                            <YStack space={SPACING.xs} flex={1}>
+                                                <Text
+                                                    fontSize={TYPOGRAPHY.sizes.sm}
+                                                    fontWeight={TYPOGRAPHY.weights.medium}
+                                                    color="$gray10"
+                                                >
+                                                    Before
+                                                </Text>
+                                                <DatePickerModal
+                                                    value={dateUpperBound}
+                                                    onChange={setDateUpperBound}
+                                                />
+                                                <Button
+                                                    size="$2"
+                                                    variant="outlined"
+                                                    disabled={isDateToday(dateUpperBound)}
+                                                    onPress={() => setDateUpperBound(new Date(Date.now()))}
+                                                    fontSize={TYPOGRAPHY.sizes.xs}
+                                                >
+                                                    Reset
+                                                </Button>
+                                            </YStack>
                                         </XStack>
-                                    </Pressable>
-                                ))}
-                                </YStack>
-                            </YStack>
-                            </YStack>
-                                </ScrollView>
-                                <XStack 
-                                    padding={SPACING.md} 
-                                    justifyContent="flex-end" 
-                                    space={SPACING.sm}
-                                    borderTopWidth={1}
-                                    borderTopColor="$borderColor"
-                                    backgroundColor="$background"
-                                >
-                                    <Button
-                                    size="$3"
-                                    variant="outlined"
-                                    onPress={() => {
-                                        setSortDropdownOpen(false);
-                                        setTimeout(() => setFilterDropdownOpen(true), 100);
-                                    }}
-                                    borderRadius={BORDER_RADIUS.md}
-                                    flex={1}
-                                    >
-                                    Cancel
-                                    </Button>
-                                    <Button
-                                    size="$3"
-                                    onPress={() => {
-                                        setSortDropdownOpen(false);
-                                        setTimeout(() => setFilterDropdownOpen(true), 100);
-                                    }}
-                                    backgroundColor="$blue9"
-                                    color="white"
-                                    borderRadius={BORDER_RADIUS.md}
-                                    flex={1}
-                                    >
-                                    Apply
-                                    </Button>
-                                </XStack>
-                            </View>
-                        </View>
-                    </Modal>
+                                    </YStack>
 
-                    <View style={CONTAINER_STYLES.section}>
+                                    {/* Apply / Cancel */}
+                                    <XStack
+                                        space={SPACING.sm}
+                                        paddingTop={SPACING.sm}
+                                        borderTopWidth={1}
+                                        borderTopColor="$borderColor"
+                                    >
+                                        <Button
+                                            size="$3"
+                                            variant="outlined"
+                                            onPress={() => setFilterSheetOpen(false)}
+                                            borderRadius={BORDER_RADIUS.md}
+                                            flex={1}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            size="$3"
+                                            onPress={() => {
+                                                setFilterSheetOpen(false);
+                                                fetchContacts();
+                                            }}
+                                            backgroundColor="$blue9"
+                                            color="white"
+                                            borderRadius={BORDER_RADIUS.md}
+                                            flex={1}
+                                        >
+                                            Apply
+                                        </Button>
+                                    </XStack>
+
+                                </YStack>
+                            </ScrollView>
+                        </Sheet.Frame>
+                    </Sheet>
+
+                    <View style={{ paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md }}>
                         <Loader loading={loading}>
-                            {searchError && (
-                            <Text color="$red9" mt="$3">
-                                {searchError}
-                            </Text>
-                            )}
-                            <ContactsList contacts={contacts} prefix="searchlist"/>
+                            {searchError ? (
+                                <Text color="$red9" marginTop={SPACING.sm}>
+                                    {searchError}
+                                </Text>
+                            ) : null}
+                            <ContactsList contacts={contacts} prefix="searchlist" />
                         </Loader>
                     </View>
                 </YStack>
             </ScrollView>
         </View>
     );
-
 }

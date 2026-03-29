@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Sheet } from '@tamagui/sheet';
-import { Text, YStack, Button, XStack, View, Image } from 'tamagui';
-import { ScrollView, RefreshControl } from 'react-native';
+import { Text, YStack, Button, XStack, View, Image, Avatar, SizableText } from 'tamagui';
+import { ScrollView, RefreshControl, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import ContactsList from '@/components/ContactsList';
+import { User as UserIcon, ChevronRight } from '@tamagui/lucide-icons';
+import { useRouter } from 'expo-router';
 import { Loader } from '@/components/Loader';
 import { searchContactsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
@@ -15,7 +16,8 @@ import { formatDateForAPI } from '@/utils/utilfunctions';
 
 import axios from 'axios';
 
-export default function mapScreen() {
+export default function MapScreen() {
+  const router = useRouter();
 
   const [isSheetOpen,    setIsSheetOpen]    = useState(false);
   const [activeLocation, setActiveLocation] = useState('');
@@ -37,11 +39,9 @@ export default function mapScreen() {
 
   // Function to open the modal sheet
   const handleMarkerPress = (location:string) => {
-    console.log("Opening marker for location:", location);
     setActiveLocation(location);
     // console.log("All contacts:", contactsByLocation)
 
-    console.log("Should have these contacts:", contactsByLocation.get(location))
     setIsSheetOpen(true);
   };
 
@@ -54,7 +54,6 @@ export default function mapScreen() {
     try {
       const location = await getCurrentLocation();
       if (location) {
-        console.log("Setting initial map region to:", location);
         setUserLocation({
           latitude: location.latitude,
           longitude: location.longitude,
@@ -74,7 +73,6 @@ export default function mapScreen() {
 
   function fillContactLocationMap(contacts) {
     contactsByLocation.clear();
-    console.log("Called fillContactLocationMap with", contacts.length, "contacts");
     for (const contact of contacts) {
 
       const location:string = contact.location
@@ -88,7 +86,6 @@ export default function mapScreen() {
   }
 
   const fetchContacts = async () => {
-    console.log("Fetching contacts");
 
     const dateLowerBound = new Date(0);
     const dateUpperBound = new Date(Date.now());
@@ -108,7 +105,6 @@ export default function mapScreen() {
     try {
         const response = await axios.post(searchContactsURL, requestBody);
         setContacts(response.data);
-        console.log("Contacts:", response.data);
         fillContactLocationMap(response.data);
         setLoading(false);
     } catch (error) {
@@ -118,7 +114,6 @@ export default function mapScreen() {
   };
 
   const handleRefresh = async () => {
-    console.log("Refreshing");
     setIsSheetOpen(false);
     setLoading(true);
     fetchContacts();
@@ -303,22 +298,61 @@ export default function mapScreen() {
               </YStack>
               
               {/* Contacts List */}
-              <YStack 
-                space={SPACING.sm}
-                padding={SPACING.md}
-                marginVertical={SPACING.sm}
-                borderWidth={1}
-                borderColor="$borderColor"
-                borderRadius={BORDER_RADIUS.md}
-                backgroundColor="$gray1"
-              >
-                {(activeLocation.length != 0) && 
-                  <ContactsList 
-                    contacts={contactsByLocation.get(activeLocation)} 
-                    prefix="locationlist" 
-                    onMorePressCallback={() => setIsSheetOpen(false)}
-                  />
-                }
+              <YStack space={SPACING.sm}>
+                {contactsByLocation.get(activeLocation)?.map((contact) => (
+                  <Pressable
+                    key={contact.contact_id}
+                    onPress={() => {
+                      setIsSheetOpen(false);
+                      router.push(`/contact/${contact.contact_id}`);
+                    }}
+                  >
+                    {({ pressed }) => (
+                      <XStack
+                        alignItems="center"
+                        space={SPACING.md}
+                        paddingHorizontal={SPACING.md}
+                        paddingVertical={SPACING.sm}
+                        borderWidth={1}
+                        borderColor="$borderColor"
+                        borderRadius={BORDER_RADIUS.md}
+                        backgroundColor={pressed ? '$gray2' : '$background'}
+                      >
+                        <Avatar circular size="$4">
+                          {contact.profile_pic_url ? (
+                            <Avatar.Image
+                              accessibilityLabel={contact.fullname}
+                              src={contact.profile_pic_url}
+                            />
+                          ) : (
+                            <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">
+                              <UserIcon size={20} color="$gray9" />
+                            </Avatar.Fallback>
+                          )}
+                        </Avatar>
+                        <YStack flex={1}>
+                          <SizableText
+                            fontSize={TYPOGRAPHY.sizes.md}
+                            fontWeight={TYPOGRAPHY.weights.bold}
+                            numberOfLines={1}
+                          >
+                            {contact.fullname}
+                          </SizableText>
+                          {contact.location ? (
+                            <SizableText
+                              fontSize={TYPOGRAPHY.sizes.sm}
+                              color="$gray10"
+                              numberOfLines={1}
+                            >
+                              {contact.location}
+                            </SizableText>
+                          ) : null}
+                        </YStack>
+                        <ChevronRight size={16} color="$gray8" />
+                      </XStack>
+                    )}
+                  </Pressable>
+                ))}
               </YStack>
               
               {/* Close Button */}

@@ -25,6 +25,7 @@ export const TYPOGRAPHY = {
 } as const;
 
 export const BORDER_RADIUS = {
+  xs: 2,
   sm: 4,
   md: 8,
   lg: 12,
@@ -84,7 +85,6 @@ export const BUTTON_VARIANTS = {
 export const CONTAINER_STYLES = {
   screen: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   section: {
     paddingHorizontal: SPACING.lg,
