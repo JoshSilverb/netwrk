@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Netwrk backend - Lambda + API Gateway (scale-to-zero)
+
+Parameters:
+  ImageUri:
+    Type: String
+    Description: ECR image URI, e.g. 123456789012.dkr.ecr.us-east-2.amazonaws.com/netwrk-backend:latest
+  DomainName:
+    Type: String
+    Default: mynetwrk.com
+  CertificateArn:
+    Type: String
+    Description: ACM certificate ARN for mynetwrk.com in us-east-2
+  S3BucketName:
+    Type: String
+
+Globals:
+  Function:
+    Timeout: 29      # API Gateway HTTP API hard limit is 30s; keep Lambda just under it
+    MemorySize: 512
+
+Resources:
+
+  NetwrkFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: netwrk-backend
+      PackageType: Image
+      ImageUri: !Ref ImageUri
+      Environment:
+        Variables:
+          DATABASE_URL: "{{resolve:secretsmanager:database-url}}"
+          OPENAI_API_KEY: "{{resolve:secretsmanager:openai-api-key:SecretString:api-key}}"
+          GOOGLE_API_KEY: "{{resolve:secretsmanager:google-api-key-1:SecretString:api-key}}"
+          S3_BUCKET_NAME: !Ref S3BucketName
+          LOG_LEVEL: INFO
+      # Grants S3 access via execution role (no hardcoded AWS keys needed)
+      # Also grants Secrets Manager read so CloudFormation can resolve secrets at deploy time
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref S3BucketName
+        - Statement:
+            - Effect: Allow
+              Action: secretsmanager:GetSecretValue
+              Resource:
+                - !Sub "arn:aws:secretsmanager:us-east-2:${AWS::AccountId}:secret:database-url*"
+                - !Sub "arn:aws:secretsmanager:us-east-2:${AWS::AccountId}:secret:openai-api-key*"
+                - !Sub "arn:aws:secretsmanager:us-east-2:${AWS::AccountId}:secret:google-api-key-1*"
+      Events:
+        ApiRoot:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref NetwrkApi
+            Path: /
+            Method: ANY
+        ApiProxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref NetwrkApi
+            Path: /{proxy+}
+            Method: ANY
+
+  NetwrkApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      Domain:
+        DomainName: !Ref DomainName
+        CertificateArn: !Ref CertificateArn
+        Route53:
+          HostedZoneName: !Sub "${DomainName}."
+
+Outputs:
+  ApiEndpoint:
+    Description: Production URL
+    Value: !Sub "https://${DomainName}"
+  FunctionArn:
+    Description: Lambda function ARN
+    Value: !GetAtt NetwrkFunction.Arn
