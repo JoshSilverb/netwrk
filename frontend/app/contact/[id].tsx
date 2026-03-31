@@ -82,7 +82,7 @@ export default function ContactPage() {
 
       <YStack flex={1} position="relative">
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 80 }}>
-      <YStack space={SPACING.xl} padding={SPACING.lg}>
+      <YStack space={SPACING.xl} paddingVertical={SPACING.lg}>
         <Loader loading={isLoading}>
         {/* Header */}
         <YStack
@@ -91,6 +91,7 @@ export default function ContactPage() {
           space={SPACING.md}
           paddingVertical={SPACING.lg}
           paddingBottom={SPACING.xl}
+          paddingHorizontal={SPACING.lg}
         >
           <Avatar circular size="$10">
               {contact.profile_pic_url ? (
@@ -124,7 +125,7 @@ export default function ContactPage() {
 
 
         {/* How you met */}
-        <YStack paddingVertical={SPACING.md} borderTopWidth={1} borderTopColor="$borderColor">
+        <YStack paddingVertical={SPACING.md} paddingHorizontal={SPACING.lg} borderTopWidth={1} borderTopColor="$borderColor">
           <Text
             fontSize={TYPOGRAPHY.sizes.xs}
             fontWeight={TYPOGRAPHY.weights.medium}
@@ -141,7 +142,7 @@ export default function ContactPage() {
         </YStack>
 
         {/* Notes */}
-        <YStack paddingVertical={SPACING.md} borderTopWidth={1} borderTopColor="$borderColor">
+        <YStack paddingVertical={SPACING.md} paddingHorizontal={SPACING.lg} borderTopWidth={1} borderTopColor="$borderColor">
           <Text
             fontSize={TYPOGRAPHY.sizes.xs}
             fontWeight={TYPOGRAPHY.weights.medium}
@@ -158,7 +159,7 @@ export default function ContactPage() {
         </YStack>
 
         {/* Contact Schedule */}
-        <YStack paddingVertical={SPACING.md} borderTopWidth={1} borderTopColor="$borderColor">
+        <YStack paddingVertical={SPACING.md} paddingHorizontal={SPACING.lg} borderTopWidth={1} borderTopColor="$borderColor">
           <Text
             fontSize={TYPOGRAPHY.sizes.xs}
             fontWeight={TYPOGRAPHY.weights.medium}
@@ -205,7 +206,7 @@ export default function ContactPage() {
         </YStack>
         
         {/* Tags */}
-        <YStack paddingVertical={SPACING.md} borderTopWidth={1} borderTopColor="$borderColor" space={SPACING.sm}>
+        <YStack paddingVertical={SPACING.md} paddingHorizontal={SPACING.lg} borderTopWidth={1} borderTopColor="$borderColor" space={SPACING.sm}>
           <Text
             fontSize={TYPOGRAPHY.sizes.xs}
             fontWeight={TYPOGRAPHY.weights.medium}
@@ -240,7 +241,7 @@ export default function ContactPage() {
         </YStack>
 
         {/* Contact Info */}
-        <YStack paddingVertical={SPACING.md} borderTopWidth={1} borderTopColor="$borderColor" space={SPACING.sm}>
+        <YStack paddingVertical={SPACING.md} paddingHorizontal={SPACING.lg} borderTopWidth={1} borderTopColor="$borderColor" space={SPACING.sm}>
           <Text
             fontSize={TYPOGRAPHY.sizes.xs}
             fontWeight={TYPOGRAPHY.weights.medium}
