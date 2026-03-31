@@ -370,53 +370,22 @@ export default function AddContactPage() {
             >
             <YStack space={SPACING.lg} padding={SPACING.lg}>
                 {errorMessage ? <Text color="$red9">{errorMessage}</Text> : null}
-                {/* Full Name Input */}
-                <YStack 
-                    space={SPACING.sm}
-                    padding={SPACING.md}
-                    borderWidth={1}
-                    borderColor="$borderColor"
-                    borderRadius={BORDER_RADIUS.md}
-                    backgroundColor="$gray1"
-                >
-                    <Text 
-                        fontSize={TYPOGRAPHY.sizes.md}
-                        fontWeight={TYPOGRAPHY.weights.medium}
-                        color="$gray11"
-                        marginBottom={SPACING.xs}
-                    >
-                        Name
-                    </Text>
-                    <Input
-                        size="$4"
-                        value={fullname}
-                        onChangeText={onChangeFullname}
-                        placeholder="Enter full name"
-                        textContentType='name'
-                        fontSize={TYPOGRAPHY.sizes.md}
-                        borderRadius={BORDER_RADIUS.md}
-                    />
-                </YStack>
-
                 {/* Profile Picture Section */}
-                <YStack 
+                <YStack
                     space={SPACING.md}
-                    padding={SPACING.md}
-                    borderWidth={1}
-                    borderColor="$borderColor"
-                    borderRadius={BORDER_RADIUS.md}
-                    backgroundColor="$gray1"
+                    paddingVertical={SPACING.md}
                     alignItems="center"
                 >
-                    <Text 
-                        fontSize={TYPOGRAPHY.sizes.md}
+                    <Text
+                        fontSize={TYPOGRAPHY.sizes.xs}
                         fontWeight={TYPOGRAPHY.weights.medium}
-                        color="$gray11"
-                        marginBottom={SPACING.xs}
+                        color="$gray12"
+                        textTransform="uppercase"
+                        letterSpacing={0.5}
                     >
                         Profile Picture
                     </Text>
-                    
+
                     <Pressable onPress={selectImage}>
                         <View position="relative">
                             <Avatar circular size="$10">
@@ -431,7 +400,7 @@ export default function AddContactPage() {
                                 </Avatar.Fallback>
                                 )}
                             </Avatar>
-                            
+
                             {/* Camera overlay */}
                             <View
                                 position="absolute"
@@ -450,8 +419,8 @@ export default function AddContactPage() {
                             </View>
                         </View>
                     </Pressable>
-                    
-                    <Text 
+
+                    <Text
                         fontSize={TYPOGRAPHY.sizes.sm}
                         color="$gray10"
                         textAlign="center"
@@ -461,36 +430,58 @@ export default function AddContactPage() {
                     </Text>
                 </YStack>
 
-                {/* Location Input */}
-                <YStack 
-                    space={SPACING.sm}
-                    padding={SPACING.md}
+                {/* Group 1: Name, Location, How You Met, Notes */}
+                <YStack
                     borderWidth={1}
                     borderColor="$borderColor"
                     borderRadius={BORDER_RADIUS.md}
-                    backgroundColor="$gray1"
+                    backgroundColor="$background"
+                    zIndex={10}
                 >
-                    <Text 
-                        fontSize={TYPOGRAPHY.sizes.md}
-                        fontWeight={TYPOGRAPHY.weights.medium}
-                        color="$gray11"
-                        marginBottom={SPACING.xs}
-                    >
-                        Location
-                    </Text>
-                    <View
-                        borderWidth={1}
-                        borderColor="$borderColor"
-                        borderRadius={BORDER_RADIUS.md}
-                        backgroundColor="$background"
-                    >
+                    {/* Name */}
+                    <YStack padding={SPACING.md} space={SPACING.xs}>
+                        <Text
+                            fontSize={TYPOGRAPHY.sizes.xs}
+                            fontWeight={TYPOGRAPHY.weights.medium}
+                            color="$gray12"
+                            textTransform="uppercase"
+                            letterSpacing={0.5}
+                        >
+                            Name
+                        </Text>
+                        <Input
+                            size="$4"
+                            value={fullname}
+                            onChangeText={onChangeFullname}
+                            placeholder="Enter full name"
+                            textContentType='name'
+                            fontSize={TYPOGRAPHY.sizes.md}
+                            borderWidth={0}
+                            backgroundColor="transparent"
+                            paddingHorizontal={0}
+                        />
+                    </YStack>
+
+                    <Separator marginHorizontal={SPACING.md} />
+
+                    {/* Location */}
+                    <YStack padding={SPACING.md} space={SPACING.xs}>
+                        <Text
+                            fontSize={TYPOGRAPHY.sizes.xs}
+                            fontWeight={TYPOGRAPHY.weights.medium}
+                            color="$gray12"
+                            textTransform="uppercase"
+                            letterSpacing={0.5}
+                        >
+                            Location
+                        </Text>
                         <CustomPlacesAutocomplete
                             predefinedPlaces={[]}
                             textInputProps={{
                                 style: {
                                     fontSize: TYPOGRAPHY.sizes.md,
-                                    paddingHorizontal: SPACING.md,
-                                    paddingVertical: SPACING.sm,
+                                    paddingHorizontal: 0,
+                                    paddingVertical: SPACING.xs,
                                 }
                             }}
                             styles={{
@@ -498,10 +489,10 @@ export default function AddContactPage() {
                                 textInput: {
                                     borderWidth: 0,
                                     backgroundColor: 'transparent',
+                                    paddingHorizontal: 0,
                                 },
                                 listView: {
                                     borderRadius: BORDER_RADIUS.md,
-                                    marginTop: SPACING.xs,
                                 }
                             }}
                             placeholder='Enter location'
@@ -511,78 +502,78 @@ export default function AddContactPage() {
                             disableScroll={true}
                             ref={ref}
                         />
-                    </View>
+                    </YStack>
+
+                    <Separator marginHorizontal={SPACING.md} />
+
+                    {/* How You Met */}
+                    <YStack padding={SPACING.md} space={SPACING.xs}>
+                        <Text
+                            fontSize={TYPOGRAPHY.sizes.xs}
+                            fontWeight={TYPOGRAPHY.weights.medium}
+                            color="$gray12"
+                            textTransform="uppercase"
+                            letterSpacing={0.5}
+                        >
+                            How you met
+                        </Text>
+                        <Input
+                            value={metThrough}
+                            onChangeText={onChangeMetThrough}
+                            placeholder="Describe how you met this person"
+                            multiline
+                            size="$4"
+                            textAlignVertical="top"
+                            minHeight={60}
+                            borderWidth={0}
+                            backgroundColor="transparent"
+                            paddingHorizontal={0}
+                        />
+                    </YStack>
+
+                    <Separator marginHorizontal={SPACING.md} />
+
+                    {/* Notes */}
+                    <YStack padding={SPACING.md} space={SPACING.xs}>
+                        <Text
+                            fontSize={TYPOGRAPHY.sizes.xs}
+                            fontWeight={TYPOGRAPHY.weights.medium}
+                            color="$gray12"
+                            textTransform="uppercase"
+                            letterSpacing={0.5}
+                        >
+                            Notes
+                        </Text>
+                        <Input
+                            value={bio}
+                            onChangeText={onChangeBio}
+                            placeholder="Add any notes about this person"
+                            multiline
+                            size="$4"
+                            textAlignVertical="top"
+                            minHeight={80}
+                            borderWidth={0}
+                            backgroundColor="transparent"
+                            paddingHorizontal={0}
+                        />
+                    </YStack>
                 </YStack>
 
-                {/* Met Through */}
-                <YStack 
-                    space={SPACING.sm}
-                    padding={SPACING.md}
-                    borderWidth={1}
-                    borderColor="$borderColor"
-                    borderRadius={BORDER_RADIUS.md}
-                    backgroundColor="$gray1"
-                >
-                    <Text 
-                        fontSize={TYPOGRAPHY.sizes.md}
-                        fontWeight={TYPOGRAPHY.weights.medium}
-                        color="$gray11"
-                        marginBottom={SPACING.xs}
-                    >
-                        How you met
-                    </Text>
-                    <Input
-                        value={metThrough}
-                        onChangeText={onChangeMetThrough}
-                        placeholder="Describe how you met this person"
-                        multiline
-                        size="$4"
-                        textAlignVertical="top"
-                        minHeight={60}
-                    />
-                </YStack>
-
-                {/* Notes */}
-                <YStack 
-                    space={SPACING.sm}
-                    padding={SPACING.md}
-                    borderWidth={1}
-                    borderColor="$borderColor"
-                    borderRadius={BORDER_RADIUS.md}
-                    backgroundColor="$gray1"
-                >
-                    <Text 
-                        fontSize={TYPOGRAPHY.sizes.md}
-                        fontWeight={TYPOGRAPHY.weights.medium}
-                        color="$gray11"
-                        marginBottom={SPACING.xs}
-                    >
-                        Notes
-                    </Text>
-                    <Input
-                        value={bio}
-                        onChangeText={onChangeBio}
-                        placeholder="Add any notes about this person"
-                        multiline
-                        size="$4"
-                        textAlignVertical="top"
-                        minHeight={80}
-                    />
-                </YStack>
                 {/* Contact Frequency */}
-                <YStack 
+                <YStack
                     space={SPACING.md}
                     padding={SPACING.md}
                     borderWidth={1}
                     borderColor="$borderColor"
                     borderRadius={BORDER_RADIUS.md}
-                    backgroundColor="$gray1"
+                    backgroundColor="$background"
                 >
-                    <Text 
-                        fontSize={TYPOGRAPHY.sizes.md}
+                    <Text
+                        fontSize={TYPOGRAPHY.sizes.xs}
                         fontWeight={TYPOGRAPHY.weights.medium}
-                        color="$gray11"
-                        marginBottom={SPACING.sm}
+                        color="$gray12"
+                        textTransform="uppercase"
+                        letterSpacing={0.5}
                     >
                         Contact Frequency
                     </Text>
@@ -631,67 +622,52 @@ export default function AddContactPage() {
                 </YStack>
 
                 {/* Tags Section */}
-                <YStack 
-                    space={SPACING.sm}
-                    padding={SPACING.md}
+                <YStack
                     borderWidth={1}
                     borderColor="$borderColor"
                     borderRadius={BORDER_RADIUS.md}
-                    backgroundColor="$gray1"
+                    backgroundColor="$background"
                 >
-                    <Text 
-                        fontSize={TYPOGRAPHY.sizes.md}
-                        fontWeight={TYPOGRAPHY.weights.medium}
-                        color="$gray11"
-                        marginBottom={SPACING.xs}
-                    >
-                        Tags
-                    </Text>
+                    <YStack padding={SPACING.md} space={SPACING.sm}>
+                        <Text
+                            fontSize={TYPOGRAPHY.sizes.xs}
+                            fontWeight={TYPOGRAPHY.weights.medium}
+                            color="$gray12"
+                            textTransform="uppercase"
+                            letterSpacing={0.5}
+                        >
+                            Tags
+                        </Text>
 
-                    {/* Tags Container with existing tags and add input */}
-                    <YStack space={SPACING.sm}>
-                        {/* Existing Tags */}
                         {tags.length > 0 && (
-                            <XStack 
-                                flexWrap="wrap" 
-                                gap={SPACING.xs}
-                                padding={SPACING.sm}
-                                borderRadius={BORDER_RADIUS.sm}
-                                backgroundColor="$gray2"
-                            >
+                            <XStack flexWrap="wrap" gap={SPACING.xs}>
                                 {tags.map((tag, index) => (
-                                    <XStack 
+                                    <XStack
                                         key={index}
                                         alignItems="center"
-                                        backgroundColor="$blue4"
+                                        backgroundColor="$gray3"
                                         borderRadius={BORDER_RADIUS.xs}
                                         paddingHorizontal={SPACING.xs}
                                         paddingVertical={2}
                                     >
-                                        <Text 
+                                        <Text
                                             fontSize={TYPOGRAPHY.sizes.xs}
-                                            color="$blue11"
+                                            color="$gray11"
                                             marginRight={4}
                                         >
                                             {tag}
                                         </Text>
                                         <Pressable onPress={() => removeTag(index)}>
-                                            <XIcon size={12} color="$blue10" />
+                                            <XIcon size={12} color="$gray9" />
                                         </Pressable>
                                     </XStack>
                                 ))}
                             </XStack>
                         )}
-                        
+
                         {/* Add New Tag */}
                         <XStack space={SPACING.xs} alignItems="center">
-                            <View
-                                flex={1}
-                                borderWidth={1}
-                                borderColor="$borderColor"
-                                borderRadius={BORDER_RADIUS.sm}
-                                backgroundColor="$background"
-                            >
+                            <View flex={1}>
                                 <CustomTagsAutocomplete
                                     placeholder="Add a tag"
                                     value={newTag}
@@ -703,6 +679,7 @@ export default function AddContactPage() {
                                         style: {
                                             fontSize: TYPOGRAPHY.sizes.sm,
                                             height: 36,
+                                            paddingHorizontal: SPACING.sm,
                                         }
                                     }}
                                     styles={{
@@ -729,131 +706,169 @@ export default function AddContactPage() {
                     </YStack>
                 </YStack>
 
-                {/* Socials Section */}
-                <YStack 
-                    space={SPACING.md}
-                    padding={SPACING.md}
+                {/* Contact Info Section */}
+                <YStack
                     borderWidth={1}
                     borderColor="$borderColor"
                     borderRadius={BORDER_RADIUS.md}
-                    backgroundColor="$gray1"
+                    backgroundColor="$background"
                 >
-                    <Text
-                        fontSize={TYPOGRAPHY.sizes.md}
-                        fontWeight={TYPOGRAPHY.weights.medium}
-                        color="$gray11"
-                        marginBottom={SPACING.xs}
-                    >
-                        Contact Info
-                    </Text>
-
-                {/* Existing Socials */}
-                {socials.map((social, index) => (
-                    <XStack 
-                        key={index} 
-                        space={SPACING.xs}
-                        padding={SPACING.sm}
-                        borderWidth={1}
-                        borderColor="$borderColor"
-                        borderRadius={BORDER_RADIUS.sm}
-                        backgroundColor="$gray1"
-                        alignItems="center"
-                    >
-                        <YStack flex={1} space={SPACING.xs}>
-                            <Input
-                                value={social.label}
-                                onChangeText={(text) => editSocial(index, 'label', text)}
-                                placeholder="Platform"
-                                size="$3"
-                                fontSize={TYPOGRAPHY.sizes.sm}
-                                height={38}
-                            />
-                            <Input
-                                value={social.address}
-                                onChangeText={(text) => editSocial(index, 'address', text)}
-                                placeholder="Contact info"
-                                size="$3"
-                                fontSize={TYPOGRAPHY.sizes.sm}
-                                height={38}
-                            />
-                        </YStack>
-                        <Button
-                            size="$2"
-                            variant="ghost"
-                            onPress={() => removeSocial(index)}
-                            padding={SPACING.xs}
-                            minWidth={32}
-                            minHeight={32}
+                    <YStack padding={SPACING.md}>
+                        <Text
+                            fontSize={TYPOGRAPHY.sizes.xs}
+                            fontWeight={TYPOGRAPHY.weights.medium}
+                            color="$gray12"
+                            textTransform="uppercase"
+                            letterSpacing={0.5}
                         >
-                            <XIcon size={16} color="$red10" />
-                        </Button>
-                    </XStack>
-                ))}
+                            Contact Info
+                        </Text>
+                    </YStack>
 
-                {/* Add New Social */}
-                {openNewSocial && 
-                    <YStack 
-                        space={SPACING.xs}
-                        padding={SPACING.sm}
-                        borderWidth={1}
-                        borderColor="$blue6"
-                        borderRadius={BORDER_RADIUS.sm}
-                        backgroundColor="$blue1"
-                    >
-                        <XStack space={SPACING.xs} alignItems="flex-end">
-                            <YStack flex={1} space={SPACING.xs}>
-                                <Input
-                                    placeholder="Platform"
-                                    value={newSocial.label}
-                                    onChangeText={(text) => setNewSocial({ ...newSocial, label: text })}
-                                    size="$3"
-                                    fontSize={TYPOGRAPHY.sizes.sm}
-                                    height={38}
-                                />
-                                <Input
-                                    placeholder="Contact info"
-                                    value={newSocial.address}
-                                    onChangeText={(text) => setNewSocial({ ...newSocial, address: text })}
-                                    size="$3"
-                                    fontSize={TYPOGRAPHY.sizes.sm}
-                                    height={38}
-                                />
-                            </YStack>
-                            
-                            <XStack space={SPACING.xs}>
+                    {socials.map((social, index) => (
+                        <React.Fragment key={index}>
+                            <Separator marginHorizontal={SPACING.md} />
+                            <XStack
+                                padding={SPACING.md}
+                                alignItems="center"
+                                space={SPACING.xs}
+                            >
+                                <YStack flex={1} space={SPACING.xs}>
+                                    <Input
+                                        value={social.label}
+                                        onChangeText={(text) => editSocial(index, 'label', text)}
+                                        placeholder="Platform"
+                                        size="$3"
+                                        fontSize={TYPOGRAPHY.sizes.sm}
+                                        height={38}
+                                        borderWidth={0}
+                                        backgroundColor="transparent"
+                                        paddingHorizontal={0}
+                                    />
+                                    <Input
+                                        value={social.address}
+                                        onChangeText={(text) => editSocial(index, 'address', text)}
+                                        placeholder="Contact info"
+                                        size="$3"
+                                        fontSize={TYPOGRAPHY.sizes.sm}
+                                        height={38}
+                                        borderWidth={0}
+                                        backgroundColor="transparent"
+                                        paddingHorizontal={0}
+                                    />
+                                </YStack>
                                 <Button
                                     size="$2"
-                                    variant="outlined"
-                                    onPress={handleCloseNewSocialPress}
-                                    minWidth={60}
+                                    variant="ghost"
+                                    onPress={() => removeSocial(index)}
+                                    padding={SPACING.xs}
+                                    minWidth={32}
+                                    minHeight={32}
+                                    backgroundColor="transparent"
                                 >
-                                    Cancel
-                                </Button>
-                                <Button
-                                    size="$2"
-                                    onPress={addSocial}
-                                    backgroundColor="$green9"
-                                    color="white"
-                                    minWidth={50}
-                                >
-                                    <PlusIcon size={14} />
+                                    <XIcon size={16} color="$red10" />
                                 </Button>
                             </XStack>
-                        </XStack>
-                    </YStack>
-                }
-                
-                {!openNewSocial && (
-                    <XStack justifyContent="center">
-                        <Button 
-                            onPress={handleOpenNewSocialPress} 
-                            variant="outlined"
-                            size="$3"
-                        >
-                            + Add Contact Method
-                        </Button>
-                    </XStack>
-                )}
+                        </React.Fragment>
+                    ))}
+
+                    {openNewSocial && (
+                        <>
+                            <Separator marginHorizontal={SPACING.md} />
+                            <YStack padding={SPACING.md} space={SPACING.md}>
+                                <XStack space={SPACING.sm} alignItems="flex-start">
+                                    <YStack flex={1} space={SPACING.md}>
+                                        <YStack space={SPACING.xs}>
+                                            <Text
+                                                fontSize={TYPOGRAPHY.sizes.xs}
+                                                fontWeight={TYPOGRAPHY.weights.medium}
+                                                color="$gray12"
+                                                textTransform="uppercase"
+                                                letterSpacing={0.5}
+                                            >
+                                                Platform
+                                            </Text>
+                                            <Input
+                                                placeholder="e.g. Twitter, LinkedIn"
+                                                value={newSocial.label}
+                                                onChangeText={(text) => setNewSocial({ ...newSocial, label: text })}
+                                                size="$3"
+                                                fontSize={TYPOGRAPHY.sizes.sm}
+                                                height={38}
+                                                borderWidth={0}
+                                                borderBottomWidth={1}
+                                                borderBottomColor="$borderColor"
+                                                backgroundColor="transparent"
+                                                paddingHorizontal={0}
+                                                borderRadius={0}
+                                            />
+                                        </YStack>
+                                        <YStack space={SPACING.xs}>
+                                            <Text
+                                                fontSize={TYPOGRAPHY.sizes.xs}
+                                                fontWeight={TYPOGRAPHY.weights.medium}
+                                                color="$gray12"
+                                                textTransform="uppercase"
+                                                letterSpacing={0.5}
+                                            >
+                                                Contact Info
+                                            </Text>
+                                            <Input
+                                                placeholder="Handle, URL, phone number…"
+                                                value={newSocial.address}
+                                                onChangeText={(text) => setNewSocial({ ...newSocial, address: text })}
+                                                size="$3"
+                                                fontSize={TYPOGRAPHY.sizes.sm}
+                                                height={38}
+                                                borderWidth={0}
+                                                borderBottomWidth={1}
+                                                borderBottomColor="$borderColor"
+                                                backgroundColor="transparent"
+                                                paddingHorizontal={0}
+                                                borderRadius={0}
+                                            />
+                                        </YStack>
+                                    </YStack>
+                                    <YStack space={SPACING.xs}>
+                                        <Button
+                                            size="$2"
+                                            onPress={addSocial}
+                                            backgroundColor="$blue9"
+                                            color="white"
+                                            minWidth={50}
+                                        >
+                                            <PlusIcon size={14} />
+                                        </Button>
+                                        <Button
+                                            size="$2"
+                                            variant="outlined"
+                                            onPress={handleCloseNewSocialPress}
+                                            minWidth={60}
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </YStack>
+                                </XStack>
+                            </YStack>
+                        </>
+                    )}
+
+                    {!openNewSocial && (
+                        <>
+                            <Separator marginHorizontal={SPACING.md} />
+                            <XStack padding={SPACING.md}>
+                                <Button
+                                    onPress={handleOpenNewSocialPress}
+                                    variant="ghost"
+                                    size="$3"
+                                    color="$blue9"
+                                    backgroundColor="transparent"
+                                >
+                                    + Add Contact Method
+                                </Button>
+                            </XStack>
+                        </>
+                    )}
                 </YStack>
 
                 {/* Action Buttons - Moved inside scroll view to rise above keyboard */}

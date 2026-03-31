@@ -121,11 +121,12 @@ const CustomPlacesAutocomplete = forwardRef<CustomPlacesAutocompleteRef, CustomP
     );
 
     return (
-      <View style={[{ flex: 0 }, styles?.container]}>
+      <View style={[{ flex: 0, position: 'relative' }, styles?.container]}>
         <Input
           value={query}
           onChangeText={handleInputChange}
           placeholder={placeholder}
+          backgroundColor="transparent"
           style={[
             {
               fontSize: TYPOGRAPHY.sizes.md,
@@ -146,7 +147,6 @@ const CustomPlacesAutocomplete = forwardRef<CustomPlacesAutocompleteRef, CustomP
               {
                 backgroundColor: 'white',
                 borderRadius: BORDER_RADIUS.md,
-                marginTop: SPACING.xs,
                 maxHeight: 200,
                 borderWidth: 1,
                 borderColor: '#e0e0e0',
@@ -155,6 +155,11 @@ const CustomPlacesAutocomplete = forwardRef<CustomPlacesAutocompleteRef, CustomP
                 shadowOpacity: 0.1,
                 shadowRadius: 4,
                 elevation: 4,
+                position: 'absolute',
+                top: 50,
+                left: 0,
+                right: 0,
+                zIndex: 1000,
               },
               styles?.listView
             ]}

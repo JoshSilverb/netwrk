@@ -463,7 +463,7 @@ export default function ContactsScreen() {
                         </Sheet.Frame>
                     </Sheet>
 
-                    <View style={{ paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md }}>
+                    <View style={{ paddingVertical: SPACING.md }}>
                         <Loader loading={isFetching && contacts.length === 0}>
                             {isError ? (
                                 <Text color="$red9" marginTop={SPACING.sm}>

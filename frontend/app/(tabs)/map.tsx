@@ -2,13 +2,12 @@ import { useState, useEffect, useMemo } from 'react';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { Sheet } from '@tamagui/sheet';
 import { Text, YStack, Button, XStack, View, Image, Avatar, SizableText } from 'tamagui';
-import { ScrollView, RefreshControl, Pressable } from 'react-native';
+import { StyleSheet, ScrollView, Pressable } from 'react-native';
 import { User as UserIcon, ChevronRight } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
-import { Loader } from '@/components/Loader';
 import { searchContactsURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
-import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
+import { SPACING, TYPOGRAPHY, CONTAINER_STYLES } from '@/constants/Styles';
 import { getCurrentLocation } from '@/utils/locationutil';
 import { formatDateForAPI } from '@/utils/utilfunctions';
 import { useQuery } from '@tanstack/react-query';
@@ -40,7 +39,7 @@ export default function MapScreen() {
     tags: [],
   };
 
-  const { data: contacts = [], isFetching, refetch } = useQuery({
+  const { data: contacts = [] } = useQuery({
     queryKey: queryKeys.contacts(mapParams),
     queryFn: async () => {
       const response = await axios.post(searchContactsURL, {
@@ -93,11 +92,6 @@ export default function MapScreen() {
     }
   };
 
-  const handleRefresh = () => {
-    setIsSheetOpen(false);
-    refetch();
-  }
-
   function getContactCoords(contact) {
     // Assumes contact coords are formatted like this:
     //  POINT(-122.4194 37.7749)
@@ -113,119 +107,68 @@ export default function MapScreen() {
   } 
 
   return (
-    <View style={CONTAINER_STYLES.screen}>
-      <ScrollView
-        refreshControl={<RefreshControl refreshing={isFetching} onRefresh={handleRefresh} />}
-        contentInsetAdjustmentBehavior="automatic"
-        scrollEnabled={!isMapInteracting}
+    <View style={[CONTAINER_STYLES.screen, { flex: 1 }]}>
+      <MapView
+        style={StyleSheet.absoluteFillObject}
+        region={mapRegion}
+        onRegionChangeComplete={setMapRegion}
+        onTouchStart={() => setIsMapInteracting(true)}
+        onTouchEnd={() => setIsMapInteracting(false)}
+        onTouchCancel={() => setIsMapInteracting(false)}
       >
-      <YStack space={SPACING.lg} padding={SPACING.lg}>
-        {/* Header */}
-        <YStack 
-          space={SPACING.sm}
-          padding={SPACING.md}
-          marginVertical={SPACING.sm}
-          borderWidth={1}
-          borderColor="$borderColor"
-          borderRadius={BORDER_RADIUS.md}
-          backgroundColor="$gray1"
-        >
-          <Text 
-            fontSize={TYPOGRAPHY.sizes.md}
-            fontWeight={TYPOGRAPHY.weights.medium}
-            color="$gray11"
-            marginBottom={SPACING.xs}
-          >
-            Contacts Map
-          </Text>
-          <Text 
-            fontSize={TYPOGRAPHY.sizes.sm}
-            color="$gray10"
-          >
-            Tap on markers to see contacts at each location
-          </Text>
-        </YStack>
-      
-        {/* Map Container */}
-        <YStack 
-          marginVertical={SPACING.sm}
-          borderWidth={1}
-          borderColor="$borderColor"
-          borderRadius={BORDER_RADIUS.md}
-          backgroundColor="$gray1"
-          overflow="hidden"
-        >
-          <Loader loading={isFetching && contacts.length === 0}>
-            <MapView
-              style={{
-                width: '100%',
-                height: 400,
-                borderRadius: BORDER_RADIUS.md
-              }}
-              region={mapRegion}
-              onRegionChangeComplete={setMapRegion}
-              onTouchStart={() => setIsMapInteracting(true)}
-              onTouchEnd={() => setIsMapInteracting(false)}
-              onTouchCancel={() => setIsMapInteracting(false)}
+        {contacts.map((contact, index) => (
+          <View key={index}>
+            {contact.coordinate && contactsByLocation.has(contact.location) &&
+            <Marker
+              coordinate={getContactCoords(contact)}
+              title={contact.location}
+              onPress={() => handleMarkerPress(contact.location)}
             >
-              {contacts.map((contact, index) => (
-                <View key={index}>
-                  {contact.coordinate && contactsByLocation.has(contact.location) &&
-                  <Marker
-                  coordinate={getContactCoords(contact)}
-                  title={contact.location}
-                  onPress={() => handleMarkerPress(contact.location)}
-                >
-                <Image
-                  source={require('@/assets/images/mapmarker.png')}
-                  style={{ height: 25, width: 25 }}
-                  resizeMode="contain"
-                />
-              </Marker>
-              }
-              </View>
-              ))}
+              <Image
+                source={require('@/assets/images/mapmarker.png')}
+                style={{ height: 25, width: 25 }}
+                resizeMode="contain"
+              />
+            </Marker>
+            }
+          </View>
+        ))}
 
-              {/* User Location Marker - Blue Circle */}
-              {userLocation && (
-                <Marker
-                  coordinate={userLocation}
-                  anchor={{ x: 0.5, y: 0.5 }}
-                  flat
-                  zIndex={1000}
-                >
-                  <View style={{
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                    {/* Outer accuracy circle - semi-transparent blue */}
-                    <View style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 20,
-                      backgroundColor: 'rgba(0, 122, 255, 0.15)',
-                      borderWidth: 1,
-                      borderColor: 'rgba(0, 122, 255, 0.3)',
-                      position: 'absolute',
-                    }} />
-                    {/* Inner location dot - solid blue with white border */}
-                    <View style={{
-                      width: 16,
-                      height: 16,
-                      borderRadius: 8,
-                      backgroundColor: '#007AFF',
-                      borderWidth: 3,
-                      borderColor: '#FFFFFF',
-                    }} />
-                  </View>
-                </Marker>
-              )}
-
-            </MapView>
-            </Loader>
-        </YStack>
-      </YStack>
-      </ScrollView>
+        {/* User Location Marker - Blue Circle */}
+        {userLocation && (
+          <Marker
+            coordinate={userLocation}
+            anchor={{ x: 0.5, y: 0.5 }}
+            flat
+            zIndex={1000}
+          >
+            <View style={{
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              {/* Outer accuracy circle - semi-transparent blue */}
+              <View style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: 'rgba(0, 122, 255, 0.15)',
+                borderWidth: 1,
+                borderColor: 'rgba(0, 122, 255, 0.3)',
+                position: 'absolute',
+              }} />
+              {/* Inner location dot - solid blue with white border */}
+              <View style={{
+                width: 16,
+                height: 16,
+                borderRadius: 8,
+                backgroundColor: '#007AFF',
+                borderWidth: 3,
+                borderColor: '#FFFFFF',
+              }} />
+            </View>
+          </Marker>
+        )}
+      </MapView>
       {/* Location Details Sheet */}
       <Sheet
         forceRemoveScrollEnabled={isSheetOpen}
@@ -250,34 +193,32 @@ export default function MapScreen() {
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled={true}
           >
-            <YStack space={SPACING.lg} padding={SPACING.lg}>
+            <YStack space={SPACING.lg}>
               {/* Sheet Header */}
-              <YStack 
-                space={SPACING.sm}
-                padding={SPACING.md}
-                borderWidth={1}
-                borderColor="$borderColor"
-                borderRadius={BORDER_RADIUS.md}
-                backgroundColor="$gray1"
+              <YStack
+                paddingHorizontal={SPACING.md}
+                paddingVertical={SPACING.sm}
+                borderBottomWidth={1}
+                borderBottomColor="$borderColor"
               >
-                <Text 
+                <Text
                   fontSize={TYPOGRAPHY.sizes.md}
                   fontWeight={TYPOGRAPHY.weights.medium}
-                  color="$gray11"
-                  marginBottom={SPACING.xs}
+                  color="$color"
                 >
                   Contacts in {activeLocation}
                 </Text>
-                <Text 
+                <Text
                   fontSize={TYPOGRAPHY.sizes.sm}
                   color="$gray10"
+                  marginTop={SPACING.xs}
                 >
                   {contactsByLocation.get(activeLocation)?.length || 0} contact{contactsByLocation.get(activeLocation)?.length !== 1 ? 's' : ''} found
                 </Text>
               </YStack>
-              
+
               {/* Contacts List */}
-              <YStack space={SPACING.sm}>
+              <YStack borderTopWidth={1} borderTopColor="$borderColor">
                 {contactsByLocation.get(activeLocation)?.map((contact) => (
                   <Pressable
                     key={contact.contact_id}
@@ -292,9 +233,8 @@ export default function MapScreen() {
                         space={SPACING.md}
                         paddingHorizontal={SPACING.md}
                         paddingVertical={SPACING.sm}
-                        borderWidth={1}
-                        borderColor="$borderColor"
-                        borderRadius={BORDER_RADIUS.md}
+                        borderBottomWidth={1}
+                        borderBottomColor="$borderColor"
                         backgroundColor={pressed ? '$gray2' : '$background'}
                       >
                         <Avatar circular size="$4">
@@ -341,6 +281,7 @@ export default function MapScreen() {
                 backgroundColor="$blue9"
                 color="white"
                 marginTop={SPACING.md}
+                marginHorizontal={SPACING.lg}
                 pressStyle={{ opacity: 0.8, backgroundColor: '$blue10' }}
                 focusStyle={{ backgroundColor: '$blue10' }}
               >

@@ -23,12 +23,10 @@ const ProfileCard = ({
                 <XStack
                     alignItems="center"
                     space={SPACING.md}
-                    marginBottom={SPACING.sm}
                     paddingHorizontal={SPACING.md}
-                    paddingVertical={SPACING.sm}
-                    borderWidth={1}
-                    borderColor="$borderColor"
-                    borderRadius={BORDER_RADIUS.md}
+                    paddingVertical={SPACING.sm + 2}
+                    borderBottomWidth={1}
+                    borderBottomColor="$borderColor"
                     backgroundColor={pressed ? '$gray2' : '$background'}
                 >
                     <Avatar circular size="$4">
@@ -68,12 +66,12 @@ const ProfileCard = ({
                                 {contact.tags.slice(0, 3).map((tag) => (
                                     <View
                                         key={tag}
-                                        backgroundColor="$blue3"
+                                        backgroundColor="$gray3"
                                         borderRadius={BORDER_RADIUS.xs}
                                         paddingHorizontal={SPACING.xs}
                                         paddingVertical={2}
                                     >
-                                        <SizableText fontSize={TYPOGRAPHY.sizes.xs} color="$blue11">
+                                        <SizableText fontSize={TYPOGRAPHY.sizes.xs} color="$gray11">
                                             {tag}
                                         </SizableText>
                                     </View>

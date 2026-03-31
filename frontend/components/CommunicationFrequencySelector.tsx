@@ -60,11 +60,12 @@ export function CommunicationFrequencySelector({ onChange, initialFrequencyType,
                 height={44}
                 value={value}
                 onChangeText={cleanAndSetValue}
+                backgroundColor="$background"
             />
 
-            <Accordion overflow="hidden" flex={1} type="multiple" borderRadius={BORDER_RADIUS.sm}>
+            <Accordion overflow="hidden" flex={1} type="multiple" borderRadius={BORDER_RADIUS.sm} backgroundColor="$background">
                 <Accordion.Item value="frequency">
-                    <Accordion.Trigger flexDirection="row" justifyContent="space-between" height={44} paddingVertical="$2">
+                    <Accordion.Trigger flexDirection="row" justifyContent="space-between" height={44} paddingVertical="$2" backgroundColor="transparent">
                         {({ open }: { open: boolean }) => (
                             <>
                                 <Paragraph>{selectedOption}</Paragraph>
