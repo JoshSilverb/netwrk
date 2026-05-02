@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from .db.session import db
 from .routes.auth import auth_bp
 from .routes.contacts import contacts_bp
@@ -10,9 +11,9 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object("app.config.Config")
 
-    # Configure logging for AWS EB
     Config.configure_logging()
 
+    CORS(app)
     db.init_app(app)
 
     app.register_blueprint(auth_bp)
