@@ -17,6 +17,7 @@ export interface Contact {
   profile_pic_url?: string;
   socials: Social[];
   tags: string[];
+  coordinate?: string | null; // WKT format: "POINT(lng lat)"
 }
 
 export interface User {

@@ -185,9 +185,209 @@ Work in this order. Each milestone should be independently shippable.
 - Delete account
 
 ### 7. Map page
-- Google Maps embed with contact markers
-- Geolocation for centering
-- Marker click → info popup with link to contact sheet
+
+#### Overview
+
+Full-viewport Google Maps page showing all contacts that have a geocoded location. Functionally equivalent to the mobile map tab but redesigned for desktop: the map fills the right portion of the screen while a persistent left sidebar lists all mapped contacts. Clicking a marker or sidebar row opens the contact detail `Sheet` (reused from milestone 4) without navigating away.
+
+---
+
+#### Layout
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  AppShell top nav (same as every authenticated page)        │
+├──────────────────┬─────────────────────────────────────────┤
+│  Left sidebar    │                                         │
+│  (320px fixed)   │        Google Maps (flex-1)             │
+│                  │                                         │
+│  ┌────────────┐  │   [marker] [marker]                     │
+│  │ Search box │  │                                         │
+│  └────────────┘  │              [marker]                   │
+│                  │                                         │
+│  Contact list    │         [user location dot]             │
+│  rows, sorted    │                                         │
+│  by proximity    │                                         │
+│  to user (if     │                                         │
+│  location        │                                         │
+│  granted) or     │                                         │
+│  alphabetically  │                                         │
+│                  │                                         │
+│  (scrollable)    │                                         │
+└──────────────────┴─────────────────────────────────────────┘
+```
+
+- The sidebar is `320px` wide, fixed height, independently scrollable.
+- The map fills all remaining horizontal space (`flex: 1`) and the full viewport height minus the top nav.
+- On window resize the map reflows naturally; the sidebar stays fixed width.
+- The contact detail `Sheet` slides in from the right over the entire layout (same component from milestone 4); the map and sidebar remain visible beneath the sheet overlay.
+
+---
+
+#### Data
+
+Reuse the `useContacts` hook with the same broad params used on the mobile map screen: no date bounds, no tag filter, no query string — fetch all contacts. Only contacts with a non-null `coordinate` field are rendered on the map or shown in the sidebar.
+
+```ts
+const mapParams = {
+  lower_bound_date: formatDateForAPI(new Date(0)),
+  upper_bound_date: formatDateForAPI(new Date()),
+  order_by: 'Date added',
+  query_string: '',
+  tags: [],
+};
+```
+
+Query key: `queryKeys.contacts(mapParams)` (same key the contacts page uses for its own params, so results are cached if the user visited contacts first).
+
+---
+
+#### Coordinate Parsing
+
+The backend returns coordinates as WKT geography strings, e.g. `POINT(-122.4194 37.7749)`. Parse with the same logic as the mobile client:
+
+```ts
+function parseCoordinate(wkt: string): { lat: number; lng: number } | null {
+  const match = wkt.match(/POINT\(([^ ]+) ([^)]+)\)/);
+  if (!match) return null;
+  return { lng: parseFloat(match[1]), lat: parseFloat(match[2]) };
+}
+```
+
+Contacts where `coordinate` is null or unparseable are silently excluded from the map and sidebar.
+
+---
+
+#### Map Setup (`components/map/MapView.tsx`)
+
+Use the `@vis.gl/react-google-maps` package (the official React wrapper for the Google Maps JS API). Do NOT use `@react-google-maps/api` (deprecated).
+
+```tsx
+import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
+```
+
+Props to set on `<Map>`:
+- `defaultCenter`: user's geolocation if granted, else `{ lat: 40.7128, lng: -74.006 }` (NYC)
+- `defaultZoom`: `5`
+- `mapId`: set via env var `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` (required for `AdvancedMarker`)
+- `gestureHandling`: `"greedy"` (no Ctrl-to-zoom prompt)
+- `disableDefaultUI`: `false` — keep zoom controls; hide street view and map type controls via `streetViewControl={false}` and `mapTypeControl={false}`
+
+Wrap the entire page in `<APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>`.
+
+**User location dot:** If `navigator.geolocation` permission is granted, render a blue pulsing dot at the user's position using a custom `<AdvancedMarker>` (a `div` styled as a filled blue circle with a semi-transparent outer ring — match mobile's appearance). Do not show a dot if permission is denied or unavailable.
+
+Obtain geolocation once on mount:
+```ts
+useEffect(() => {
+  navigator.geolocation.getCurrentPosition(
+    (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+    () => {} // silently ignore denial
+  );
+}, []);
+```
+
+---
+
+#### Contact Markers (`components/map/ContactMarker.tsx`)
+
+- One `<AdvancedMarker>` per unique `(lat, lng)` coordinate pair.
+- When multiple contacts share a location, render a single marker for that location and show all contacts when it is clicked.
+- Use a custom SVG pin (a small filled circle with a subtle drop shadow) — do not use the default Google red teardrop.
+- Active marker (currently selected location) uses an accent color; all others use the app's primary color.
+- On marker click: set `activeLocation` state to that marker's location string. This:
+  1. Highlights the marker visually (accent color).
+  2. Opens the location popover (see below).
+  3. Scrolls the sidebar to show the contacts at that location.
+
+---
+
+#### Location Popover (Info Window)
+
+When a marker is clicked, render a Google Maps `<InfoWindow>` anchored to that marker.
+
+Contents:
+- **Header**: Location name (city/region string from `contact.location`)
+- **Contact count**: `"3 contacts here"` in muted text
+- **Contact rows** (up to 3, then "+ N more"):
+  - Avatar (initials fallback) + name
+  - Last contacted date
+  - Clickable row: clicking a row closes the InfoWindow and opens the contact detail `Sheet` for that contact
+- **"View all"** link if more than 3 contacts share the location — clicking it scrolls the sidebar to that location group
+
+Close button (×) in the top-right corner of the InfoWindow. Also close on map click (set `activeLocation` to `null`).
+
+---
+
+#### Left Sidebar (`components/map/MapSidebar.tsx`)
+
+- **Header**: `"X contacts on map"` count
+- **Search input**: filters the sidebar list in real-time (client-side, no API call). Matches on `contact.fullname` and `contact.location`.
+- **Contact list**: each row shows:
+  - Avatar (initials fallback if no `profile_pic_url`)
+  - Name (bold)
+  - Location string (muted, one line, truncated)
+  - Clicking a row: pan the map to that contact's marker, set `activeLocation`, open the InfoWindow for that location
+- **Grouping**: rows are grouped by location string. Each group has a sticky section header showing the location name and contact count. Within a group, contacts are sorted alphabetically by name.
+- **Empty state**: if no contacts have coordinates, show a centered message: `"None of your contacts have a location yet."` with a button linking to `/contacts` to add one.
+- **Loading state**: skeleton rows while the query is in flight.
+
+---
+
+#### State
+
+| State | Type | Scope | Notes |
+|---|---|---|---|
+| `userLocation` | `{ lat, lng } \| null` | component | Set once on mount from geolocation API |
+| `activeLocation` | `string \| null` | component | Location string of the currently selected marker/InfoWindow |
+| `sidebarQuery` | `string` | component | Live search filter for the sidebar list |
+| `selectedContactId` | `string \| null` | component | ID of contact whose Sheet is open; passed to the reused `ContactSheet` |
+
+No URL params needed for the map page — map state is ephemeral.
+
+---
+
+#### Map Pan Behavior
+
+When the user clicks a sidebar row, pan the map programmatically using the Maps JS API `map.panTo({ lat, lng })`. Access the map instance via `useMap()` from `@vis.gl/react-google-maps`. Also call `map.setZoom(10)` if the current zoom is less than 8 (so zoomed-out users get pulled in to a useful level).
+
+---
+
+#### Env Vars Required
+
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Google Maps JS API key |
+| `NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID` | Cloud-based map ID (required for AdvancedMarker) |
+
+Both must be set in the Vercel dashboard under Environment Variables.
+
+---
+
+#### Files to Create
+
+```
+web/
+├── app/(app)/map/
+│   └── page.tsx               # Page component; fetches contacts, composes layout
+├── components/map/
+│   ├── MapView.tsx             # APIProvider + Map + markers + InfoWindow
+│   ├── ContactMarker.tsx       # Single AdvancedMarker with active/inactive styles
+│   ├── LocationInfoWindow.tsx  # InfoWindow contents for a clicked marker
+│   └── MapSidebar.tsx          # Left panel: search + grouped contact list
+```
+
+`page.tsx` owns all state and passes props down. No context needed — the tree is shallow.
+
+---
+
+#### Dependencies
+
+```bash
+npm install @vis.gl/react-google-maps
+```
+
+No other new dependencies. Reuses: TanStack Query (`useContacts`), shadcn `Sheet` (from milestone 4), shadcn `Avatar`, shadcn `Input`, shadcn `Skeleton`, and the existing `formatDateForAPI` utility.
 
 ### 8. Post-launch: Richer table view
 - Requires separate design pass before implementation
