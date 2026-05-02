@@ -1,31 +1,17 @@
 import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Tabs } from 'expo-router';
 import { Pressable } from 'react-native';
+import { Users, MapPin, Plus, User } from '@tamagui/lucide-icons';
 
-import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={24} style={{ marginBottom: -3 }} {...props} />;
-}
-
 function HeaderAccountButton() {
-  const colorScheme = useColorScheme();
   return (
     <Link href="/account" asChild>
-      <Pressable>
+      <Pressable style={{ marginRight: 20 }}>
         {({ pressed }) => (
-          <FontAwesome
-            name="user"
-            size={25}
-            color={Colors[colorScheme ?? 'light'].text}
-            style={{ marginRight: 16, opacity: pressed ? 0.5 : 1 }}
-          />
+          <User size={28} color={pressed ? '#64748B' : '#475569'} />
         )}
       </Pressable>
     </Link>
@@ -38,7 +24,13 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        tabBarActiveTintColor: '#14B8A6',
+        tabBarInactiveTintColor: '#94A3B8',
+        tabBarStyle: {
+          backgroundColor: '#0F172A',
+          borderTopColor: '#1E293B',
+          borderTopWidth: 1,
+        },
         headerShown: useClientOnlyValue(false, true),
       }}
     >
@@ -46,7 +38,7 @@ export default function TabLayout() {
         name="add"
         options={{
           title: 'Add Contact',
-          tabBarIcon: ({ color }) => <TabBarIcon name="plus" color={color} />,
+          tabBarIcon: ({ color }) => <Plus size={24} color={color} />,
           headerRight: () => <HeaderAccountButton />,
         }}
       />
@@ -54,7 +46,7 @@ export default function TabLayout() {
         name="contacts"
         options={{
           title: 'Contacts',
-          tabBarIcon: ({ color }) => <TabBarIcon name="users" color={color} />,
+          tabBarIcon: ({ color }) => <Users size={24} color={color} />,
           headerRight: () => <HeaderAccountButton />,
         }}
       />
@@ -62,7 +54,7 @@ export default function TabLayout() {
         name="map"
         options={{
           title: 'Map',
-          tabBarIcon: ({ color }) => <TabBarIcon name="map" color={color} />,
+          tabBarIcon: ({ color }) => <MapPin size={24} color={color} />,
           headerRight: () => <HeaderAccountButton />,
         }}
       />

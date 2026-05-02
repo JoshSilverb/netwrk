@@ -1,7 +1,10 @@
 import { Stack, Link, router } from 'expo-router';
 import { View, Button, XStack, YStack, Avatar, ScrollView, Text, Sheet, Label, Switch, Separator, Input, Checkbox } from 'tamagui';
-import { Pressable, Alert } from 'react-native';
-import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon, User as UserIcon } from '@tamagui/lucide-icons';
+import { Pressable, Alert, StyleSheet } from 'react-native';
+import { Plus as PlusIcon, X as XIcon, Camera as CameraIcon, User as UserIcon, MapPin } from '@tamagui/lucide-icons';
+
+const TEAL = '#14B8A6';
+const NAVY = '#0F172A';
 import * as ImagePicker from 'expo-image-picker';
 import { getUserDetailsURL, updateUserDetailsURL, getS3UploadURL, addContactForUserURL } from '@/constants/Apis';
 import { useState, useEffect } from 'react';
@@ -398,121 +401,109 @@ export default function AccountPage() {
     <View style={CONTAINER_STYLES.screen} backgroundColor="$background">
       <Stack.Screen options={{ title: "" }} />
 
-      <ScrollView>
-      <YStack alignItems="flex-start" gap={SPACING.md} padding={SPACING.xl}>
-        
-        {/* Header Stack */}
-        <YStack alignSelf="center" alignItems='center' gap={SPACING.md}>
-          <Avatar circular size="$10">
+      <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
+        {/* Navy hero header */}
+        <View style={accountStyles.heroBackground} />
+        <YStack alignItems="center" paddingTop={SPACING.xl} paddingBottom={SPACING.lg} gap={SPACING.sm}>
+          <Avatar circular size="$12">
             {profilePicUrl ? (
-              <Avatar.Image
-                accessibilityLabel={username}
-                src={profilePicUrl}
-              />
+              <Avatar.Image accessibilityLabel={username} src={profilePicUrl} />
             ) : (
               <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">
-                <UserIcon size={24} color="gray" />
+                <UserIcon size={28} color="$gray9" />
               </Avatar.Fallback>
             )}
           </Avatar>
 
-          <Text
-            fontSize={TYPOGRAPHY.sizes.title}
-            fontWeight={TYPOGRAPHY.weights.bold}
-          >
+          <Text fontSize={TYPOGRAPHY.sizes.title} fontWeight="700" textAlign="center" paddingHorizontal={SPACING.lg}>
             {username}
           </Text>
 
-          {userLocation && (
-            <Text
-              fontSize={TYPOGRAPHY.sizes.md}
-              color="$gray10"
-            >
-              {userLocation}
-            </Text>
-          )}
+          {userLocation ? (
+            <XStack alignItems="center" gap={4}>
+              <MapPin size={13} color={TEAL} />
+              <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray10">{userLocation}</Text>
+            </XStack>
+          ) : null}
 
-          <Link href='/(tabs)/contacts' asChild>
-            <Button 
-              size="$3"
-              backgroundColor="$blue9" 
-              color="white"
-              marginVertical={SPACING.xs}
-            >
-              <Text color="white">
-                {numContacts || '0'} contacts
-              </Text>
-            </Button>
+          <Link href="/(tabs)/contacts" asChild>
+            <Pressable>
+              <View style={accountStyles.statPill}>
+                <Text style={accountStyles.statText}>{numContacts || '0'} contacts</Text>
+              </View>
+            </Pressable>
           </Link>
-
-          <Button
-            onPress={() => setImportSheetActive(true)}
-            size="$3"
-            variant="outlined"
-            borderRadius={BORDER_RADIUS.md}
-          >
-            Import contacts
-          </Button>
-          <Text color="$red">
-            {errorMessage}
-          </Text>
-          
         </YStack>
 
-        {/* Personal Info Stack */}
-        <YStack space={SPACING.md} width="100%" marginTop={SPACING.lg}>
-          <YStack space={SPACING.sm}>
-            <Text 
-              fontSize={TYPOGRAPHY.sizes.lg}
-              fontWeight={TYPOGRAPHY.weights.bold}
-              color="$gray10"
-            >
+        {/* About card */}
+        <YStack
+          backgroundColor="$background"
+          borderRadius={12}
+          marginHorizontal={SPACING.md}
+          marginBottom={SPACING.sm}
+          borderWidth={1}
+          borderColor="$borderColor"
+          overflow="hidden"
+        >
+          <XStack paddingHorizontal={SPACING.md} paddingTop={SPACING.md} paddingBottom={SPACING.xs}>
+            <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8}>
               About
             </Text>
-            <View 
-              padding={SPACING.md}
-              borderWidth={1}
-              borderColor="$borderColor"
-              borderRadius={BORDER_RADIUS.sm}
-              backgroundColor="$background"
-            >
-              <Text fontSize={TYPOGRAPHY.sizes.sm}>
-                {userBio}
-              </Text>
-            </View>
-          </YStack>
-
-          <YStack space={SPACING.sm} marginTop={SPACING.lg} width="100%">
-            <Button
-              onPress={handleEditProfile}
-              size="$3"
-              backgroundColor="$blue9"
-              color="white"
-              borderRadius={BORDER_RADIUS.md}
-            >
-              Edit Profile
-            </Button>
-            <Button
-              onPress={() => setSettingsSheetActive(true)}
-              size="$3"
-              variant="outlined"
-              borderRadius={BORDER_RADIUS.md}
-            >
-              Settings
-            </Button>
-            <Button
-              onPress={() => setLogoutSheetActive(true)}
-              size="$3"
-              variant="outlined"
-              borderColor="$red9"
-              color="$red9"
-              borderRadius={BORDER_RADIUS.md}
-            >
-              Log Out
-            </Button>
+          </XStack>
+          <YStack paddingHorizontal={SPACING.md} paddingBottom={SPACING.md}>
+            <Text fontSize={TYPOGRAPHY.sizes.sm} color={userBio ? '$color' : '$gray9'} fontStyle={userBio ? 'normal' : 'italic'}>
+              {userBio || 'No bio added'}
+            </Text>
           </YStack>
         </YStack>
-      </YStack>
+
+        {/* Action buttons */}
+        <YStack gap={SPACING.sm} marginHorizontal={SPACING.md} marginTop={SPACING.sm}>
+          <Button
+            onPress={() => setImportSheetActive(true)}
+            size="$4"
+            variant="outlined"
+            borderRadius={BORDER_RADIUS.md}
+            fontSize={TYPOGRAPHY.sizes.md}
+            fontWeight={TYPOGRAPHY.weights.bold}
+          >
+            Import Contacts
+          </Button>
+          <Button
+            onPress={handleEditProfile}
+            size="$4"
+            backgroundColor={TEAL}
+            color="white"
+            borderRadius={BORDER_RADIUS.md}
+            fontSize={TYPOGRAPHY.sizes.md}
+            fontWeight={TYPOGRAPHY.weights.bold}
+          >
+            Edit Profile
+          </Button>
+          <Button
+            onPress={() => setSettingsSheetActive(true)}
+            size="$4"
+            variant="outlined"
+            borderRadius={BORDER_RADIUS.md}
+            fontSize={TYPOGRAPHY.sizes.md}
+            fontWeight={TYPOGRAPHY.weights.bold}
+          >
+            Settings
+          </Button>
+          <Button
+            onPress={() => setLogoutSheetActive(true)}
+            size="$4"
+            variant="outlined"
+            borderColor="$red9"
+            color="$red9"
+            borderRadius={BORDER_RADIUS.md}
+            fontSize={TYPOGRAPHY.sizes.md}
+            fontWeight={TYPOGRAPHY.weights.bold}
+          >
+            Log Out
+          </Button>
+          {errorMessage ? <Text color="$red9" fontSize={TYPOGRAPHY.sizes.sm}>{errorMessage}</Text> : null}
+        </YStack>
       </ScrollView>
       
       {/* Contact Import Modal */}
@@ -524,76 +515,51 @@ export default function AccountPage() {
               borderTopRightRadius={BORDER_RADIUS.lg}
           >
           <Sheet.Handle backgroundColor="$gray8" />
-          <YStack 
-              space={SPACING.lg} 
-              padding={SPACING.lg}
-          >
-              {/* Options */}
-              <YStack 
-                  space={SPACING.md}
+          <YStack space={SPACING.lg} padding={SPACING.lg}>
+              <YStack
+                  space={SPACING.sm}
                   padding={SPACING.md}
                   borderWidth={1}
                   borderColor="$borderColor"
-                  borderRadius={BORDER_RADIUS.md}
-                  backgroundColor="$gray1"
-                  alignItems="center"
+                  borderRadius={12}
+                  backgroundColor="$background"
               >
-                  <Text 
-                      fontSize={TYPOGRAPHY.sizes.lg}
-                      fontWeight={TYPOGRAPHY.weights.bold}
-                      color="$gray11"
-                      textAlign="center"
-                  >
+                  <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8}>
                       Import contacts
                   </Text>
-                  <Text 
-                      fontSize={TYPOGRAPHY.sizes.md}
-                      color="$gray10"
-                      textAlign="center"
-                      lineHeight={20}
-                  >
+                  <Text fontSize={TYPOGRAPHY.sizes.md} color="$gray10" lineHeight={20}>
                       Import contacts from one of these sources:
                   </Text>
               </YStack>
           </YStack>
-          
+
           {/* Action Buttons */}
           <YStack
               padding={SPACING.md}
-              space={SPACING.sm}
+              gap={SPACING.sm}
               borderTopWidth={1}
               borderTopColor="$borderColor"
               backgroundColor="$background"
           >
               <Button
-                  size="$3"
+                  size="$4"
                   onPress={() => {
                       setImportSheetActive(false);
                       importFromContactsApp();
                   }}
-                  backgroundColor="$blue9"
+                  backgroundColor={TEAL}
                   color="white"
                   borderRadius={BORDER_RADIUS.md}
+                  fontWeight={TYPOGRAPHY.weights.bold}
               >
                   From contacts app
               </Button>
-              {/* <Button
-                  size="$3"
-                  onPress={() => {
-                      setImportSheetActive(false);
-                      // handleLogOut();
-                  }}
-                  backgroundColor="$blue9"
-                  color="white"
-                  borderRadius={BORDER_RADIUS.md}
-              >
-                  From spreadsheet
-              </Button> */}
               <Button
-                  size="$3"
+                  size="$4"
                   variant="outlined"
                   onPress={() => setImportSheetActive(false)}
                   borderRadius={BORDER_RADIUS.md}
+                  fontWeight={TYPOGRAPHY.weights.bold}
               >
                   Cancel
               </Button>
@@ -611,59 +577,44 @@ export default function AccountPage() {
               borderTopRightRadius={BORDER_RADIUS.lg}
           >
           <Sheet.Handle backgroundColor="$gray8" />
-          <YStack 
-              space={SPACING.lg} 
-              padding={SPACING.lg}
-          >
-              {/* Content Section */}
-              <YStack 
-                  space={SPACING.md}
+          <YStack space={SPACING.lg} padding={SPACING.lg}>
+              <YStack
+                  space={SPACING.sm}
                   padding={SPACING.md}
                   borderWidth={1}
                   borderColor="$borderColor"
-                  borderRadius={BORDER_RADIUS.md}
-                  backgroundColor="$gray1"
-                  alignItems="center"
+                  borderRadius={12}
+                  backgroundColor="$background"
               >
-                  <Text 
-                      fontSize={TYPOGRAPHY.sizes.lg}
-                      fontWeight={TYPOGRAPHY.weights.bold}
-                      color="$gray11"
-                      textAlign="center"
-                  >
+                  <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8}>
                       Log Out
                   </Text>
-                  <Text 
-                      fontSize={TYPOGRAPHY.sizes.md}
-                      color="$gray10"
-                      textAlign="center"
-                      lineHeight={20}
-                  >
+                  <Text fontSize={TYPOGRAPHY.sizes.md} color="$gray10" lineHeight={20}>
                       Are you sure you want to log out? You'll need to sign in again to access your contacts.
                   </Text>
               </YStack>
           </YStack>
-          
+
           {/* Action Buttons */}
-          <XStack 
-              padding={SPACING.md} 
-              justifyContent="flex-end" 
-              space={SPACING.sm}
+          <XStack
+              padding={SPACING.md}
+              gap={SPACING.sm}
               borderTopWidth={1}
               borderTopColor="$borderColor"
               backgroundColor="$background"
           >
               <Button
-                  size="$3"
+                  size="$4"
                   variant="outlined"
                   onPress={() => setLogoutSheetActive(false)}
                   borderRadius={BORDER_RADIUS.md}
+                  fontWeight={TYPOGRAPHY.weights.bold}
                   flex={1}
               >
                   Cancel
               </Button>
               <Button
-                  size="$3"
+                  size="$4"
                   onPress={() => {
                       setLogoutSheetActive(false);
                       handleLogOut();
@@ -671,6 +622,7 @@ export default function AccountPage() {
                   backgroundColor="$red9"
                   color="white"
                   borderRadius={BORDER_RADIUS.md}
+                  fontWeight={TYPOGRAPHY.weights.bold}
                   flex={1}
               >
                   Log Out
@@ -691,11 +643,7 @@ export default function AccountPage() {
           >
           <Sheet.Handle backgroundColor="$gray8" />
           <YStack space={SPACING.lg} padding={SPACING.lg}>
-              <Text
-                  fontSize={TYPOGRAPHY.sizes.lg}
-                  fontWeight={TYPOGRAPHY.weights.bold}
-                  color="$gray11"
-              >
+              <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8}>
                   Settings
               </Text>
               <XStack
@@ -704,10 +652,10 @@ export default function AccountPage() {
                   padding={SPACING.md}
                   borderWidth={1}
                   borderColor="$borderColor"
-                  borderRadius={BORDER_RADIUS.md}
-                  backgroundColor="$gray1"
+                  borderRadius={12}
+                  backgroundColor="$background"
               >
-                  <Text fontSize={TYPOGRAPHY.sizes.md} color="$gray11">
+                  <Text fontSize={TYPOGRAPHY.sizes.md} color="$color">
                       Dark mode
                   </Text>
                   <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray9">
@@ -715,10 +663,11 @@ export default function AccountPage() {
                   </Text>
               </XStack>
               <Button
-                  size="$3"
+                  size="$4"
                   variant="outlined"
                   onPress={() => setSettingsSheetActive(false)}
                   borderRadius={BORDER_RADIUS.md}
+                  fontWeight={TYPOGRAPHY.weights.bold}
               >
                   Close
               </Button>
@@ -743,29 +692,21 @@ export default function AccountPage() {
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ flexGrow: 1 }}
           >
-            <YStack 
-                space={SPACING.lg} 
-                padding={SPACING.lg}
-            >
+            <YStack space={SPACING.lg} padding={SPACING.lg}>
                 {/* Profile Picture Section */}
-                <YStack 
-                    space={SPACING.md}
+                <YStack
+                    space={SPACING.sm}
                     padding={SPACING.md}
                     borderWidth={1}
                     borderColor="$borderColor"
-                    borderRadius={BORDER_RADIUS.md}
-                    backgroundColor="$gray1"
+                    borderRadius={12}
+                    backgroundColor="$background"
                     alignItems="center"
                 >
-                    <Text 
-                        fontSize={TYPOGRAPHY.sizes.md}
-                        fontWeight={TYPOGRAPHY.weights.medium}
-                        color="$gray11"
-                        marginBottom={SPACING.xs}
-                    >
+                    <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8} alignSelf="flex-start">
                         Profile Picture
                     </Text>
-                    
+
                     <Pressable onPress={selectImage}>
                         <View position="relative">
                             <Avatar circular size="$10">
@@ -776,17 +717,16 @@ export default function AccountPage() {
                                 />
                               ) : (
                                 <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">
-                                  <UserIcon size={24} color="gray" />
+                                  <UserIcon size={24} color="$gray9" />
                                 </Avatar.Fallback>
                               )}
                             </Avatar>
-                            
-                            {/* Camera overlay */}
+
                             <View
                                 position="absolute"
                                 bottom={0}
                                 right={0}
-                                backgroundColor="$blue9"
+                                backgroundColor={TEAL}
                                 borderRadius={20}
                                 width={32}
                                 height={32}
@@ -799,32 +739,22 @@ export default function AccountPage() {
                             </View>
                         </View>
                     </Pressable>
-                    
-                    <Text 
-                        fontSize={TYPOGRAPHY.sizes.sm}
-                        color="$gray10"
-                        textAlign="center"
-                        marginTop={SPACING.xs}
-                    >
+
+                    <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray9" textAlign="center">
                         Tap to change profile picture
                     </Text>
                 </YStack>
 
                 {/* Username Section */}
-                <YStack 
+                <YStack
                     space={SPACING.sm}
                     padding={SPACING.md}
                     borderWidth={1}
                     borderColor="$borderColor"
-                    borderRadius={BORDER_RADIUS.md}
-                    backgroundColor="$gray1"
+                    borderRadius={12}
+                    backgroundColor="$background"
                 >
-                    <Text 
-                        fontSize={TYPOGRAPHY.sizes.md}
-                        fontWeight={TYPOGRAPHY.weights.medium}
-                        color="$gray11"
-                        marginBottom={SPACING.xs}
-                    >
+                    <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8}>
                         Username
                     </Text>
                     <Input
@@ -837,20 +767,15 @@ export default function AccountPage() {
                 </YStack>
 
                 {/* Bio Section */}
-                <YStack 
+                <YStack
                     space={SPACING.sm}
                     padding={SPACING.md}
                     borderWidth={1}
                     borderColor="$borderColor"
-                    borderRadius={BORDER_RADIUS.md}
-                    backgroundColor="$gray1"
+                    borderRadius={12}
+                    backgroundColor="$background"
                 >
-                    <Text 
-                        fontSize={TYPOGRAPHY.sizes.md}
-                        fontWeight={TYPOGRAPHY.weights.medium}
-                        color="$gray11"
-                        marginBottom={SPACING.xs}
-                    >
+                    <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8}>
                         About
                     </Text>
                     <Input
@@ -870,15 +795,10 @@ export default function AccountPage() {
                     padding={SPACING.md}
                     borderWidth={1}
                     borderColor="$borderColor"
-                    borderRadius={BORDER_RADIUS.md}
-                    backgroundColor="$gray1"
+                    borderRadius={12}
+                    backgroundColor="$background"
                 >
-                    <Text
-                        fontSize={TYPOGRAPHY.sizes.md}
-                        fontWeight={TYPOGRAPHY.weights.medium}
-                        color="$gray11"
-                        marginBottom={SPACING.xs}
-                    >
+                    <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8}>
                         Location
                     </Text>
                     <CustomPlacesAutocomplete
@@ -896,28 +816,29 @@ export default function AccountPage() {
           {/* Action Buttons */}
           <XStack
               padding={SPACING.md}
-              justifyContent="flex-end"
-              space={SPACING.sm}
+              gap={SPACING.sm}
               borderTopWidth={1}
               borderTopColor="$borderColor"
               backgroundColor="$background"
               paddingBottom={insets.bottom + SPACING.md}
           >
               <Button
-                  size="$3"
+                  size="$4"
                   variant="outlined"
                   onPress={() => setEditProfileSheetActive(false)}
                   borderRadius={BORDER_RADIUS.md}
+                  fontWeight={TYPOGRAPHY.weights.bold}
                   flex={1}
               >
                   Cancel
               </Button>
               <Button
-                  size="$3"
+                  size="$4"
                   onPress={handleSaveProfile}
-                  backgroundColor="$blue9"
+                  backgroundColor={TEAL}
                   color="white"
                   borderRadius={BORDER_RADIUS.md}
+                  fontWeight={TYPOGRAPHY.weights.bold}
                   flex={1}
               >
                   Save Changes
@@ -943,38 +864,28 @@ export default function AccountPage() {
           >
               {/* Header */}
               <YStack
-                  space={SPACING.md}
+                  space={SPACING.sm}
                   padding={SPACING.md}
                   borderWidth={1}
                   borderColor="$borderColor"
-                  borderRadius={BORDER_RADIUS.md}
-                  backgroundColor="$gray1"
-                  alignItems="center"
+                  borderRadius={12}
+                  backgroundColor="$background"
               >
-                  <Text
-                      fontSize={TYPOGRAPHY.sizes.lg}
-                      fontWeight={TYPOGRAPHY.weights.bold}
-                      color="$gray11"
-                      textAlign="center"
-                  >
+                  <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8}>
                       Select Contacts to Import
                   </Text>
-                  <Text
-                      fontSize={TYPOGRAPHY.sizes.md}
-                      color="$gray10"
-                      textAlign="center"
-                      lineHeight={20}
-                  >
+                  <Text fontSize={TYPOGRAPHY.sizes.md} color="$gray10" lineHeight={20}>
                       {Object.values(selectedContacts).filter(Boolean).length} of {formattedContacts.length} contacts selected
                   </Text>
               </YStack>
 
               {/* Toggle All Button */}
               <Button
-                  size="$3"
+                  size="$4"
                   onPress={handleToggleAllContacts}
                   variant="outlined"
                   borderRadius={BORDER_RADIUS.md}
+                  fontWeight={TYPOGRAPHY.weights.bold}
               >
                   {Object.values(selectedContacts).filter(Boolean).length === formattedContacts.length ? "Deselect All" : "Select All"}
               </Button>
@@ -1007,7 +918,8 @@ export default function AccountPage() {
                         borderWidth={1}
                         borderColor="$borderColor"
                         borderRadius={BORDER_RADIUS.sm}
-                        backgroundColor={selectedContacts[index] ? "$gray3" : "$background"}
+                        backgroundColor={selectedContacts[index] ? 'rgba(20,184,166,0.08)' : '$background'}
+                        borderColor={selectedContacts[index] ? 'rgba(20,184,166,0.4)' : '$borderColor'}
                         alignItems="center"
                         space={SPACING.md}
                       >
@@ -1058,33 +970,32 @@ export default function AccountPage() {
           {/* Action Buttons */}
           <XStack
               padding={SPACING.md}
-              justifyContent="flex-end"
-              space={SPACING.sm}
+              gap={SPACING.sm}
               borderTopWidth={1}
               borderTopColor="$borderColor"
               backgroundColor="$background"
               paddingBottom={insets.bottom + SPACING.md}
           >
               <Button
-                  size="$3"
+                  size="$4"
                   variant="outlined"
                   onPress={handleCancelContactSelection}
                   borderRadius={BORDER_RADIUS.md}
+                  fontWeight={TYPOGRAPHY.weights.bold}
                   flex={1}
               >
                   Cancel
               </Button>
               <Button
-                  size="$3"
+                  size="$4"
                   onPress={handleConfirmContactSelection}
-                  backgroundColor="$blue9"
+                  backgroundColor={TEAL}
                   color="white"
                   borderRadius={BORDER_RADIUS.md}
+                  fontWeight={TYPOGRAPHY.weights.bold}
                   flex={1}
               >
-                  <Text color="white">
-                      Confirm ({Object.values(selectedContacts).filter(Boolean).length})
-                  </Text>
+                  <Text color="white">Confirm ({Object.values(selectedContacts).filter(Boolean).length})</Text>
               </Button>
           </XStack>
           </Sheet.Frame>
@@ -1094,3 +1005,27 @@ export default function AccountPage() {
     </View>
   );
 }
+
+const accountStyles = StyleSheet.create({
+  heroBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 130,
+    backgroundColor: NAVY,
+  },
+  statPill: {
+    backgroundColor: 'rgba(20, 184, 166, 0.1)',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(20, 184, 166, 0.3)',
+  },
+  statText: {
+    fontSize: 13,
+    color: TEAL,
+    fontWeight: '600',
+  },
+});

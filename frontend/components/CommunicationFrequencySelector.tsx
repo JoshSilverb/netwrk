@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { ChevronDown } from '@tamagui/lucide-icons'
 import type { SelectProps } from 'tamagui'
-import { Input, Accordion, Square, XStack, Paragraph } from 'tamagui'
+import { Input, Accordion, Square, XStack, Paragraph, Separator } from 'tamagui'
 import { BORDER_RADIUS } from '@/constants/Styles';
+
+const TEAL = '#14B8A6';
 
 type FrequencyOption = 'weeks' | 'months'
 
@@ -15,6 +17,7 @@ type SelectDemoItemProps = SelectProps & {
 export function CommunicationFrequencySelector({ onChange, initialFrequencyType, initialValue, ...props }: SelectDemoItemProps) {
     const [selectedOption, setSelectedOption] = useState<FrequencyOption>(initialFrequencyType || 'months')
     const [value, setValue] = useState(String(initialValue || 1))
+    const [openItems, setOpenItems] = useState<string[]>([])
 
     console.log(`Initialized selector with freq: ${selectedOption} given ${initialFrequencyType}`)
 
@@ -37,6 +40,7 @@ export function CommunicationFrequencySelector({ onChange, initialFrequencyType,
 
     const handleOptionSelect = (option: FrequencyOption) => {
         setSelectedOption(option)
+        setOpenItems([])
     }
 
     useEffect(() => {
@@ -63,7 +67,7 @@ export function CommunicationFrequencySelector({ onChange, initialFrequencyType,
                 backgroundColor="$background"
             />
 
-            <Accordion overflow="hidden" flex={1} type="multiple" borderRadius={BORDER_RADIUS.sm} backgroundColor="$background">
+            <Accordion overflow="hidden" flex={1} type="multiple" borderRadius={BORDER_RADIUS.sm} backgroundColor="$background" borderWidth={1} borderColor="$borderColor" value={openItems} onValueChange={setOpenItems}>
                 <Accordion.Item value="frequency">
                     <Accordion.Trigger flexDirection="row" justifyContent="space-between" height={44} paddingVertical="$2" backgroundColor="transparent">
                         {({ open }: { open: boolean }) => (
@@ -75,20 +79,27 @@ export function CommunicationFrequencySelector({ onChange, initialFrequencyType,
                             </>
                         )}
                     </Accordion.Trigger>
-                    <Accordion.Content>
-                        <XStack flexDirection="column" gap="$2">
+                    <Accordion.Content padding={0} borderTopWidth={1} borderTopColor="$borderColor" >
+                        <XStack flexDirection="column">
                             <Paragraph
                                 onPress={() => handleOptionSelect('weeks')}
-                                padding="$2"
-                                backgroundColor={selectedOption === 'weeks' ? '$blue4' : 'transparent'}
+                                paddingHorizontal="$3"
+                                paddingVertical="$2"
+                                backgroundColor={selectedOption === 'weeks' ? 'rgba(20,184,166,0.1)' : 'transparent'}
+                                color={selectedOption === 'weeks' ? TEAL : '$color'}
+                                fontWeight={selectedOption === 'weeks' ? '600' : '400'}
                                 cursor="pointer"
                             >
                                 weeks
                             </Paragraph>
+                            <Separator />
                             <Paragraph
                                 onPress={() => handleOptionSelect('months')}
-                                padding="$2"
-                                backgroundColor={selectedOption === 'months' ? '$blue4' : 'transparent'}
+                                paddingHorizontal="$3"
+                                paddingVertical="$2"
+                                backgroundColor={selectedOption === 'months' ? 'rgba(20,184,166,0.1)' : 'transparent'}
+                                color={selectedOption === 'months' ? TEAL : '$color'}
+                                fontWeight={selectedOption === 'months' ? '600' : '400'}
                                 cursor="pointer"
                             >
                                 months

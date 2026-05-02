@@ -33,24 +33,25 @@ export const BORDER_RADIUS = {
 } as const;
 
 export const COLORS = {
-  primary: '#2f95dc',
-  secondary: '#ccc',
-  background: '#fff',
-  surface: '#f8f9fa',
-  border: '#e9ecef',
+  primary: '#14B8A6',
+  navy: '#0F172A',
+  secondary: '#CBD5E1',
+  background: '#F8FAFC',
+  surface: '#FFFFFF',
+  border: '#E2E8F0',
   text: {
-    primary: '#000',
-    secondary: '#6c757d',
-    muted: '#adb5bd',
+    primary: '#0F172A',
+    secondary: '#64748B',
+    muted: '#94A3B8',
   },
   dark: {
-    background: '#000',
-    surface: '#1a1a1a',
-    border: '#333',
+    background: '#0F172A',
+    surface: '#1E293B',
+    border: '#334155',
     text: {
-      primary: '#fff',
-      secondary: '#adb5bd',
-      muted: '#6c757d',
+      primary: '#F1F5F9',
+      secondary: '#94A3B8',
+      muted: '#475569',
     },
   },
 } as const;
