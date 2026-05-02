@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Contact, ContactPayload } from '@/types';
-import { useUpdateContact, useDeleteContact } from '@/hooks/useContacts';
-import { reminderPeriodToFrequency, frequencyToReminderPeriod, FREQUENCY_OPTIONS } from '@/lib/reminder';
+import { useUpdateContact, useDeleteContact, useContact } from '@/hooks/useContacts';
+import { formatFrequency, FrequencyUnit } from '@/lib/reminder';
+import { FrequencyField } from './AddContactSheet';
 import {
   Sheet,
   SheetContent,
@@ -35,13 +36,26 @@ import { X, Check, User, Plus } from 'lucide-react';
 
 const PLATFORM_OPTIONS = ['email', 'phone', 'instagram', 'linkedin', 'twitter', 'other'];
 
+// Converts "DD Mon, YYYY" (backend display format) → "YYYY-MM-DD" (date input format)
+function toInputDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 interface EditForm {
   fullname: string;
   location: string;
   metthrough: string;
   userbio: string;
   lastcontact: string;
-  frequency: string;
+  frequencyEnabled: boolean;
+  frequencyValue: string;
+  frequencyUnit: FrequencyUnit;
   tags: string[];
   tagInput: string;
   socials: { label: string; address: string }[];
@@ -59,23 +73,44 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
   const updateContact = useUpdateContact();
   const deleteContact = useDeleteContact();
 
-  function startEdit() {
-    if (!contact) return;
-    setForm({
-      fullname: contact.fullname,
-      location: contact.location ?? '',
-      metthrough: contact.metthrough ?? '',
-      userbio: contact.userbio ?? '',
-      lastcontact: '',
-      frequency: Object.entries({
-        weekly: [1, null], biweekly: [2, null], monthly: [null, 1], quarterly: [null, 3], yearly: [null, 12]
-      }).find(([, [w, m]]) => w === contact.remind_in_weeks && m === contact.remind_in_months)?.[0] ?? '',
-      tags: [...(contact.tags ?? [])],
+  // Fetch full contact details so tags/socials are always complete
+  const { data: fullContact } = useContact(open ? (contact?.contact_id ?? null) : null);
+  const resolved = fullContact ?? contact;
+
+  function buildForm(c: Contact): EditForm {
+    return {
+      fullname: c.fullname,
+      location: c.location ?? '',
+      metthrough: c.metthrough ?? '',
+      userbio: c.userbio ?? '',
+      lastcontact: toInputDate(c.lastcontact),
+      frequencyEnabled: c.remind_in_weeks != null || c.remind_in_months != null,
+      frequencyValue: String(c.remind_in_weeks ?? c.remind_in_months ?? 1),
+      frequencyUnit: c.remind_in_weeks != null ? 'weeks' : 'months',
+      tags: [...(c.tags ?? [])],
       tagInput: '',
-      socials: (contact.socials ?? []).map((s) => ({ label: s.label, address: s.address })),
-    });
+      socials: (c.socials ?? []).map((s) => ({ label: s.label, address: s.address })),
+    };
+  }
+
+  function startEdit() {
+    if (!resolved) return;
+    setForm(buildForm(resolved));
     setEditing(true);
   }
+
+  // If full contact loads after edit was already opened, refresh form data
+  useEffect(() => {
+    if (editing && fullContact && form) {
+      setForm((f) => f && {
+        ...f,
+        lastcontact: toInputDate(fullContact.lastcontact),
+        tags: [...(fullContact.tags ?? [])],
+        socials: (fullContact.socials ?? []).map((s) => ({ label: s.label, address: s.address })),
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fullContact?.contact_id]);
 
   function cancelEdit() {
     setEditing(false);
@@ -84,14 +119,18 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
 
   async function saveEdit() {
     if (!contact || !form) return;
-    const reminderPeriod = frequencyToReminderPeriod(form.frequency);
+    const reminderPeriod = (() => {
+      if (!form.frequencyEnabled) return { weeks: null, months: null };
+      const n = parseInt(form.frequencyValue) || null;
+      return form.frequencyUnit === 'weeks' ? { weeks: n, months: null } : { weeks: null, months: n };
+    })();
     const payload: ContactPayload & { contact_id: number } = {
       contact_id: contact.contact_id,
       fullname: form.fullname,
       location: form.location,
       metthrough: form.metthrough,
       userbio: form.userbio,
-      lastcontact: form.lastcontact || contact.lastcontact?.split(', ').reverse().join('-') || '',
+      lastcontact: form.lastcontact,
       tags: form.tags,
       socials: form.socials,
       reminderPeriod,
@@ -107,7 +146,7 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
     onOpenChange(false);
   }
 
-  if (!contact) return null;
+  if (!contact || !resolved) return null;
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) { setEditing(false); setForm(null); } onOpenChange(o); }}>
@@ -155,23 +194,14 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
               />
             </EditField>
 
-            <EditField label="Contact frequency">
-              <Select
-                value={form.frequency}
-                onValueChange={(v) => setForm((f) => f && { ...f, frequency: v ?? '' })}
-              >
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Select frequency…">
-                    {FREQUENCY_OPTIONS.find((o) => o.value === form.frequency)?.label}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {FREQUENCY_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </EditField>
+            <FrequencyField
+              enabled={form.frequencyEnabled}
+              value={form.frequencyValue}
+              unit={form.frequencyUnit}
+              onToggle={(enabled) => setForm((f) => f && { ...f, frequencyEnabled: enabled })}
+              onValueChange={(v) => setForm((f) => f && { ...f, frequencyValue: v })}
+              onUnitChange={(u) => setForm((f) => f && { ...f, frequencyUnit: u })}
+            />
 
             <EditField label="Tags">
               <div className="flex flex-wrap gap-1 mb-1">
@@ -277,10 +307,10 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
           <>
             {/* Avatar + name */}
             <div className="flex flex-col items-center pt-10 pb-6 px-6">
-              {contact.profile_pic_url ? (
+              {resolved.profile_pic_url ? (
                 <img
-                  src={contact.profile_pic_url}
-                  alt={contact.fullname}
+                  src={resolved.profile_pic_url}
+                  alt={resolved.fullname}
                   className="h-32 w-32 rounded-full object-cover bg-slate-200 border-2 border-slate-300"
                 />
               ) : (
@@ -288,40 +318,44 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
                   <User className="h-12 w-12 text-slate-400" />
                 </div>
               )}
-              <h2 className="mt-4 text-2xl font-bold text-slate-900 text-center">{contact.fullname}</h2>
+              <h2 className="mt-4 text-2xl font-bold text-slate-900 text-center">{resolved.fullname}</h2>
             </div>
 
             {/* Info rows */}
             <div className="flex-1 overflow-y-auto px-6 space-y-5">
-              <InfoRow label="Location" value={contact.location} />
-              <InfoRow label="How you met" value={contact.metthrough} />
-              <InfoRow label="Notes" value={contact.userbio} />
+              <InfoRow label="Location" value={resolved.location} />
+              <InfoRow label="How you met" value={resolved.metthrough} />
+              <InfoRow label="Notes" value={resolved.userbio} />
 
               <div>
                 <p className="text-sm font-semibold text-slate-800 mb-2">Outreach</p>
                 <div className="space-y-1">
-                  <p className="text-sm text-slate-700">Last contact: <span className="text-slate-500">{contact.lastcontact || '—'}</span></p>
-                  <p className="text-sm text-slate-700">Next contact: <span className="text-slate-500">{contact.nextcontact || '—'}</span></p>
-                  <p className="text-sm text-slate-700">Frequency: <span className="text-slate-500">{reminderPeriodToFrequency(contact.remind_in_weeks, contact.remind_in_months)}</span></p>
+                  <p className="text-sm text-slate-700">Last contact: <span className="text-slate-500">{resolved.lastcontact || '—'}</span></p>
+                  {resolved.nextcontact && (
+                    <p className="text-sm text-slate-700">Next contact: <span className="text-slate-500">{resolved.nextcontact}</span></p>
+                  )}
+                  {(resolved.remind_in_weeks != null || resolved.remind_in_months != null) && (
+                    <p className="text-sm text-slate-700">Frequency: <span className="text-slate-500">{formatFrequency(resolved.remind_in_weeks, resolved.remind_in_months)}</span></p>
+                  )}
                 </div>
               </div>
 
-              {(contact.tags?.length ?? 0) > 0 && (
+              {(resolved.tags?.length ?? 0) > 0 && (
                 <div>
                   <p className="text-sm font-semibold text-slate-800 mb-2">Tags</p>
                   <div className="flex flex-wrap gap-1">
-                    {contact.tags.map((tag) => (
+                    {resolved.tags.map((tag) => (
                       <Badge key={tag} variant="secondary">{tag}</Badge>
                     ))}
                   </div>
                 </div>
               )}
 
-              {(contact.socials?.length ?? 0) > 0 && (
+              {(resolved.socials?.length ?? 0) > 0 && (
                 <div>
                   <p className="text-sm font-semibold text-slate-800 mb-2">Contact info</p>
                   <div className="space-y-1">
-                    {contact.socials.map((s, i) => (
+                    {resolved.socials.map((s, i) => (
                       <div key={i} className="flex gap-2 text-sm">
                         <span className="text-slate-500 capitalize w-24 flex-shrink-0">{s.label}</span>
                         <span className="text-slate-700">{s.address}</span>
@@ -350,9 +384,9 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Delete {contact.fullname}?</AlertDialogTitle>
+                    <AlertDialogTitle>Delete {resolved.fullname}?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently remove {contact.fullname} from your contacts. This cannot be undone.
+                      This will permanently remove {resolved.fullname} from your contacts. This cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

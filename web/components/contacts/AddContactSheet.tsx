@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useCreateContact } from '@/hooks/useContacts';
-import { frequencyToReminderPeriod, FREQUENCY_OPTIONS } from '@/lib/reminder';
+import { FrequencyUnit } from '@/lib/reminder';
 import {
   Sheet,
   SheetContent,
@@ -23,6 +23,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Plus, X } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const PLATFORM_OPTIONS = ['email', 'phone', 'instagram', 'linkedin', 'twitter', 'other'];
 
@@ -37,7 +38,9 @@ const emptyForm = () => ({
   metthrough: '',
   userbio: '',
   lastcontact: '',
-  frequency: '',
+  frequencyEnabled: false,
+  frequencyValue: '1',
+  frequencyUnit: 'months' as FrequencyUnit,
 });
 
 interface AddContactSheetProps {
@@ -75,6 +78,14 @@ export function AddContactSheet({ open, onOpenChange }: AddContactSheetProps) {
     setSocials((prev) => prev.filter((_, i) => i !== index));
   }
 
+  function buildReminderPeriod() {
+    if (!form.frequencyEnabled) return { weeks: null, months: null };
+    const n = parseInt(form.frequencyValue) || null;
+    return form.frequencyUnit === 'weeks'
+      ? { weeks: n, months: null }
+      : { weeks: null, months: n };
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     await createContact.mutateAsync({
@@ -85,7 +96,7 @@ export function AddContactSheet({ open, onOpenChange }: AddContactSheetProps) {
       lastcontact: form.lastcontact || new Date().toISOString().slice(0, 10),
       tags,
       socials,
-      reminderPeriod: frequencyToReminderPeriod(form.frequency),
+      reminderPeriod: buildReminderPeriod(),
     });
     setForm(emptyForm());
     setTags([]);
@@ -152,24 +163,14 @@ export function AddContactSheet({ open, onOpenChange }: AddContactSheetProps) {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Planned contact frequency</Label>
-            <Select
-              value={form.frequency}
-              onValueChange={(v) => setForm((f) => ({ ...f, frequency: v ?? '' }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select frequency…" />
-              </SelectTrigger>
-              <SelectContent>
-                {FREQUENCY_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <FrequencyField
+            enabled={form.frequencyEnabled}
+            value={form.frequencyValue}
+            unit={form.frequencyUnit}
+            onToggle={(enabled) => setForm((f) => ({ ...f, frequencyEnabled: enabled }))}
+            onValueChange={(v) => setForm((f) => ({ ...f, frequencyValue: v }))}
+            onUnitChange={(u) => setForm((f) => ({ ...f, frequencyUnit: u }))}
+          />
 
           {/* Tags */}
           <div className="space-y-2">
@@ -215,7 +216,7 @@ export function AddContactSheet({ open, onOpenChange }: AddContactSheetProps) {
                     onValueChange={(v) => updateSocial(i, 'label', v ?? 'email')}
                   >
                     <SelectTrigger className="w-32 flex-shrink-0">
-                      <SelectValue />
+                      <SelectValue>{s.label}</SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {PLATFORM_OPTIONS.map((p) => (
@@ -252,5 +253,69 @@ export function AddContactSheet({ open, onOpenChange }: AddContactSheetProps) {
         </form>
       </SheetContent>
     </Sheet>
+  );
+}
+
+interface FrequencyFieldProps {
+  enabled: boolean;
+  value: string;
+  unit: FrequencyUnit;
+  onToggle: (enabled: boolean) => void;
+  onValueChange: (v: string) => void;
+  onUnitChange: (u: FrequencyUnit) => void;
+}
+
+export function FrequencyField({ enabled, value, unit, onToggle, onValueChange, onUnitChange }: FrequencyFieldProps) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Label>Contact frequency</Label>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          onClick={() => onToggle(!enabled)}
+          className={cn(
+            'relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200',
+            enabled ? 'bg-teal-600' : 'bg-slate-300'
+          )}
+        >
+          <span
+            className={cn(
+              'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200',
+              enabled ? 'translate-x-4' : 'translate-x-0'
+            )}
+          />
+        </button>
+      </div>
+      {enabled && (
+        <div className="flex gap-2 items-center">
+          <Input
+            type="number"
+            min="1"
+            value={value}
+            onChange={(e) => onValueChange(e.target.value.replace(/[^0-9]/g, ''))}
+            className="w-20 bg-white"
+          />
+          <div className="flex rounded-md border border-slate-200 overflow-hidden text-sm">
+            {(['weeks', 'months'] as FrequencyUnit[]).map((u) => (
+              <button
+                key={u}
+                type="button"
+                onClick={() => onUnitChange(u)}
+                className={cn(
+                  'px-3 py-1.5 transition-colors',
+                  unit === u
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-white text-slate-600 hover:bg-slate-50'
+                )}
+              >
+                {u}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
