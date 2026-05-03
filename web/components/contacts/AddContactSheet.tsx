@@ -20,10 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Plus, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LocationAutocomplete } from '@/components/ui/location-autocomplete';
+import { TagAutocomplete } from '@/components/ui/tag-autocomplete';
 
 const PLATFORM_OPTIONS = ['email', 'phone', 'instagram', 'linkedin', 'twitter', 'other'];
 
@@ -51,20 +52,8 @@ interface AddContactSheetProps {
 export function AddContactSheet({ open, onOpenChange }: AddContactSheetProps) {
   const [form, setForm] = useState(emptyForm());
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
   const [socials, setSocials] = useState<SocialEntry[]>([]);
   const createContact = useCreateContact();
-
-  function addTag() {
-    const trimmed = tagInput.trim();
-    if (!trimmed || tags.includes(trimmed)) return;
-    setTags((prev) => [...prev, trimmed]);
-    setTagInput('');
-  }
-
-  function removeTag(tag: string) {
-    setTags((prev) => prev.filter((t) => t !== tag));
-  }
 
   function addSocial() {
     setSocials((prev) => [...prev, { label: 'email', address: '' }]);
@@ -126,11 +115,9 @@ export function AddContactSheet({ open, onOpenChange }: AddContactSheetProps) {
 
           <div className="space-y-2">
             <Label htmlFor="location">Location</Label>
-            <Input
-              id="location"
+            <LocationAutocomplete
               value={form.location}
-              onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-              placeholder="City, State"
+              onChange={(v) => setForm((f) => ({ ...f, location: v }))}
             />
           </div>
 
@@ -175,34 +162,11 @@ export function AddContactSheet({ open, onOpenChange }: AddContactSheetProps) {
           {/* Tags */}
           <div className="space-y-2">
             <Label>Tags</Label>
-            <div className="flex gap-2">
-              <Input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addTag();
-                  }
-                }}
-                placeholder="Add tag…"
-              />
-              <Button type="button" variant="outline" onClick={addTag}>
-                Add
-              </Button>
-            </div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {tags.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="gap-1">
-                    {tag}
-                    <button type="button" onClick={() => removeTag(tag)} className="hover:text-red-500">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-            )}
+            <TagAutocomplete
+              tags={tags}
+              onAdd={(t) => setTags((prev) => [...prev, t])}
+              onRemove={(t) => setTags((prev) => prev.filter((x) => x !== t))}
+            />
           </div>
 
           {/* Socials */}

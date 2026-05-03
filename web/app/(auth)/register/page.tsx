@@ -54,7 +54,7 @@ export default function RegisterPage() {
               <Input
                 id="username"
                 type="text"
-                placeholder="josh"
+                placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required

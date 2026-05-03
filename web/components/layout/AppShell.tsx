@@ -19,7 +19,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col h-screen overflow-hidden bg-slate-50">
       {/* Top navbar */}
       <header className="flex-shrink-0 bg-slate-900 flex items-center px-6 py-0 h-16">
-        <span className="text-xl font-bold tracking-tight text-white flex-1">Netwrk</span>
+        <Link href="/contacts" className="text-xl font-bold tracking-tight text-white flex-1 hover:text-teal-400 transition-colors">
+          Netwrk
+        </Link>
 
         <nav className="flex items-center gap-1 mr-3">
           {navItems.map(({ href, label }) => {

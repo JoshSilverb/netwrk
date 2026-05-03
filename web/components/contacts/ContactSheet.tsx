@@ -33,6 +33,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { X, Check, User, Plus } from 'lucide-react';
+import { LocationAutocomplete } from '@/components/ui/location-autocomplete';
+import { TagAutocomplete } from '@/components/ui/tag-autocomplete';
 
 const PLATFORM_OPTIONS = ['email', 'phone', 'instagram', 'linkedin', 'twitter', 'other'];
 
@@ -57,7 +59,6 @@ interface EditForm {
   frequencyValue: string;
   frequencyUnit: FrequencyUnit;
   tags: string[];
-  tagInput: string;
   socials: { label: string; address: string }[];
 }
 
@@ -88,7 +89,6 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
       frequencyValue: String(c.remind_in_weeks ?? c.remind_in_months ?? 1),
       frequencyUnit: c.remind_in_weeks != null ? 'weeks' : 'months',
       tags: [...(c.tags ?? [])],
-      tagInput: '',
       socials: (c.socials ?? []).map((s) => ({ label: s.label, address: s.address })),
     };
   }
@@ -165,9 +165,9 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
             </EditField>
 
             <EditField label="Location">
-              <Input
+              <LocationAutocomplete
                 value={form.location}
-                onChange={(e) => setForm((f) => f && { ...f, location: e.target.value })}
+                onChange={(v) => setForm((f) => f && { ...f, location: v })}
               />
             </EditField>
 
@@ -204,40 +204,11 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
             />
 
             <EditField label="Tags">
-              <div className="flex flex-wrap gap-1 mb-1">
-                {form.tags.map((tag) => (
-                  <span key={tag} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-200 text-xs text-slate-700">
-                    {tag}
-                    <button onClick={() => setForm((f) => f && { ...f, tags: f.tags.filter((t) => t !== tag) })} className="hover:text-red-500">×</button>
-                  </span>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add tag…"
-                  value={form.tagInput}
-                  onChange={(e) => setForm((f) => f && { ...f, tagInput: e.target.value })}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && form.tagInput.trim()) {
-                      e.preventDefault();
-                      const t = form.tagInput.trim();
-                      if (!form.tags.includes(t)) setForm((f) => f && { ...f, tags: [...f.tags, t], tagInput: '' });
-                    }
-                  }}
-                  className="bg-white"
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    const t = form.tagInput.trim();
-                    if (t && !form.tags.includes(t)) setForm((f) => f && { ...f, tags: [...f.tags, t], tagInput: '' });
-                  }}
-                >
-                  Add
-                </Button>
-              </div>
+              <TagAutocomplete
+                tags={form.tags}
+                onAdd={(t) => setForm((f) => f && { ...f, tags: [...f.tags, t] })}
+                onRemove={(t) => setForm((f) => f && { ...f, tags: f.tags.filter((x) => x !== t) })}
+              />
             </EditField>
 
             <EditField label="Contact info">
