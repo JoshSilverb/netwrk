@@ -8,8 +8,12 @@ import { Check as CheckIcon } from '@tamagui/lucide-icons';
 import { saveToken, getToken } from '@/utils/tokenstore';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { Pressable, StyleSheet } from 'react-native';
 import { HomePageUrl } from '@/constants/Definitions';
-import { SPACING, TYPOGRAPHY, COLORS } from '@/constants/Styles';
+import { SPACING, TYPOGRAPHY, BORDER_RADIUS } from '@/constants/Styles';
+
+const TEAL = '#14B8A6';
+const NAVY = '#0F172A';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -18,12 +22,11 @@ export default function LoginScreen() {
   const [rememberMe, setRememberMe] = useState(false);
 
   const router = useRouter();
-
   const { token, setToken } = useAuth();
 
   useEffect(() => {
     handleRetrieveSavedToken();
-  }, [])
+  }, []);
 
   const handleRetrieveSavedToken = async () => {
     const retrievedToken = await getToken();
@@ -31,23 +34,17 @@ export default function LoginScreen() {
       setToken(retrievedToken);
       router.replace(HomePageUrl);
     }
-  }
+  };
 
   const handleLogin = async () => {
-    const requestBody = {
-      username: username,
-      password: password
-    }
-
     try {
-      const response = await axios.post(validateUserCredentialsURL, requestBody);
+      const response = await axios.post(validateUserCredentialsURL, { username, password });
       setLoginError('');
       setToken(response.data['user_token']);
       if (rememberMe) {
         await saveToken(response.data['user_token']);
       }
       router.replace(HomePageUrl);
-
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         if (error.response.status === 401) {
@@ -62,126 +59,161 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <KeyboardAwareScrollView
-        enableOnAndroid={true}
-        enableAutomaticScroll={true}
+        enableOnAndroid
+        enableAutomaticScroll
         extraScrollHeight={20}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={styles.scroll}
       >
-        <YStack
-          flex={1}
-          alignItems="center"
-          justifyContent="center"
-          backgroundColor="$background"
-          paddingHorizontal={SPACING.lg}
-          paddingVertical={SPACING.xxl}
-        >
-          {/* Brand block */}
-          <YStack alignItems="center" marginBottom={SPACING.xxl}>
-            <Image
-              width={80}
-              height={80}
-              borderRadius={16}
-              source={require('../assets/images/netwrk-icon-square.png')}
-              marginBottom={SPACING.sm}
-            />
-            <Text
-              fontSize={TYPOGRAPHY.sizes.title}
-              fontWeight={TYPOGRAPHY.weights.bold}
-              color="$blue9"
-            >
-              Netwrk
-            </Text>
-          </YStack>
+        {/* Navy header strip */}
+        <View style={styles.navyStrip}>
+          <Image
+            width={68}
+            height={68}
+            borderRadius={16}
+            source={require('../assets/images/netwrk-icon-square.png')}
+            marginBottom={SPACING.sm}
+          />
+          <Text fontSize={26} fontWeight="800" color="white" letterSpacing={-0.5}>
+            Netwrk
+          </Text>
+          <Text fontSize={TYPOGRAPHY.sizes.sm} color="rgba(255,255,255,0.55)" marginTop={4}>
+            Stay connected with the people that matter
+          </Text>
+        </View>
 
-          {/* Form */}
-          <YStack width="100%" space={SPACING.xs}>
-            <Text
-              fontSize={TYPOGRAPHY.sizes.sm}
-              fontWeight={TYPOGRAPHY.weights.medium}
-              color="$gray11"
-              marginBottom={SPACING.xs}
-            >
+        {/* Form card — overlaps the bottom of the strip slightly */}
+        <YStack
+          backgroundColor="$background"
+          borderRadius={20}
+          marginHorizontal={SPACING.md}
+          borderWidth={1}
+          borderColor="$borderColor"
+          overflow="hidden"
+          marginTop={-SPACING.xl}
+          marginBottom={SPACING.md}
+          // subtle elevation
+          shadowColor="#000"
+          shadowOffset={{ width: 0, height: 4 }}
+          shadowOpacity={0.08}
+          shadowRadius={12}
+          elevation={4}
+        >
+          {/* Username */}
+          <YStack paddingHorizontal={SPACING.md} paddingTop={SPACING.md} paddingBottom={SPACING.xs}>
+            <Text fontSize={11} fontWeight="600" color="$gray9" style={styles.label}>
               Username
             </Text>
+          </YStack>
+          <YStack paddingHorizontal={SPACING.md} paddingBottom={SPACING.md}>
             <Input
-              id="username"
               placeholder="Enter username"
               value={username}
               onChangeText={setUsername}
               size="$4"
-              width="100%"
               autoCapitalize="none"
+              borderWidth={0}
+              backgroundColor="transparent"
             />
+          </YStack>
 
-            <Text
-              fontSize={TYPOGRAPHY.sizes.sm}
-              fontWeight={TYPOGRAPHY.weights.medium}
-              color="$gray11"
-              marginTop={SPACING.md}
-              marginBottom={SPACING.xs}
-            >
+          <View height={1} backgroundColor="$borderColor" />
+
+          {/* Password */}
+          <YStack paddingHorizontal={SPACING.md} paddingTop={SPACING.md} paddingBottom={SPACING.xs}>
+            <Text fontSize={11} fontWeight="600" color="$gray9" style={styles.label}>
               Password
             </Text>
+          </YStack>
+          <YStack paddingHorizontal={SPACING.md} paddingBottom={SPACING.md}>
             <Input
-              id="password"
               placeholder="Enter password"
               value={password}
               onChangeText={setPassword}
               size="$4"
-              width="100%"
               secureTextEntry
+              borderWidth={0}
+              backgroundColor="transparent"
             />
-
-            {loginError ? (
-              <Text color="$red9" marginTop={SPACING.sm} textAlign="center">
-                {loginError}
-              </Text>
-            ) : null}
-
-            <Button
-              marginTop={SPACING.lg}
-              width="100%"
-              size="$4"
-              backgroundColor="$blue9"
-              color="white"
-              onPress={handleLogin}
-              fontWeight={TYPOGRAPHY.weights.bold}
-            >
-              Log In
-            </Button>
-
-            <XStack marginTop={SPACING.md} justifyContent="center" alignItems="center" space={SPACING.sm}>
-              <Checkbox
-                id="rememberMeCheckBox"
-                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-              >
-                <Checkbox.Indicator>
-                  <CheckIcon />
-                </Checkbox.Indicator>
-              </Checkbox>
-              <Label htmlFor="rememberMeCheckBox" fontSize={TYPOGRAPHY.sizes.sm}>
-                Remember me
-              </Label>
-            </XStack>
-
-            <XStack marginTop={SPACING.lg} justifyContent="center" alignItems="center" space={SPACING.sm}>
-              <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray10">
-                Don't have an account?
-              </Text>
-              <Button
-                variant="link"
-                onPress={() => router.push('/register')}
-                fontSize={TYPOGRAPHY.sizes.sm}
-              >
-                Sign Up
-              </Button>
-            </XStack>
           </YStack>
         </YStack>
+
+        {loginError ? (
+          <Text
+            color="$red9"
+            fontSize={TYPOGRAPHY.sizes.sm}
+            textAlign="center"
+            marginHorizontal={SPACING.md}
+            marginBottom={SPACING.sm}
+          >
+            {loginError}
+          </Text>
+        ) : null}
+
+        {/* Log In button */}
+        <Button
+          marginHorizontal={SPACING.md}
+          size="$4"
+          backgroundColor={TEAL}
+          color="white"
+          fontWeight="700"
+          borderRadius={BORDER_RADIUS.md}
+          onPress={handleLogin}
+          marginBottom={SPACING.sm}
+        >
+          Log In
+        </Button>
+
+        {/* Remember me */}
+        <XStack marginTop={SPACING.xs} justifyContent="center" alignItems="center" gap={SPACING.sm}>
+          <Checkbox
+            id="rememberMeCheckBox"
+            onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+          >
+            <Checkbox.Indicator>
+              <CheckIcon />
+            </Checkbox.Indicator>
+          </Checkbox>
+          <Label htmlFor="rememberMeCheckBox" fontSize={TYPOGRAPHY.sizes.sm} color="$gray10">
+            Remember me
+          </Label>
+        </XStack>
+
+        {/* Sign up link */}
+        <XStack marginTop={SPACING.xl} marginBottom={SPACING.xxl} justifyContent="center" alignItems="center" gap={4}>
+          <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray10">
+            Don't have an account?
+          </Text>
+          <Pressable onPress={() => router.push('/register')}>
+            <Text fontSize={TYPOGRAPHY.sizes.sm} color={TEAL} fontWeight="600">
+              {' '}Sign Up
+            </Text>
+          </Pressable>
+        </XStack>
       </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: '#F8FAFC', // slate-50 — light, airy
+  },
+  scroll: {
+    flexGrow: 1,
+  },
+  navyStrip: {
+    backgroundColor: NAVY,
+    alignItems: 'center',
+    paddingTop: SPACING.xxl,
+    paddingBottom: SPACING.xxl + SPACING.xl, // extra bottom so card can overlap
+    paddingHorizontal: SPACING.lg,
+  },
+  label: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+});
