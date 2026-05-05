@@ -21,12 +21,12 @@ import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const SORT_OPTIONS = [
-  { value: 'DATE_ADDED', label: 'Date added' },
-  { value: 'LAST_CONTACT_NEWEST', label: 'Last contact (newest)' },
-  { value: 'LAST_CONTACT_OLDEST', label: 'Last contact (oldest)' },
-  { value: 'ALPHABETICAL', label: 'Alphabetical' },
-  { value: 'NEXT_CONTACT_DATE', label: 'Next contact date' },
-  { value: 'RELEVANCE', label: 'Relevance' },
+  { value: 'Date added', label: 'Date added' },
+  { value: 'Last contacted (newest)', label: 'Last contact (newest)' },
+  { value: 'Last contacted (oldest)', label: 'Last contact (oldest)' },
+  { value: 'Alphabetical', label: 'Alphabetical' },
+  { value: 'Next contact date', label: 'Next contact date' },
+  { value: 'Relevance', label: 'Relevance' },
 ];
 
 function ContactsInner() {
@@ -34,7 +34,7 @@ function ContactsInner() {
   const searchParams = useSearchParams();
 
   const q = searchParams.get('q') ?? '';
-  const sort = searchParams.get('sort') ?? 'DATE_ADDED';
+  const sort = searchParams.get('sort') ?? 'Date added';
 
   const [searchInput, setSearchInput] = useState(q);
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);

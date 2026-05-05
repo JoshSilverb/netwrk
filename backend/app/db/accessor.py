@@ -566,6 +566,21 @@ def update_user_details(user_token: str, username: str, bio: str, profile_pic_ob
     db.session.commit()
 
 
+def _apply_tag_filter(query, tags):
+    """Restrict query to contacts that have ALL of the specified tags (AND logic)."""
+    if not tags:
+        return query
+    return query.filter(
+        Contact.contact_id.in_(
+            db.session.query(Tag.contact_id)
+            .join(TagLabel, Tag.tag_id == TagLabel.id)
+            .filter(TagLabel.label.in_(tags))
+            .group_by(Tag.contact_id)
+            .having(func.count(func.distinct(TagLabel.label)) == len(tags))
+        )
+    )
+
+
 def _build_base_query_no_search(user_token, lower_bound_date, upper_bound_date, tags):
     """Build base query without semantic search filtering."""
     query = (
@@ -583,11 +598,7 @@ def _build_base_query_no_search(user_token, lower_bound_date, upper_bound_date, 
         .filter(Contact.lastcontact <= upper_bound_date)
     )
 
-    # Add tag filter if needed
-    if tags:
-        query = query.join(Tag, Tag.contact_id == Contact.contact_id)
-        query = query.join(TagLabel, Tag.tag_id == TagLabel.id)
-        query = query.filter(TagLabel.label.in_(tags))
+    query = _apply_tag_filter(query, tags)
 
     return query
 
@@ -612,11 +623,7 @@ def _build_relevance_query(user_token, embedding_string, lower_bound_date, upper
         .filter(Contact.embedding.isnot(None))  # Only contacts with embeddings
     )
 
-    # Add tag filter if needed
-    if tags:
-        query = query.join(Tag, Tag.contact_id == Contact.contact_id)
-        query = query.join(TagLabel, Tag.tag_id == TagLabel.id)
-        query = query.filter(TagLabel.label.in_(tags))
+    query = _apply_tag_filter(query, tags)
 
     # Sort by similarity (no limit for RELEVANCE)
     query = query.order_by(text(f"embedding <-> '{vector_str}'"))
@@ -686,11 +693,7 @@ def _build_semantic_filtered_query(
         .join(similar_contacts_cte, Contact.contact_id == similar_contacts_cte.c.contact_id)
     )
 
-    # Add tag filter if needed
-    if tags:
-        query = query.join(Tag, Tag.contact_id == Contact.contact_id)
-        query = query.join(TagLabel, Tag.tag_id == TagLabel.id)
-        query = query.filter(TagLabel.label.in_(tags))
+    query = _apply_tag_filter(query, tags)
 
     # Apply the requested sort order to the filtered results
     query = _apply_sort_order(query, sort_option_enum, user_latitude, user_longitude)

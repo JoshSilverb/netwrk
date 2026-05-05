@@ -18,7 +18,7 @@ export function useContacts(params: SearchParams = {}) {
       const { data } = await api.post<Contact[]>('/searchContacts', {
         search_params: {
           query_string: params.q ?? '',
-          order_by: params.sort ?? 'DATE_ADDED',
+          order_by: params.sort ?? 'Date added',
           tags: params.tags ?? [],
           lower_bound_date: params.afterDate ?? '1900-01-01',
           upper_bound_date: params.beforeDate ?? '2100-12-31',
