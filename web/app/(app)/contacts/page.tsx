@@ -6,6 +6,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { ContactCard } from '@/components/contacts/ContactCard';
 import { ContactSheet } from '@/components/contacts/ContactSheet';
 import { AddContactSheet } from '@/components/contacts/AddContactSheet';
+import { ImportSheet } from '@/components/contacts/ImportSheet';
 import { useContacts, useTags } from '@/hooks/useContacts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Contact } from '@/types';
-import { Search } from 'lucide-react';
+import { Search, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const SORT_OPTIONS = [
@@ -40,6 +41,7 @@ function ContactsInner() {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
+  const [importSheetOpen, setImportSheetOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tagSearch, setTagSearch] = useState('');
   const [afterDate, setAfterDate] = useState('');
@@ -182,6 +184,14 @@ function ContactsInner() {
               </span>
             )}
             <Button
+              onClick={() => setImportSheetOpen(true)}
+              className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 flex-shrink-0 font-medium text-sm"
+              variant="outline"
+            >
+              <Upload className="h-3.5 w-3.5 mr-1.5" />
+              Upload spreadsheet
+            </Button>
+            <Button
               onClick={() => setAddSheetOpen(true)}
               className="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 flex-shrink-0 font-medium text-sm"
               variant="outline"
@@ -223,6 +233,7 @@ function ContactsInner() {
 
       <ContactSheet contact={selectedContact} open={sheetOpen} onOpenChange={setSheetOpen} />
       <AddContactSheet open={addSheetOpen} onOpenChange={setAddSheetOpen} />
+      <ImportSheet open={importSheetOpen} onOpenChange={setImportSheetOpen} contacts={contacts ?? []} />
     </AppShell>
   );
 }
