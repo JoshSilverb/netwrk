@@ -58,7 +58,7 @@ const CustomPlacesAutocomplete = forwardRef<CustomPlacesAutocompleteRef, CustomP
 
       setLoading(true);
       try {
-        const response = await axios.get<PlacesResponse>('https://mynetwrk.com/places/autocomplete', {
+        const response = await axios.get<PlacesResponse>('https://api.mynetwrk.com/places/autocomplete', {
           params: { input }
         });
 

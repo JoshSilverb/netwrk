@@ -7,7 +7,7 @@ s3_prefix = "netwrk-backend"
 region = "us-east-2"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "ImageUri=\"711387105820.dkr.ecr.us-east-2.amazonaws.com/netwrk-backend:latest\" DomainName=\"mynetwrk.com\" CertificateArn=\"arn:aws:acm:us-east-2:711387105820:certificate/f6a3c35b-6b14-43bf-8a75-da14e6187f2d\" S3BucketName=\"netwrkbucket\""
+parameter_overrides = "ImageUri=\"711387105820.dkr.ecr.us-east-2.amazonaws.com/netwrk-backend:latest\" DomainName=\"api.mynetwrk.com\" CertificateArn=\"arn:aws:acm:us-east-2:711387105820:certificate/62eb2802-6279-4e11-a439-e3bcf6c4a9e5\" S3BucketName=\"netwrkbucket\""
 image_repositories = []
 
 [default.global.parameters]

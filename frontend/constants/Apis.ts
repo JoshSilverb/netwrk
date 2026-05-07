@@ -1,6 +1,6 @@
 // This file contains URLs for APIs used in this app
 
-const baseURL = 'https://mynetwrk.com';
+const baseURL = 'https://api.mynetwrk.com';
 const tier = '';
 export const addContactForUserURL       = baseURL + tier + '/addContactForUser';
 export const getContactByIdURL          = baseURL + tier + '/getContactById';

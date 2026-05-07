@@ -8,10 +8,10 @@ Parameters:
     Description: ECR image URI, e.g. 123456789012.dkr.ecr.us-east-2.amazonaws.com/netwrk-backend:latest
   DomainName:
     Type: String
-    Default: mynetwrk.com
+    Default: api.mynetwrk.com
   CertificateArn:
     Type: String
-    Description: ACM certificate ARN for mynetwrk.com in us-east-2
+    Description: ACM certificate ARN for api.mynetwrk.com in us-east-2
   S3BucketName:
     Type: String
 
@@ -69,7 +69,7 @@ Resources:
         DomainName: !Ref DomainName
         CertificateArn: !Ref CertificateArn
         Route53:
-          HostedZoneName: !Sub "${DomainName}."
+          HostedZoneName: "mynetwrk.com."
 
 Outputs:
   ApiEndpoint:
