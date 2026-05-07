@@ -21,20 +21,20 @@ const FILTER_STATE_KEY = '@contacts_filter_state';
 
 export default function ContactsScreen() {
     const sortOptions = [
-        'Date added',
-        'Last contacted (newest)',
-        'Last contacted (oldest)',
-        'Alphabetical',
-        'Distance',
-        'Relevance',
-        'Next contact date',
+        { label: 'Date added',              value: 'DATE_ADDED' },
+        { label: 'Last contacted (newest)', value: 'LAST_CONTACT_NEWEST' },
+        { label: 'Last contacted (oldest)', value: 'LAST_CONTACT_OLDEST' },
+        { label: 'Alphabetical',            value: 'ALPHABETICAL' },
+        { label: 'Distance',                value: 'DISTANCE' },
+        { label: 'Relevance',               value: 'RELEVANCE' },
+        { label: 'Next contact date',       value: 'NEXT_CONTACT_DATE' },
     ];
 
     const { token } = useAuth();
 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTags, setSelectedTags] = useState<string[]>([]);
-    const [selectedSortOption, setSelectedSortOption] = useState(sortOptions[0]);
+    const [selectedSortOption, setSelectedSortOption] = useState(sortOptions[0].value);
     const [dateLowerBound, setDateLowerBound] = useState(new Date(0));
     const [dateUpperBound, setDateUpperBound] = useState(new Date(Date.now()));
     const [filterStateLoaded, setFilterStateLoaded] = useState(false);
@@ -52,7 +52,7 @@ export default function ContactsScreen() {
                     const parsed = JSON.parse(savedState);
                     setSearchQuery(parsed.searchQuery || '');
                     setSelectedTags(parsed.selectedTags || []);
-                    setSelectedSortOption(parsed.selectedSortOption || sortOptions[0]);
+                    setSelectedSortOption(parsed.selectedSortOption || sortOptions[0].value);
                     setDateLowerBound(parsed.dateLowerBound ? new Date(parsed.dateLowerBound) : new Date(0));
                     setDateUpperBound(parsed.dateUpperBound ? new Date(parsed.dateUpperBound) : new Date(Date.now()));
                 }
@@ -140,7 +140,7 @@ export default function ContactsScreen() {
         (selectedTags.length > 0 ? 1 : 0) +
         (!isDateUnset(dateLowerBound) ? 1 : 0) +
         (!isDateToday(dateUpperBound) ? 1 : 0) +
-        (selectedSortOption !== sortOptions[0] ? 1 : 0);
+        (selectedSortOption !== sortOptions[0].value ? 1 : 0);
 
     return (
         <View style={CONTAINER_STYLES.screen} backgroundColor="$background">
@@ -228,7 +228,7 @@ export default function ContactsScreen() {
                                                 backgroundColor="$gray1"
                                             >
                                                 <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray11">
-                                                    {selectedSortOption}
+                                                    {sortOptions.find(o => o.value === selectedSortOption)?.label}
                                                 </Text>
                                                 <ChevronDown
                                                     size={16}
@@ -248,9 +248,9 @@ export default function ContactsScreen() {
                                             >
                                                 {sortOptions.map((option, index) => (
                                                     <Pressable
-                                                        key={option}
+                                                        key={option.value}
                                                         onPress={() => {
-                                                            setSelectedSortOption(option);
+                                                            setSelectedSortOption(option.value);
                                                             setSortExpanded(false);
                                                         }}
                                                     >
@@ -259,7 +259,7 @@ export default function ContactsScreen() {
                                                             space={SPACING.sm}
                                                             paddingHorizontal={SPACING.md}
                                                             paddingVertical={SPACING.sm}
-                                                            backgroundColor={selectedSortOption === option ? '$blue2' : 'transparent'}
+                                                            backgroundColor={selectedSortOption === option.value ? '$blue2' : 'transparent'}
                                                             borderBottomWidth={index < sortOptions.length - 1 ? 1 : 0}
                                                             borderBottomColor="$borderColor"
                                                         >
@@ -268,12 +268,12 @@ export default function ContactsScreen() {
                                                                 height={18}
                                                                 borderRadius={9}
                                                                 borderWidth={2}
-                                                                borderColor={selectedSortOption === option ? '$blue9' : '$gray7'}
-                                                                backgroundColor={selectedSortOption === option ? '$blue9' : 'transparent'}
+                                                                borderColor={selectedSortOption === option.value ? '$blue9' : '$gray7'}
+                                                                backgroundColor={selectedSortOption === option.value ? '$blue9' : 'transparent'}
                                                                 alignItems="center"
                                                                 justifyContent="center"
                                                             >
-                                                                {selectedSortOption === option && (
+                                                                {selectedSortOption === option.value && (
                                                                     <View
                                                                         width={7}
                                                                         height={7}
@@ -284,10 +284,10 @@ export default function ContactsScreen() {
                                                             </View>
                                                             <Text
                                                                 fontSize={TYPOGRAPHY.sizes.sm}
-                                                                fontWeight={selectedSortOption === option ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}
-                                                                color={selectedSortOption === option ? '$blue11' : '$color'}
+                                                                fontWeight={selectedSortOption === option.value ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}
+                                                                color={selectedSortOption === option.value ? '$blue11' : '$color'}
                                                             >
-                                                                {option}
+                                                                {option.label}
                                                             </Text>
                                                         </XStack>
                                                     </Pressable>

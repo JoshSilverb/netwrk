@@ -47,7 +47,7 @@ export default function MapScreen() {
   const mapParams = {
     lower_bound_date: formatDateForAPI(new Date(0)),
     upper_bound_date: formatDateForAPI(new Date()),
-    order_by: 'Date added',
+    order_by: 'DATE_ADDED',
     query_string: '',
     tags: [],
   };

@@ -33,13 +33,10 @@ class SortOptions(Enum):
     
 
 def get_sort_option(value: str) -> SortOptions | None:
-    """Return an enum option from 'SortOptions' whose value matches that of the 
-    specified 'value', or return 'none' if 'value' is not in 'SortOptions'."""
-
-    for opt in SortOptions:
-        if opt.value == value:
-            return opt
-    return None
+    try:
+        return SortOptions[value]
+    except KeyError:
+        return None
 
 
 def get_contact_by_id(
