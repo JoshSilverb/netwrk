@@ -1,13 +1,27 @@
 from flask import Blueprint, jsonify, request
 import logging
+import requests as http_requests
 
 from app.db import accessor as db_accessor
 from app.aws import awsutils
+from app.config import Config
 
 logger = logging.getLogger(__name__)
 
 
 users_bp = Blueprint("users", __name__)
+
+
+def _geocode_location(location: str) -> dict | None:
+    if not location:
+        return None
+    try:
+        url = f"https://maps.googleapis.com/maps/api/geocode/json?address={'+'.join(location.split())}&key={Config.GOOGLE_API_KEY}"
+        resp = http_requests.get(url, timeout=5)
+        resp.raise_for_status()
+        return resp.json()["results"][0]["geometry"]["location"]
+    except Exception:
+        return None
 
 
 def _generate_user_profile_pic_url(profile_pic_object_name: str) -> str:
@@ -81,6 +95,8 @@ def update_user_details():
     location: str             = data.get('location', '')
     is_public: bool           = data.get('is_public', False)
 
+    coordinate = _geocode_location(location) if location else None
+
     try:
         db_accessor.update_user_details(
             user_token=user_token,
@@ -89,7 +105,8 @@ def update_user_details():
             bio=bio,
             profile_pic_object_name=profile_pic_object_key,
             location=location,
-            is_public=is_public
+            is_public=is_public,
+            coordinate=coordinate,
         )
     except Exception as e:
         return jsonify({"error": str(e)}), 409

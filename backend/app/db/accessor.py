@@ -547,10 +547,12 @@ def update_user_details(
     bio: str,
     profile_pic_object_name: str,
     location: str,
-    is_public: bool
+    is_public: bool,
+    coordinate: dict | None = None,
 ):
     """
     Update profile fields for the user with the specified user_token.
+    coordinate: optional {'lat': float, 'lng': float} from geocoding the location string.
     """
 
     logger.info(f"About to update user with token: '{user_token}'")
@@ -568,6 +570,13 @@ def update_user_details(
     user.bio       = bio
     user.location  = location
     user.is_public = is_public
+
+    if coordinate and "lng" in coordinate and "lat" in coordinate:
+        user.coordinates = func.ST_GeogFromText(
+            f'SRID=4326;POINT({coordinate["lng"]} {coordinate["lat"]})'
+        )
+    elif not location:
+        user.coordinates = None
 
     if profile_pic_object_name:
         user.profile_pic_object_name = profile_pic_object_name
@@ -649,13 +658,13 @@ def _build_base_query_no_search(user_token, lower_bound_date, upper_bound_date, 
             Contact.contact_id.label("contact_id"),
             Contact.fullname,
             Contact.location,
-            func.ST_AsText(Contact.coordinates).label("coordinate"),
             Contact.userbio,
             Contact.profile_pic_object_name,
             Contact.linked_user_id,
             LinkedUser.profile_pic_object_name.label("linked_user_profile_pic_object_name"),
             LinkedUser.location.label("linked_user_location"),
             LinkedUser.bio.label("linked_user_bio"),
+            func.ST_AsText(func.COALESCE(Contact.coordinates, LinkedUser.coordinates)).label("coordinate"),
         )
         .join(User, Contact.user_id == User.user_id)
         .outerjoin(LinkedUser, Contact.linked_user_id == LinkedUser.user_id)
@@ -679,13 +688,13 @@ def _build_relevance_query(user_token, embedding_string, lower_bound_date, upper
             Contact.contact_id.label("contact_id"),
             Contact.fullname,
             Contact.location,
-            func.ST_AsText(Contact.coordinates).label("coordinate"),
             Contact.userbio,
             Contact.profile_pic_object_name,
             Contact.linked_user_id,
             LinkedUser.profile_pic_object_name.label("linked_user_profile_pic_object_name"),
             LinkedUser.location.label("linked_user_location"),
             LinkedUser.bio.label("linked_user_bio"),
+            func.ST_AsText(func.COALESCE(Contact.coordinates, LinkedUser.coordinates)).label("coordinate"),
         )
         .join(User, Contact.user_id == User.user_id)
         .outerjoin(LinkedUser, Contact.linked_user_id == LinkedUser.user_id)
@@ -759,13 +768,13 @@ def _build_semantic_filtered_query(
             Contact.contact_id.label("contact_id"),
             Contact.fullname,
             Contact.location,
-            func.ST_AsText(Contact.coordinates).label("coordinate"),
             Contact.userbio,
             Contact.profile_pic_object_name,
             Contact.linked_user_id,
             LinkedUser.profile_pic_object_name.label("linked_user_profile_pic_object_name"),
             LinkedUser.location.label("linked_user_location"),
             LinkedUser.bio.label("linked_user_bio"),
+            func.ST_AsText(func.COALESCE(Contact.coordinates, LinkedUser.coordinates)).label("coordinate"),
         )
         .join(similar_contacts_cte, Contact.contact_id == similar_contacts_cte.c.contact_id)
         .outerjoin(LinkedUser, Contact.linked_user_id == LinkedUser.user_id)

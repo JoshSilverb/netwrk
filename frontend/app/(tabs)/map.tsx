@@ -71,8 +71,9 @@ export default function MapScreen() {
   const contactsByLocation = useMemo(() => {
     const map = new Map<string, any[]>();
     for (const contact of mappedContacts) {
-      if (!map.has(contact.location)) map.set(contact.location, []);
-      map.get(contact.location)!.push(contact);
+      const loc = (contact.linked_user_location || contact.location) || '';
+      if (!map.has(loc)) map.set(loc, []);
+      map.get(loc)!.push(contact);
     }
     return map;
   }, [mappedContacts]);
@@ -142,9 +143,9 @@ export default function MapScreen() {
                 ]}>
                   {locContacts.length > 1 ? (
                     <Text style={styles.markerCount}>{locContacts.length}</Text>
-                  ) : locContacts[0].profile_pic_url ? (
+                  ) : (locContacts[0].is_linked ? (locContacts[0].linked_user_profile_pic_url || locContacts[0].profile_pic_url) : locContacts[0].profile_pic_url) ? (
                     <Image
-                      source={{ uri: locContacts[0].profile_pic_url }}
+                      source={{ uri: (locContacts[0].is_linked ? (locContacts[0].linked_user_profile_pic_url || locContacts[0].profile_pic_url) : locContacts[0].profile_pic_url)! }}
                       style={isActive ? styles.markerAvatarActive : styles.markerAvatarInactive}
                     />
                   ) : (
@@ -214,8 +215,11 @@ export default function MapScreen() {
                       backgroundColor={pressed ? NAVY_SURFACE : NAVY}
                     >
                       <Avatar circular size="$4">
-                        {contact.profile_pic_url ? (
-                          <Avatar.Image accessibilityLabel={contact.fullname} src={contact.profile_pic_url} />
+                        {(contact.is_linked ? (contact.linked_user_profile_pic_url || contact.profile_pic_url) : contact.profile_pic_url) ? (
+                          <Avatar.Image
+                            accessibilityLabel={contact.fullname}
+                            src={(contact.is_linked ? (contact.linked_user_profile_pic_url || contact.profile_pic_url) : contact.profile_pic_url)!}
+                          />
                         ) : (
                           <Avatar.Fallback backgroundColor={NAVY_SURFACE} alignItems="center" justifyContent="center">
                             <UserIcon size={20} color={SLATE_MUTED} />
@@ -226,15 +230,18 @@ export default function MapScreen() {
                         <SizableText fontSize={TYPOGRAPHY.sizes.md} fontWeight="700" color="white" numberOfLines={1}>
                           {contact.fullname}
                         </SizableText>
-                        {contact.userbio ? (
-                          <SizableText fontSize={TYPOGRAPHY.sizes.sm} color={SLATE_MUTED} numberOfLines={1}>
-                            {contact.userbio}
-                          </SizableText>
-                        ) : contact.lastcontact ? (
-                          <SizableText fontSize={TYPOGRAPHY.sizes.sm} color={SLATE_MUTED} numberOfLines={1}>
-                            Last: {contact.lastcontact}
-                          </SizableText>
-                        ) : null}
+                        {(() => {
+                          const bio = contact.userbio || (contact.is_linked ? contact.linked_user_bio : null);
+                          return bio ? (
+                            <SizableText fontSize={TYPOGRAPHY.sizes.sm} color={SLATE_MUTED} numberOfLines={1}>
+                              {bio}
+                            </SizableText>
+                          ) : contact.lastcontact ? (
+                            <SizableText fontSize={TYPOGRAPHY.sizes.sm} color={SLATE_MUTED} numberOfLines={1}>
+                              Last: {contact.lastcontact}
+                            </SizableText>
+                          ) : null;
+                        })()}
                       </YStack>
                     </XStack>
                   )}
