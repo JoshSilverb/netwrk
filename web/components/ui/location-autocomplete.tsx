@@ -29,7 +29,7 @@ export function LocationAutocomplete({ value, onChange, placeholder = 'City, Sta
   useEffect(() => {
     if (inputValue.length < 2) { setSuggestions([]); return; }
     const controller = new AbortController();
-    fetch(`https://mynetwrk.com/places/autocomplete?input=${encodeURIComponent(inputValue)}`, {
+    fetch(`https://api.mynetwrk.com/places/autocomplete?input=${encodeURIComponent(inputValue)}`, {
       signal: controller.signal,
     })
       .then((r) => r.json())

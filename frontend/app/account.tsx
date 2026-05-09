@@ -43,9 +43,11 @@ export default function AccountPage() {
   const [isLightMode, setIsLightMode] = useState(true);
 
   // Edit profile form state
+  const [editFullname,  setEditFullname]  = useState('');
   const [editUsername,  setEditUsername]  = useState('');
   const [editBio,       setEditBio]       = useState('');
   const [editLocation,  setEditLocation]  = useState('');
+  const [editIsPublic,  setEditIsPublic]  = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const locationRef = React.useRef<CustomPlacesAutocompleteRef>(null);
 
@@ -59,9 +61,11 @@ export default function AccountPage() {
 
   const profilePicUrl = userData?.profile_pic_url || '';
   const username = userData?.username || '';
+  const fullname = userData?.fullname || '';
   const numContacts = userData?.num_contacts || '';
   const userBio = userData?.bio || '';
   const userLocation = userData?.location || '';
+  const userIsPublic = userData?.is_public ?? false;
 
   useEffect(() => {
     if (editProfileSheetActive && userLocation) {
@@ -123,10 +127,12 @@ export default function AccountPage() {
       const new_filename = await uploadUserPicture();
       await axios.post(updateUserDetailsURL, {
         user_token: token,
+        fullname: editFullname,
         username: editUsername,
         bio: editBio,
         image_object_key: new_filename || '',
         location: editLocation,
+        is_public: editIsPublic,
       });
     },
     onSuccess: () => {
@@ -278,10 +284,12 @@ export default function AccountPage() {
 
   const handleEditProfile = () => {
     // Initialize edit state with current data
+    setEditFullname(fullname);
     setEditUsername(username);
     setEditBio(userBio);
     setEditLocation(userLocation);
-    setSelectedImage(null); // Reset selected image
+    setEditIsPublic(userIsPublic);
+    setSelectedImage(null);
     setEditProfileSheetActive(true);
   };
 
@@ -416,8 +424,13 @@ export default function AccountPage() {
           </Avatar>
 
           <Text fontSize={TYPOGRAPHY.sizes.title} fontWeight="700" textAlign="center" paddingHorizontal={SPACING.lg}>
-            {username}
+            {fullname || username}
           </Text>
+          {username ? (
+            <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray9" textAlign="center">
+              @{username}
+            </Text>
+          ) : null}
 
           {userLocation ? (
             <XStack alignItems="center" gap={4}>
@@ -745,6 +758,27 @@ export default function AccountPage() {
                     </Text>
                 </YStack>
 
+                {/* Full Name Section */}
+                <YStack
+                    space={SPACING.sm}
+                    padding={SPACING.md}
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius={12}
+                    backgroundColor="$background"
+                >
+                    <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8}>
+                        Full name
+                    </Text>
+                    <Input
+                        value={editFullname}
+                        onChangeText={setEditFullname}
+                        placeholder="Your full name"
+                        size="$4"
+                        textAlignVertical="top"
+                    />
+                </YStack>
+
                 {/* Username Section */}
                 <YStack
                     space={SPACING.sm}
@@ -762,6 +796,7 @@ export default function AccountPage() {
                         onChangeText={setEditUsername}
                         placeholder="New username"
                         size="$4"
+                        autoCapitalize="none"
                         textAlignVertical="top"
                     />
                 </YStack>
@@ -810,6 +845,34 @@ export default function AccountPage() {
                         ref={locationRef}
                     />
                 </YStack>
+
+                {/* Public Profile Toggle */}
+                <XStack
+                    padding={SPACING.md}
+                    borderWidth={1}
+                    borderColor="$borderColor"
+                    borderRadius={12}
+                    backgroundColor="$background"
+                    justifyContent="space-between"
+                    alignItems="center"
+                >
+                    <YStack flex={1} marginRight={SPACING.md}>
+                        <Text fontSize={TYPOGRAPHY.sizes.sm} fontWeight="600" color="$color">
+                            Public profile
+                        </Text>
+                        <Text fontSize={11} color="$gray9" marginTop={2}>
+                            Discoverable by other Netwrk users
+                        </Text>
+                    </YStack>
+                    <Switch
+                        checked={editIsPublic}
+                        onCheckedChange={(val) => setEditIsPublic(val as boolean)}
+                        size="$3"
+                        backgroundColor={editIsPublic ? TEAL : '$gray5'}
+                    >
+                        <Switch.Thumb animation="quicker" />
+                    </Switch>
+                </XStack>
             </YStack>
           </KeyboardAwareScrollView>
 

@@ -48,7 +48,7 @@ export default function LoginScreen() {
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         if (error.response.status === 401) {
-          setLoginError('Invalid username or password.');
+          setLoginError('Invalid email or password.');
         } else {
           setLoginError(`Server error: ${error.response.status}`);
         }
@@ -109,7 +109,7 @@ export default function LoginScreen() {
           </YStack>
           <YStack paddingHorizontal={SPACING.md} paddingBottom={SPACING.md}>
             <Input
-              placeholder="Enter username"
+              placeholder="janesmith"
               value={username}
               onChangeText={setUsername}
               size="$4"

@@ -1,5 +1,4 @@
 from flask import Blueprint, jsonify, request
-import json
 import logging
 
 from app.db import accessor as db_accessor
@@ -9,6 +8,18 @@ logger = logging.getLogger(__name__)
 
 
 users_bp = Blueprint("users", __name__)
+
+
+def _generate_user_profile_pic_url(profile_pic_object_name: str) -> str:
+    if not profile_pic_object_name:
+        return ""
+    try:
+        url = awsutils.getSignedS3ObjectURL(profile_pic_object_name, awsutils.S3ObjectMethods.DOWNLOAD)
+        return url or ""
+    except Exception as e:
+        logger.error(f"Failed to get signed URL for user profile picture {profile_pic_object_name}: {e}")
+        return ""
+
 
 @users_bp.route("/deleteUser", methods=["POST"])
 def delete_user():
@@ -31,16 +42,8 @@ def get_user_details():
 
     user_details = db_accessor.get_user_details(user_token=user_token)
     profile_pic_object_name = user_details["profile_pic_object_name"]
-    
-    profile_pic_url = ""
 
-    if profile_pic_object_name:
-        profile_pic_url = awsutils.getSignedS3ObjectURL(profile_pic_object_name, awsutils.S3ObjectMethods.DOWNLOAD)
-
-        if not profile_pic_url:
-            logger.error(f"failed to get signed url for profile picture with object ID: {profile_pic_object_name}")
-
-    user_details["profile_pic_url"] = profile_pic_url
+    user_details["profile_pic_url"] = _generate_user_profile_pic_url(profile_pic_object_name)
 
     return jsonify(user_details)
 
@@ -50,35 +53,19 @@ def create_user():
 
     data = request.get_json()
     username: str = data['username']
+    fullname: str = data['fullname']
     password: str = data['password']
-    location: str | None = data.get('location')
 
-    user_token = db_accessor.create_user(username=username, password=password, location=location)
+    try:
+        user_token = db_accessor.create_user(
+            username=username,
+            fullname=fullname,
+            password=password
+        )
+    except NameError as e:
+        return jsonify({"error": str(e)}), 409
 
     return jsonify({'user_token': user_token})
-
-
-# @users_bp.route("/updateUserPicture/<user_token>", methods=["POST"])
-# def update_user_picture(user_token):
-#     logger.info("Got update user picture request")
-
-#     logger.debug(f"Profile picture in request files: {'profile_pic' in request.files}")
-
-#     if 'profile_pic' not in request.files:
-#         # If no profile picture is given, do nothing.
-
-#         return jsonify({})
-
-#     profile_pic_file = request.files['profile_pic']
-#     s3_object_name = awsutils.uploadFileToS3(profile_pic_file)
-
-#     if not s3_object_name:
-#         return jsonify({"message": "failed to upload profile picture"}), 500
-    
-#     logger.debug("Calling database update user function")
-#     db_accessor.update_user_picture(user_token, s3_object_name)
-
-#     return jsonify({})
 
 
 @users_bp.route("/updateUserDetails", methods=["POST"])
@@ -86,14 +73,26 @@ def update_user_details():
 
     data = request.get_json()
     logger.debug(f"Received update user request data: {data}")
-    user_token: int             = data['user_token']
-    username: str               = data['username']
-    bio: str                    = data['bio']
+    user_token: str           = data['user_token']
+    username: str             = data['username']
+    fullname: str             = data['fullname']
+    bio: str                  = data['bio']
     profile_pic_object_key: str = data['image_object_key']
-    location: str               = data.get('location', '')
+    location: str             = data.get('location', '')
+    is_public: bool           = data.get('is_public', False)
 
-    logger.debug("Calling database update user function")
-    db_accessor.update_user_details(user_token, username, bio, profile_pic_object_key, location)
+    try:
+        db_accessor.update_user_details(
+            user_token=user_token,
+            username=username,
+            fullname=fullname,
+            bio=bio,
+            profile_pic_object_name=profile_pic_object_key,
+            location=location,
+            is_public=is_public
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 409
 
     return jsonify({})
 
@@ -108,3 +107,39 @@ def get_tags_for_user():
 
     return jsonify(tags)
 
+
+@users_bp.route("/searchUsers", methods=["GET"])
+def search_users():
+    q          = request.args.get("q", "").strip()
+    user_token = request.args.get("user_token", "")
+
+    if not db_accessor.validate_token(user_token):
+        return jsonify({"message": "Invalid user token"}), 401
+
+    if not q:
+        return jsonify([])
+
+    results = db_accessor.search_users_by_username(prefix=q)
+
+    for r in results:
+        r["profile_pic_url"] = _generate_user_profile_pic_url(r.pop("profile_pic_object_name"))
+
+    return jsonify(results)
+
+
+@users_bp.route("/getUserById", methods=["POST"])
+def get_user_by_id():
+    data = request.get_json()
+    user_token     = data["user_token"]
+    target_user_id = data["user_id"]
+
+    if not db_accessor.validate_token(user_token):
+        return jsonify({"message": "Invalid user token"}), 401
+
+    user = db_accessor.get_user_by_id(target_user_id)
+    if not user:
+        return jsonify({"message": "User not found"}), 404
+
+    user["profile_pic_url"] = _generate_user_profile_pic_url(user.pop("profile_pic_object_name"))
+
+    return jsonify(user)

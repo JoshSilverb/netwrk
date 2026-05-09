@@ -22,7 +22,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const { data } = await api.post('/validateUserCredentials', { username: username, password: password });
+      const { data } = await api.post('/validateUserCredentials', { username, password });
       setToken(data.user_token);
       router.push('/contacts');
     } catch {
@@ -49,7 +49,8 @@ export default function LoginPage() {
               <Input
                 id="username"
                 type="text"
-                placeholder="Username"
+                placeholder="janesmith"
+                autoCapitalize="none"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required

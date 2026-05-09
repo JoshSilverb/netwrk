@@ -16,6 +16,13 @@ export type Contact = {
   userbio: string;
   profile_pic_url?: string;
   contact_id?: number;
+  is_linked?: boolean;
+  linked_user_id?: string | null;
+  linked_user_profile_pic_url?: string | null;
+  linked_user_fullname?: string | null;
+  linked_user_username?: string | null;
+  linked_user_bio?: string | null;
+  linked_user_location?: string | null;
 }
 
 export type User = {

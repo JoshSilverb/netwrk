@@ -4,7 +4,7 @@ from app.models.socials import Social, SocialLabel
 from app.models.tags import Tag, TagLabel
 
 from sqlalchemy import insert, func, select, and_, or_, text, update
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, aliased
 from app.db.session import db
 from geoalchemy2 import Geography
 from dateutil.relativedelta import relativedelta
@@ -30,7 +30,7 @@ class SortOptions(Enum):
     DISTANCE = 'Distance'
     RELEVANCE = 'Relevance'
     NEXT_CONTACT_DATE = 'Next contact date'
-    
+
 
 def get_sort_option(value: str) -> SortOptions | None:
     try:
@@ -44,24 +44,25 @@ def get_contact_by_id(
     contact_id: int
 ):
     """
-    Search the database for the details of the contact with the contact ID 
+    Search the database for the details of the contact with the contact ID
         given in the args
     Returns:
-        A dict representing a contact from the database, with keys equal to 
+        A dict representing a contact from the database, with keys equal to
             the columns of the database
     """
-    
+
     # Step 1: Verify user exists and owns the contact
     contact = (
         db.session.query(Contact)
-        .join(User)
+        .join(User, Contact.user_id == User.user_id)
         .filter(and_(
             User.user_token == user_token,
             Contact.contact_id == contact_id
         ))
         .options(
             joinedload(Contact.socials).joinedload(Social.social_label),
-            joinedload(Contact.tags).joinedload(Tag.tag_label)
+            joinedload(Contact.tags).joinedload(Tag.tag_label),
+            joinedload(Contact.linked_user)
         )
         .first()
     )
@@ -100,6 +101,24 @@ def get_contact_by_id(
     # Step 5: Get tags
     contact_dict["tags"] = [tag.tag_label.label for tag in contact.tags]
 
+    # Step 6: Linked user fields
+    contact_dict["linked_user_id"] = str(contact.linked_user_id) if contact.linked_user_id else None
+    contact_dict["is_linked"] = contact.linked_user_id is not None
+
+    if contact.linked_user_id and contact.linked_user:
+        lu = contact.linked_user
+        contact_dict["linked_user_fullname"]            = lu.fullname
+        contact_dict["linked_user_username"]            = lu.username
+        contact_dict["linked_user_bio"]                 = lu.bio or ""
+        contact_dict["linked_user_location"]            = lu.location or ""
+        contact_dict["linked_user_profile_pic_object_name"] = lu.profile_pic_object_name or ""
+    else:
+        contact_dict["linked_user_fullname"]            = None
+        contact_dict["linked_user_username"]            = None
+        contact_dict["linked_user_bio"]                 = None
+        contact_dict["linked_user_location"]            = None
+        contact_dict["linked_user_profile_pic_object_name"] = None
+
     return contact_dict
 
 def add_contact(
@@ -115,7 +134,8 @@ def add_contact(
     embedding_vector: list[float],
     socials: list[dict] | None,
     tags: list[str] | None,
-    image_object_key: str | None = None
+    image_object_key: str | None = None,
+    linked_user_id: str | None = None
 ) -> int:
     """
     Add the contact defined by the given args to the database
@@ -125,9 +145,22 @@ def add_contact(
 
     # Step 1: Look up user_id from user_token
     user = db.session.query(User).where(User.user_token == user_token).first()
-    
+
     if user is None:
         raise ValueError("Invalid user_token — user not found.")
+
+    # Step 2: Resolve and validate linked_user_id
+    linked_uuid = None
+    if linked_user_id:
+        linked_uuid = uuid.UUID(linked_user_id)
+        linked_user = db.session.query(User).filter_by(user_id=linked_uuid).first()
+        if not linked_user:
+            raise ValueError("Linked user not found")
+        duplicate = db.session.query(Contact).filter_by(
+            user_id=user.user_id, linked_user_id=linked_uuid
+        ).first()
+        if duplicate:
+            raise ValueError("DUPLICATE_LINKED_USER")
 
     # Prepare coordinate field
     if coordinate and "lng" in coordinate and "lat" in coordinate:
@@ -161,13 +194,14 @@ def add_contact(
             nextcontact=next_contact,
             embedding=embedding_vector,
             profile_pic_object_name=image_object_key,
+            linked_user_id=linked_uuid,
         )
         .returning(Contact.contact_id)
     )
 
     result = db.session.execute(stmt)
     new_contact_id = result.scalar_one()
-    
+
     logger.info("Successfully inserted new contact")
 
     # Insert socials
@@ -287,7 +321,7 @@ def update_contact(
     coordinate: dict | None,  # Optional: expects {'lng': float, 'lat': float}
     met_through: str | None,
     user_bio: str | None,
-    last_contact: date | None,  
+    last_contact: date | None,
     reminder_period_weeks: int | None,
     reminder_period_months: int | None,
     embedding_vector: list[float],
@@ -296,7 +330,9 @@ def update_contact(
     image_object_key: str | None = None
 ):
     """
-    Add the contact defined by the given args to the database
+    Update the contact defined by the given args in the database.
+    For linked contacts, location and profile picture are not updated
+    (they come from the linked user's live profile).
     Returns:
         The contact ID of the updated contact as an int
     """
@@ -310,57 +346,49 @@ def update_contact(
     if not contact:
         raise Exception(f"No contact with ID {contact_id} found for user")
 
-    # 3. Update fields on the contact
-    contact.fullname = fullname
-    contact.location = location
+    # 3. Update fields — location/pic/coordinates are locked for linked contacts
+    contact.fullname   = fullname
     contact.metthrough = met_through
-    contact.userbio = user_bio
-    contact.lastcontact = last_contact
-    contact.remind_in_weeks = reminder_period_weeks
-    contact.remind_in_months = reminder_period_months
-    contact.embedding = embedding_vector
+    contact.userbio    = user_bio
+    contact.lastcontact        = last_contact
+    contact.remind_in_weeks    = reminder_period_weeks
+    contact.remind_in_months   = reminder_period_months
+    contact.embedding          = embedding_vector
 
+    if not contact.linked_user_id:
+        contact.location = location
+        if image_object_key:
+            contact.profile_pic_object_name = image_object_key
+        if coordinate:
+            point_wkt = f'SRID=4326;POINT({coordinate["lng"]} {coordinate["lat"]})'
+            contact.coordinates = func.ST_GeogFromText(point_wkt)
+        else:
+            contact.coordinates = None
 
     # Prepare nextcontact field
-
     if (not reminder_period_months and not reminder_period_weeks) or not last_contact:
         contact.nextcontact = None
     else:
-        reminderPeriod_days = reminder_period_weeks * 7 if reminder_period_weeks else 0
+        reminderPeriod_days   = reminder_period_weeks * 7 if reminder_period_weeks else 0
         reminderPeriod_months = reminder_period_months if reminder_period_months else 0
         contact.nextcontact = last_contact + relativedelta(months=+reminderPeriod_months, days=+reminderPeriod_days)
 
     logger.info(f"Contact's next contact date set to {contact.nextcontact}")
-    
-    # Only update profile picture if a new one is provided
-    if image_object_key:
-        contact.profile_pic_object_name = image_object_key
-
-    # Coordinate update (assuming PostGIS or JSON field)
-    if coordinate:
-        contact.longitude = coordinate.get('lng')
-        contact.latitude = coordinate.get('lat')
-    else:
-        contact.longitude = None
-        contact.latitude = None
 
     # 4. Update socials
     if socials is not None:
-        # Clear existing socials
         db.session.query(Social).filter_by(contact_id=contact_id).delete()
 
         for social_dict in socials:
             label_name = social_dict["label"]
-            address = social_dict["address"]
+            address    = social_dict["address"]
 
-            # Get or create social label
             social_label = db.session.query(SocialLabel).filter_by(label=label_name).first()
             if not social_label:
                 social_label = SocialLabel(label=label_name)
                 db.session.add(social_label)
-                db.session.flush()  # ensure ID is available
+                db.session.flush()
 
-            # Add new social entry
             new_social = Social(
                 contact_id=contact_id,
                 social_id=social_label.id,
@@ -370,18 +398,15 @@ def update_contact(
 
     # 5. Update tags
     if tags is not None:
-        # Clear existing tags
         db.session.query(Tag).filter_by(contact_id=contact_id).delete()
 
         for tag_name in tags:
-            # Get or create tag label
             tag_label = db.session.query(TagLabel).filter_by(label=tag_name).first()
             if not tag_label:
                 tag_label = TagLabel(user_id=user.user_id, label=tag_name)
                 db.session.add(tag_label)
                 db.session.flush()
 
-            # Add tag association
             tag = Tag(contact_id=contact_id, tag_id=tag_label.id)
             db.session.add(tag)
 
@@ -392,7 +417,7 @@ def update_contact(
 
 def get_tags_for_user(user_token: str):
     """
-    Get the tags associatd with the user with the user ID in the given args.
+    Get the tags associated with the user with the user ID in the given args.
     Returns:
         The tags associated with the user with the user ID given in the args.
     """
@@ -403,24 +428,22 @@ def get_tags_for_user(user_token: str):
     return user_tags
 
 
-def create_user(username: str, password: str, location: str | None = None):
+def create_user(username: str, fullname: str, password: str, location: str | None = None):
     """
     Store the user credentials defined in the given args, and generate and store a new user token.
     Returns:
         The new user token associated with this user.
     """
-    # Check for existing user with the same username
-    existing_user = db.session.query(User).filter_by(username=username).first()
-    if existing_user:
+    existing_username = db.session.query(User).filter_by(username=username).first()
+    if existing_username:
         raise NameError("Username already taken")
 
-    # Hash the password
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     user_token = uuid.uuid4().hex.strip()
 
-    # Create and add new user
     new_user = User(
         username=username,
+        fullname=fullname,
         password=hashed_password.decode('utf-8'),
         user_token=user_token,
         num_contacts=0,
@@ -440,27 +463,18 @@ def create_user(username: str, password: str, location: str | None = None):
 
 def validate_user_credentials_and_regenerate_token(username: str, password: str):
     """
-    Validate the user credentials defined in the given args against the stored credentials in the database, and generate and store a new user token.
+    Validate the user credentials against stored credentials using username as identifier.
     Returns:
-        The new user token associated with this user.
+        The user token associated with this user.
     """
-    # Fetch the user by username
     user = db.session.query(User).filter_by(username=username).first()
     if not user:
         logger.warning(f"Authentication failed: No user profile found for username={username}")
         raise NameError("Invalid credentials")
 
-    # Check password
     if not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
         logger.warning(f"Authentication failed: Incorrect password for username={username}")
         raise NameError("Invalid credentials")
-
-    # Generate new token
-    # new_user_token = uuid.uuid4().hex
-    # user.user_token = new_user_token
-
-    # Commit the update
-    # db.session.commit()
 
     logger.info(f"Successfully authenticated user: {username}")
     return user.user_token
@@ -470,9 +484,8 @@ def validate_token(user_token: str):
     """
     Validate that the specified 'user_token' corresponds to a user in the database.
     Returns:
-        A bool reflecting if the username/pwd are valid.
+        A bool reflecting if the token is valid.
     """
-    # Fetch the user by username
     user = db.session.query(User).filter_by(user_token=user_token).first()
     if not user:
         logger.warning(f"Authentication failed: No user profile found for user token={user_token}")
@@ -480,7 +493,6 @@ def validate_token(user_token: str):
 
     logger.info(f"Successfully authenticated user with token: {user_token}")
     return True
-
 
 
 def delete_user(user_token: str):
@@ -516,6 +528,9 @@ def get_user_details(user_token: str):
 
     user_dict = {
         "username": user.username,
+        "fullname": user.fullname,
+        "email": user.email,
+        "is_public": user.is_public,
         "num_contacts": user.num_contacts,
         "bio": user.bio if user.bio else "",
         "profile_pic_object_name": user.profile_pic_object_name if user.profile_pic_object_name else "",
@@ -525,42 +540,90 @@ def get_user_details(user_token: str):
     return user_dict
 
 
-def update_user_details(user_token: str, username: str, bio: str, profile_pic_object_name: str, location: str):
-
+def update_user_details(
+    user_token: str,
+    username: str,
+    fullname: str,
+    bio: str,
+    profile_pic_object_name: str,
+    location: str,
+    is_public: bool
+):
     """
-    Add the specified 'username', 'bio', 'profile_pic_object_name', and 'location' to the
-    database entry  for the user with the specified 'user_token'.
+    Update profile fields for the user with the specified user_token.
     """
 
-    logger.info(f"About to update user with token: '{user_token}' " + \
-                 f"to have new username: '{username}' and bio: '{bio}'")
+    logger.info(f"About to update user with token: '{user_token}'")
 
     user = db.session.query(User).filter_by(user_token=user_token).first()
     if not user:
         raise Exception(f"No user with token {user_token} found")
-    
+
     users_with_username = db.session.query(User).filter_by(username=username).all()
-    
-    if (len(users_with_username) > 0 and users_with_username[0].user_token != user_token):
-        logger.error(f"Got {len(users_with_username)} results with this username, and its token is '{users_with_username[0].user_token}'")
-        raise Exception(f"Username already taken")
+    if len(users_with_username) > 0 and users_with_username[0].user_token != user_token:
+        raise Exception("Username already taken")
 
-    logger.info(f"Got user with username: '{user.username}' and bio: '{user.bio}'")
-
-    user.username = username
-    user.bio = bio
-    user.location = location
-
-    # Only set new profile pic object name if one is given.
+    user.username  = username
+    user.fullname  = fullname
+    user.bio       = bio
+    user.location  = location
+    user.is_public = is_public
 
     if profile_pic_object_name:
         user.profile_pic_object_name = profile_pic_object_name
 
-    logger.info(f"Set user fields, now bio: '{user.bio}'")
-    
-    logger.info("Committing user profile update")
-    
     db.session.commit()
+
+
+def get_user_by_id(user_id: str) -> dict | None:
+    """
+    Get public profile details for any user by their UUID.
+    Used for looking up a private-profile user by exact ID.
+    Returns:
+        A dict of user profile fields, or None if not found.
+    """
+    try:
+        uid = uuid.UUID(user_id)
+    except ValueError:
+        return None
+
+    user = db.session.query(User).filter_by(user_id=uid).first()
+    if not user:
+        return None
+
+    return {
+        "user_id": str(user.user_id),
+        "username": user.username,
+        "fullname": user.fullname,
+        "bio": user.bio or "",
+        "location": user.location or "",
+        "is_public": user.is_public,
+        "profile_pic_object_name": user.profile_pic_object_name or "",
+    }
+
+
+def search_users_by_username(prefix: str, limit: int = 10) -> list[dict]:
+    """
+    Search for public users whose username starts with the given prefix.
+    Returns:
+        A list of user dicts (user_id, username, fullname, profile_pic_object_name).
+    """
+    users = (
+        db.session.query(User)
+        .filter(User.is_public == True)
+        .filter(User.username.ilike(f"{prefix}%"))
+        .limit(limit)
+        .all()
+    )
+    return [
+        {
+            "user_id": str(u.user_id),
+            "username": u.username,
+            "fullname": u.fullname,
+            "profile_pic_object_name": u.profile_pic_object_name or "",
+        }
+        for u in users
+    ]
 
 
 def _apply_tag_filter(query, tags):
@@ -580,6 +643,7 @@ def _apply_tag_filter(query, tags):
 
 def _build_base_query_no_search(user_token, lower_bound_date, upper_bound_date, tags):
     """Build base query without semantic search filtering."""
+    LinkedUser = aliased(User)
     query = (
         db.session.query(
             Contact.contact_id.label("contact_id"),
@@ -587,9 +651,12 @@ def _build_base_query_no_search(user_token, lower_bound_date, upper_bound_date, 
             Contact.location,
             func.ST_AsText(Contact.coordinates).label("coordinate"),
             Contact.userbio,
-            Contact.profile_pic_object_name
+            Contact.profile_pic_object_name,
+            Contact.linked_user_id,
+            LinkedUser.profile_pic_object_name.label("linked_user_profile_pic_object_name"),
         )
         .join(User, Contact.user_id == User.user_id)
+        .outerjoin(LinkedUser, Contact.linked_user_id == LinkedUser.user_id)
         .filter(User.user_token == user_token)
         .filter(Contact.lastcontact >= lower_bound_date)
         .filter(Contact.lastcontact <= upper_bound_date)
@@ -604,6 +671,7 @@ def _build_relevance_query(user_token, embedding_string, lower_bound_date, upper
     """Build query for RELEVANCE sorting - returns ALL contacts sorted by similarity."""
     vector_str = '[' + ','.join(map(str, embedding_string)) + ']'
 
+    LinkedUser = aliased(User)
     query = (
         db.session.query(
             Contact.contact_id.label("contact_id"),
@@ -611,9 +679,12 @@ def _build_relevance_query(user_token, embedding_string, lower_bound_date, upper
             Contact.location,
             func.ST_AsText(Contact.coordinates).label("coordinate"),
             Contact.userbio,
-            Contact.profile_pic_object_name
+            Contact.profile_pic_object_name,
+            Contact.linked_user_id,
+            LinkedUser.profile_pic_object_name.label("linked_user_profile_pic_object_name"),
         )
         .join(User, Contact.user_id == User.user_id)
+        .outerjoin(LinkedUser, Contact.linked_user_id == LinkedUser.user_id)
         .filter(User.user_token == user_token)
         .filter(Contact.lastcontact >= lower_bound_date)
         .filter(Contact.lastcontact <= upper_bound_date)
@@ -678,6 +749,7 @@ def _build_semantic_filtered_query(
     )
 
     # Main query: Get full contact details for the top-N similar contacts
+    LinkedUser = aliased(User)
     query = (
         db.session.query(
             Contact.contact_id.label("contact_id"),
@@ -685,9 +757,12 @@ def _build_semantic_filtered_query(
             Contact.location,
             func.ST_AsText(Contact.coordinates).label("coordinate"),
             Contact.userbio,
-            Contact.profile_pic_object_name
+            Contact.profile_pic_object_name,
+            Contact.linked_user_id,
+            LinkedUser.profile_pic_object_name.label("linked_user_profile_pic_object_name"),
         )
         .join(similar_contacts_cte, Contact.contact_id == similar_contacts_cte.c.contact_id)
+        .outerjoin(LinkedUser, Contact.linked_user_id == LinkedUser.user_id)
     )
 
     query = _apply_tag_filter(query, tags)
@@ -807,4 +882,3 @@ def search_contacts_and_sort(
         c['socials'] = socials_by_contact.get(c['contact_id'], [])
 
     return contact_dicts
-

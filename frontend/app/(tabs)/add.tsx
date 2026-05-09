@@ -5,7 +5,7 @@ import { Pressable, Alert } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Months } from '@/constants/Definitions';
 import { Text, View, XStack, YStack, Button, Input, Avatar, Switch } from 'tamagui';
-import { addContactForUserURL, getContactByIdURL, updateContactForUserURL, getS3UploadURL } from '@/constants/Apis';
+import { addContactForUserURL, getContactByIdURL, updateContactForUserURL, getS3UploadURL, searchUsersURL, getUserByIdURL } from '@/constants/Apis';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -25,8 +25,9 @@ import { DatePickerModal } from '@/components/DatePickerModal';
 const TEAL = '#14B8A6';
 
 export default function AddContactPage() {
-    const params = useLocalSearchParams<{ id?: string }>();
+    const params = useLocalSearchParams<{ id?: string; isLinked?: string }>();
     const id = params.id ?? "0";
+    const isLinkedParam = params.isLinked === '1';
 
     const [errorMessage, setErrorMessage] = React.useState('');
     const queryClient = useQueryClient();
@@ -47,6 +48,15 @@ export default function AddContactPage() {
     const [newTag,     setNewTag]          = React.useState('');
     const [selectedImage, setSelectedImage] = React.useState(null);
     const [profileImageURI, setProfileImageURI] = React.useState(null);
+
+    // "Find a Netwrk user" mode (create flow only)
+    const [addMode, setAddMode] = React.useState<'manual' | 'netwrk'>('manual');
+    const [userSearchQuery, setUserSearchQuery] = React.useState('');
+    const [userSearchResults, setUserSearchResults] = React.useState([]);
+    const [selectedNetwrkUser, setSelectedNetwrkUser] = React.useState(null);
+    const [userIdInput, setUserIdInput] = React.useState('');
+    const [netwrkMetthrough, setNetwrkMetthrough] = React.useState('');
+    const [netwrkError, setNetwrkError] = React.useState('');
 
     const insets = useSafeAreaInsets();
     const ref = React.useRef<CustomPlacesAutocompleteRef>(null);
@@ -229,7 +239,65 @@ export default function AddContactPage() {
         onError: () => setErrorMessage("Failed to update contact details"),
     });
 
-    const submitting = createMutation.isPending || updateMutation.isPending;
+    const netwrkCreateMutation = useMutation({
+        mutationFn: async () => {
+            const response = await axios.post(addContactForUserURL, {
+                user_token: token,
+                newContact: {
+                    fullname: selectedNetwrkUser?.fullname ?? '',
+                    location: '',
+                    userbio: '',
+                    metthrough: netwrkMetthrough,
+                    socials: [],
+                    lastcontact: formatDateForAPI(new Date()),
+                    reminderPeriod: { weeks: null, months: null },
+                    tags: [],
+                    image_object_key: '',
+                    linked_user_id: selectedNetwrkUser?.user_id,
+                },
+            });
+            return response.data;
+        },
+        onSuccess: async (newId) => {
+            setSelectedNetwrkUser(null);
+            setUserSearchQuery('');
+            setNetwrkMetthrough('');
+            setNetwrkError('');
+            queryClient.invalidateQueries({ queryKey: ['contacts'] });
+            router.push(`/contact/${newId}`);
+        },
+        onError: (err: any) => {
+            const msg = err?.response?.data?.error;
+            if (msg?.includes('already added')) {
+                setNetwrkError("You've already added this person as a contact.");
+            } else {
+                setNetwrkError('Something went wrong. Please try again.');
+            }
+        },
+    });
+
+    const searchNetwrkUsers = async (query: string) => {
+        if (!query || query.length < 1) { setUserSearchResults([]); return; }
+        try {
+            const res = await axios.get(`${searchUsersURL}?q=${encodeURIComponent(query)}&user_token=${encodeURIComponent(token ?? '')}`);
+            setUserSearchResults(res.data);
+        } catch {
+            setUserSearchResults([]);
+        }
+    };
+
+    const lookupUserById = async () => {
+        if (!userIdInput.trim()) return;
+        try {
+            const res = await axios.post(getUserByIdURL, { user_token: token, user_id: userIdInput.trim() });
+            setSelectedNetwrkUser(res.data);
+            setUserSearchResults([]);
+        } catch {
+            Alert.alert('Not found', 'No user found with that ID.');
+        }
+    };
+
+    const submitting = createMutation.isPending || updateMutation.isPending || netwrkCreateMutation.isPending;
 
     const postNewContact = () => {
         if (!fullname) { setErrorMessage("Cannot create a contact without a name"); return; }
@@ -268,9 +336,144 @@ export default function AddContactPage() {
                         </Text>
                     ) : null}
 
+                    {/* Mode toggle — only shown when creating */}
+                    {id === '0' ? (
+                        <XStack marginHorizontal={SPACING.md} marginBottom={SPACING.md} borderRadius={10} borderWidth={1} borderColor="$borderColor" overflow="hidden">
+                            {(['manual', 'netwrk'] as const).map((m) => (
+                                <Pressable
+                                    key={m}
+                                    onPress={() => { setAddMode(m); setSelectedNetwrkUser(null); setUserSearchQuery(''); setUserSearchResults([]); setNetwrkError(''); }}
+                                    style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: addMode === m ? TEAL : 'transparent' }}
+                                >
+                                    <Text fontSize={TYPOGRAPHY.sizes.sm} fontWeight="600" color={addMode === m ? 'white' : '$gray10'}>
+                                        {m === 'manual' ? 'Add manually' : 'Find a Netwrk user'}
+                                    </Text>
+                                </Pressable>
+                            ))}
+                        </XStack>
+                    ) : null}
+
+                    {/* "Find a Netwrk user" panel */}
+                    {id === '0' && addMode === 'netwrk' ? (
+                        <YStack paddingHorizontal={SPACING.md} gap={SPACING.md}>
+                            {/* Username search */}
+                            <YStack gap={SPACING.xs}>
+                                <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8}>Search by username</Text>
+                                <Input
+                                    size="$4"
+                                    placeholder="Search username…"
+                                    value={userSearchQuery}
+                                    onChangeText={(q) => { setUserSearchQuery(q); setSelectedNetwrkUser(null); searchNetwrkUsers(q); }}
+                                    autoCapitalize="none"
+                                />
+                                {userSearchResults.length > 0 && !selectedNetwrkUser ? (
+                                    <YStack borderWidth={1} borderColor="$borderColor" borderRadius={10} overflow="hidden">
+                                        {userSearchResults.map((u: any) => (
+                                            <Pressable
+                                                key={u.user_id}
+                                                onPress={() => { setSelectedNetwrkUser(u); setUserSearchQuery(u.fullname); setUserSearchResults([]); }}
+                                                style={{ flexDirection: 'row', alignItems: 'center', padding: SPACING.sm, gap: SPACING.sm }}
+                                            >
+                                                <Avatar circular size="$3">
+                                                    {u.profile_pic_url ? <Avatar.Image src={u.profile_pic_url} /> : <Avatar.Fallback backgroundColor="$color3"><UserIcon size={14} color="$gray9" /></Avatar.Fallback>}
+                                                </Avatar>
+                                                <Text fontSize={TYPOGRAPHY.sizes.sm} fontWeight="600">{u.fullname}</Text>
+                                                <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray9">@{u.username}</Text>
+                                            </Pressable>
+                                        ))}
+                                    </YStack>
+                                ) : null}
+                            </YStack>
+
+                            {/* User ID lookup */}
+                            <YStack gap={SPACING.xs}>
+                                <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8}>Add by user ID</Text>
+                                <XStack gap={SPACING.sm}>
+                                    <Input
+                                        size="$4" flex={1}
+                                        placeholder="Paste user ID…"
+                                        value={userIdInput}
+                                        onChangeText={setUserIdInput}
+                                        autoCapitalize="none"
+                                    />
+                                    <Button size="$4" variant="outlined" onPress={lookupUserById} disabled={!userIdInput.trim()}>
+                                        Look up
+                                    </Button>
+                                </XStack>
+                            </YStack>
+
+                            {/* Selected user preview */}
+                            {selectedNetwrkUser ? (
+                                <YStack borderWidth={1} borderColor="$borderColor" borderRadius={12} padding={SPACING.md} gap={SPACING.sm} backgroundColor="$background">
+                                    <XStack gap={SPACING.sm} alignItems="center">
+                                        <Avatar circular size="$6">
+                                            {selectedNetwrkUser.profile_pic_url
+                                                ? <Avatar.Image src={selectedNetwrkUser.profile_pic_url} />
+                                                : <Avatar.Fallback backgroundColor="$color3"><UserIcon size={20} color="$gray9" /></Avatar.Fallback>}
+                                        </Avatar>
+                                        <YStack>
+                                            <Text fontWeight="700" fontSize={TYPOGRAPHY.sizes.md}>{selectedNetwrkUser.fullname}</Text>
+                                            <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray9">@{selectedNetwrkUser.username}</Text>
+                                        </YStack>
+                                    </XStack>
+                                    {selectedNetwrkUser.location ? <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray10">📍 {selectedNetwrkUser.location}</Text> : null}
+                                    {selectedNetwrkUser.bio ? <Text fontSize={TYPOGRAPHY.sizes.sm} color="$color">{selectedNetwrkUser.bio}</Text> : null}
+
+                                    <YStack gap={SPACING.xs} marginTop={SPACING.xs}>
+                                        <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8}>How you met</Text>
+                                        <Input
+                                            size="$4"
+                                            placeholder="e.g. Conference in NYC"
+                                            value={netwrkMetthrough}
+                                            onChangeText={setNetwrkMetthrough}
+                                        />
+                                    </YStack>
+
+                                    {netwrkError ? <Text color="$red9" fontSize={TYPOGRAPHY.sizes.sm}>{netwrkError}</Text> : null}
+
+                                    <Button
+                                        size="$4"
+                                        backgroundColor={TEAL}
+                                        color="white"
+                                        fontWeight="700"
+                                        borderRadius={BORDER_RADIUS.md}
+                                        onPress={() => netwrkCreateMutation.mutate()}
+                                        disabled={submitting}
+                                        marginTop={SPACING.xs}
+                                    >
+                                        {submitting ? 'Adding…' : 'Add contact'}
+                                    </Button>
+                                </YStack>
+                            ) : null}
+                        </YStack>
+                    ) : null}
+
+                    {/* Manual / edit form — hidden when in "Find a Netwrk user" mode */}
+                    {(id !== '0' || addMode === 'manual') ? <>
+
+                    {/* Linked contact banner */}
+                    {isLinkedParam ? (
+                        <YStack
+                            marginHorizontal={SPACING.md}
+                            marginBottom={SPACING.sm}
+                            padding={SPACING.sm}
+                            backgroundColor="rgba(20,184,166,0.08)"
+                            borderRadius={10}
+                            borderWidth={1}
+                            borderColor="rgba(20,184,166,0.25)"
+                        >
+                            <Text fontSize={TYPOGRAPHY.sizes.sm} color={TEAL} fontWeight="600">
+                                Netwrk profile linked
+                            </Text>
+                            <Text fontSize={11} color="$gray9" marginTop={2}>
+                                Name, location, and profile picture are managed by this user's profile and cannot be edited.
+                            </Text>
+                        </YStack>
+                    ) : null}
+
                     {/* Profile Picture */}
-                    <YStack alignItems="center" paddingVertical={SPACING.lg} gap={SPACING.sm}>
-                        <Pressable onPress={selectImage}>
+                    <YStack alignItems="center" paddingVertical={SPACING.lg} gap={SPACING.sm} opacity={isLinkedParam ? 0.4 : 1}>
+                        <Pressable onPress={isLinkedParam ? undefined : selectImage}>
                             <View position="relative">
                                 <Avatar circular size="$10">
                                     {profileImageURI ? (
@@ -281,49 +484,63 @@ export default function AddContactPage() {
                                         </Avatar.Fallback>
                                     )}
                                 </Avatar>
-                                <View
-                                    position="absolute" bottom={0} right={0}
-                                    backgroundColor={TEAL} borderRadius={20}
-                                    width={32} height={32}
-                                    alignItems="center" justifyContent="center"
-                                    borderWidth={2} borderColor="$background"
-                                >
-                                    <CameraIcon size={16} color="white" />
-                                </View>
+                                {!isLinkedParam && (
+                                    <View
+                                        position="absolute" bottom={0} right={0}
+                                        backgroundColor={TEAL} borderRadius={20}
+                                        width={32} height={32}
+                                        alignItems="center" justifyContent="center"
+                                        borderWidth={2} borderColor="$background"
+                                    >
+                                        <CameraIcon size={16} color="white" />
+                                    </View>
+                                )}
                             </View>
                         </Pressable>
-                        <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray10">
-                            Tap to {selectedImage ? 'change' : 'add'} photo
-                        </Text>
+                        {!isLinkedParam && (
+                            <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray10">
+                                Tap to {selectedImage ? 'change' : 'add'} photo
+                            </Text>
+                        )}
                     </YStack>
 
                     {/* Name */}
-                    <YStack backgroundColor="$background" borderRadius={12} marginHorizontal={SPACING.md} marginBottom={SPACING.sm} borderWidth={1} borderColor="$borderColor" overflow="hidden">
+                    <YStack backgroundColor="$background" borderRadius={12} marginHorizontal={SPACING.md} marginBottom={SPACING.sm} borderWidth={1} borderColor="$borderColor" overflow="hidden" opacity={isLinkedParam ? 0.5 : 1}>
                         <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8} paddingHorizontal={SPACING.md} paddingTop={SPACING.md} paddingBottom={SPACING.xs}>Name</Text>
                         <Input
-                            size="$4" value={fullname} onChangeText={onChangeFullname}
+                            size="$4" value={fullname} onChangeText={isLinkedParam ? undefined : onChangeFullname}
                             placeholder="Full name" textContentType="name"
                             fontSize={TYPOGRAPHY.sizes.md} borderWidth={0}
                             backgroundColor="transparent" paddingHorizontal={SPACING.md} paddingBottom={SPACING.sm}
+                            editable={!isLinkedParam}
                         />
                     </YStack>
 
                     {/* Location */}
-                    <YStack backgroundColor="$background" borderRadius={12} marginHorizontal={SPACING.md} marginBottom={SPACING.sm} borderWidth={1} borderColor="$borderColor" zIndex={10}>
+                    <YStack backgroundColor="$background" borderRadius={12} marginHorizontal={SPACING.md} marginBottom={SPACING.sm} borderWidth={1} borderColor="$borderColor" zIndex={10} opacity={isLinkedParam ? 0.5 : 1}>
                         <Text fontSize={11} fontWeight="600" color="$gray9" textTransform="uppercase" letterSpacing={0.8} paddingHorizontal={SPACING.md} paddingTop={SPACING.md} paddingBottom={SPACING.xs}>Location</Text>
-                        <CustomPlacesAutocomplete
-                            predefinedPlaces={[]}
-                            textInputProps={{ style: { fontSize: TYPOGRAPHY.sizes.md, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm } }}
-                            styles={{
-                                container: { flex: 0 },
-                                textInput: { borderWidth: 0, backgroundColor: 'transparent', paddingHorizontal: SPACING.md },
-                                listView: { borderRadius: BORDER_RADIUS.md },
-                            }}
-                            placeholder="City, state or country"
-                            onPress={(data) => onChangeLocation(data.description)}
-                            disableScroll={true}
-                            ref={ref}
-                        />
+                        {isLinkedParam ? (
+                            <Input
+                                size="$4" value={location}
+                                fontSize={TYPOGRAPHY.sizes.md} borderWidth={0}
+                                backgroundColor="transparent" paddingHorizontal={SPACING.md} paddingBottom={SPACING.sm}
+                                editable={false}
+                            />
+                        ) : (
+                            <CustomPlacesAutocomplete
+                                predefinedPlaces={[]}
+                                textInputProps={{ style: { fontSize: TYPOGRAPHY.sizes.md, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm } }}
+                                styles={{
+                                    container: { flex: 0 },
+                                    textInput: { borderWidth: 0, backgroundColor: 'transparent', paddingHorizontal: SPACING.md },
+                                    listView: { borderRadius: BORDER_RADIUS.md },
+                                }}
+                                placeholder="City, state or country"
+                                onPress={(data) => onChangeLocation(data.description)}
+                                disableScroll={true}
+                                ref={ref}
+                            />
+                        )}
                     </YStack>
 
                     {/* How You Met */}
@@ -531,6 +748,8 @@ export default function AddContactPage() {
                             </Button>
                         )}
                     </YStack>
+
+                    </> : null}
                 </YStack>
             </KeyboardAwareScrollView>
         </View>

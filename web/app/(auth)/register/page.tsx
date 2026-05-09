@@ -12,9 +12,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [fullname, setFullname] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [location, setLocation] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -24,14 +24,15 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const { data } = await api.post('/storeUserCredentials', {
+        fullname,
         username,
         password,
-        location: location || undefined,
       });
       setToken(data.user_token);
       router.push('/contacts');
-    } catch {
-      setError('Registration failed. Please try again.');
+    } catch (err: any) {
+      const msg = err?.response?.data?.error;
+      setError(msg ?? 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -50,11 +51,23 @@ export default function RegisterPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="fullname">Full name</Label>
+              <Input
+                id="fullname"
+                type="text"
+                placeholder="Jane Smith"
+                value={fullname}
+                onChange={(e) => setFullname(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
                 type="text"
-                placeholder="Username"
+                placeholder="janesmith"
+                autoCapitalize="none"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -69,16 +82,6 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="location">Location <span className="text-slate-400 font-normal">(optional)</span></Label>
-              <Input
-                id="location"
-                type="text"
-                placeholder="City, State"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
               />
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}

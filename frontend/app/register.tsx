@@ -3,7 +3,6 @@ import { useRouter } from 'expo-router';
 import { YStack, Input, Button, Text, XStack, Checkbox, Label, View, Image } from 'tamagui';
 import axios from 'axios';
 import { storeUserCredentialsURL } from '@/constants/Apis';
-import CustomPlacesAutocomplete from '@/components/CustomPlacesAutocomplete';
 import { useAuth } from '@/components/AuthContext';
 import { Check as CheckIcon } from '@tamagui/lucide-icons';
 import { saveToken, getToken } from '@/utils/tokenstore';
@@ -17,9 +16,9 @@ const TEAL = '#14B8A6';
 const NAVY = '#0F172A';
 
 export default function CreateAccountScreen() {
+  const [fullname, setFullname] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [location, setLocation] = useState('');
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -42,9 +41,9 @@ export default function CreateAccountScreen() {
   const handleCreateAccount = async () => {
     try {
       const response = await axios.post(storeUserCredentialsURL, {
+        fullname,
         username,
         password,
-        location: location || null,
       });
       if (response.status === 200) {
         setError('');
@@ -57,8 +56,11 @@ export default function CreateAccountScreen() {
         setError('Something went wrong. Please try again.');
       }
     } catch (err) {
-      if (__DEV__) console.error('Error creating account:', err);
-      setError('Could not create account. Please try again.');
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else {
+        setError('Could not create account. Please try again.');
+      }
     }
   };
 
@@ -88,14 +90,14 @@ export default function CreateAccountScreen() {
           </Text>
         </View>
 
-        {/* Form card — overlaps the strip, zIndex for autocomplete dropdown */}
+        {/* Form card */}
         <YStack
           backgroundColor="$background"
           borderRadius={20}
           marginHorizontal={SPACING.md}
           borderWidth={1}
           borderColor="$borderColor"
-          overflow="visible"
+          overflow="hidden"
           marginTop={-SPACING.xl}
           marginBottom={SPACING.md}
           shadowColor="#000"
@@ -103,17 +105,35 @@ export default function CreateAccountScreen() {
           shadowOpacity={0.08}
           shadowRadius={12}
           elevation={4}
-          style={{ zIndex: 10 }}
         >
-          {/* Username */}
+          {/* Full name */}
           <YStack paddingHorizontal={SPACING.md} paddingTop={SPACING.md} paddingBottom={SPACING.xs} style={styles.topRadius}>
+            <Text fontSize={11} fontWeight="600" color="$gray9" style={styles.label}>
+              Full name
+            </Text>
+          </YStack>
+          <YStack paddingHorizontal={SPACING.md} paddingBottom={SPACING.md}>
+            <Input
+              placeholder="Jane Smith"
+              value={fullname}
+              onChangeText={setFullname}
+              size="$4"
+              borderWidth={0}
+              backgroundColor="transparent"
+            />
+          </YStack>
+
+          <View height={1} backgroundColor="$borderColor" />
+
+          {/* Username */}
+          <YStack paddingHorizontal={SPACING.md} paddingTop={SPACING.md} paddingBottom={SPACING.xs}>
             <Text fontSize={11} fontWeight="600" color="$gray9" style={styles.label}>
               Username
             </Text>
           </YStack>
           <YStack paddingHorizontal={SPACING.md} paddingBottom={SPACING.md}>
             <Input
-              placeholder="Enter username"
+              placeholder="janesmith"
               value={username}
               onChangeText={setUsername}
               size="$4"
@@ -133,42 +153,13 @@ export default function CreateAccountScreen() {
           </YStack>
           <YStack paddingHorizontal={SPACING.md} paddingBottom={SPACING.md}>
             <Input
-              placeholder="Enter password"
+              placeholder="At least 8 characters"
               value={password}
               onChangeText={setPassword}
               size="$4"
               secureTextEntry
               borderWidth={0}
               backgroundColor="transparent"
-            />
-          </YStack>
-
-          <View height={1} backgroundColor="$borderColor" />
-
-          {/* Location */}
-          <YStack paddingHorizontal={SPACING.md} paddingTop={SPACING.md} paddingBottom={SPACING.xs}>
-            <XStack gap={6} alignItems="center">
-              <Text fontSize={11} fontWeight="600" color="$gray9" style={styles.label}>
-                Location
-              </Text>
-              <Text fontSize={11} color="$gray8" style={styles.label}>
-                (optional)
-              </Text>
-            </XStack>
-          </YStack>
-          <YStack paddingBottom={SPACING.xs} style={{ zIndex: 20 }}>
-            <CustomPlacesAutocomplete
-              placeholder="Enter your location"
-              onPress={(data) => setLocation(data.description)}
-              disableScroll
-              styles={{
-                container: { flex: 0 },
-                textInput: {
-                  borderWidth: 0,
-                  backgroundColor: 'transparent',
-                  paddingHorizontal: SPACING.md,
-                },
-              }}
             />
           </YStack>
         </YStack>

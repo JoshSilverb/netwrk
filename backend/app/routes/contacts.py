@@ -20,9 +20,9 @@ def _location_to_coords(location: str) -> dict[str, str] | None:
     Args:
         location: an address or name of a place as a string
     Returns:
-        A dict in the form {'lat': num, 'lng': num} representing the 
-            coordinates of the given location if it can be determined, 
-            othewise return 'None'
+        A dict in the form {'lat': num, 'lng': num} representing the
+            coordinates of the given location if it can be determined,
+            otherwise return 'None'
     """
 
     logger.info(f"Getting coordinates for location: {location}")
@@ -33,16 +33,16 @@ def _location_to_coords(location: str) -> dict[str, str] | None:
     location_url_segment = '+'.join(location.split(' '))
     geocode_request_url = f"https://maps.googleapis.com/maps/api/geocode/json?address={location_url_segment}&key={Config.GOOGLE_API_KEY}"
     geocode_response = requests.get(geocode_request_url)
-    
+
     geocode_response.raise_for_status()
     location_coords = geocode_response.json()["results"][0]["geometry"]["location"]
     logger.info(f"Parsed location coordinates: {location_coords}")
 
     return location_coords
 
-def _get_contact_embedding(name: str, 
-                           location: str, 
-                           met_through:str, 
+def _get_contact_embedding(name: str,
+                           location: str,
+                           met_through:str,
                            bio: str) -> list[float]:
     """
     Get the embedding for a contact with the given attributes.
@@ -71,11 +71,11 @@ def _get_query_string_embedding(query_string: str,) -> list[float]:
     """
     Get the embedding of the given query string.
     Args:
-        query_string: user-specified query to semantically search contacts 
+        query_string: user-specified query to semantically search contacts
     Returns:
         A 1536-dimensional list representing the embedding of the input
     """
-    
+
     openai_client = OpenAI(api_key=Config.OPENAI_API_KEY)
     embedding_object = openai_client.embeddings.create(
         model="text-embedding-3-small",
@@ -96,10 +96,10 @@ def _generate_contact_profile_pic_url(profile_pic_object_name: str) -> str:
     """
     if not profile_pic_object_name:
         return ""
-    
+
     try:
         profile_pic_url = awsutils.getSignedS3ObjectURL(
-            profile_pic_object_name, 
+            profile_pic_object_name,
             awsutils.S3ObjectMethods.DOWNLOAD
         )
         return profile_pic_url or ""
@@ -118,11 +118,20 @@ def get_contact_by_id():
 
     contact = db_accessor.get_contact_by_id(user_token, contact_id)
     logger.info(f"Retrieved contact: {contact}")
-    
-    # Add profile picture URL if available
-    if contact and contact.get("profile_pic_object_name"):
+
+    if not contact:
+        return jsonify(contact)
+
+    # Contact's own profile pic
+    if contact.get("profile_pic_object_name"):
         contact["profile_pic_url"] = _generate_contact_profile_pic_url(contact["profile_pic_object_name"])
-    
+    else:
+        contact["profile_pic_url"] = ""
+
+    # Linked user's profile pic
+    linked_pic_key = contact.pop("linked_user_profile_pic_object_name", None)
+    contact["linked_user_profile_pic_url"] = _generate_contact_profile_pic_url(linked_pic_key or "")
+
     return jsonify(contact)
 
 
@@ -133,45 +142,51 @@ def add_new_contact():
 
     newcontact = data["newContact"]
 
-    user_token: str = data['user_token']
-    fullname: str = newcontact['fullname']
-    location: str = newcontact['location']
-    userbio: str = newcontact['userbio']
-    metthrough: str = newcontact['metthrough']
-    socials: list[dict] = newcontact['socials']
+    user_token: str               = data['user_token']
+    fullname: str                 = newcontact['fullname']
+    location: str                 = newcontact.get('location', '')
+    userbio: str                  = newcontact.get('userbio', '')
+    metthrough: str               = newcontact.get('metthrough', '')
+    socials: list[dict]           = newcontact.get('socials', [])
+    tags: list[str]               = newcontact.get('tags', [])
+    linked_user_id: str | None    = newcontact.get('linked_user_id')
+    image_object_key: str         = newcontact.get('image_object_key', '')
 
-    lastcontact_str = newcontact['lastcontact']
+    lastcontact_str = newcontact.get('lastcontact') or datetime.today().strftime("%Y-%m-%d")
     lastcontact = datetime.strptime(lastcontact_str, "%Y-%m-%d").date()
 
-    tags: list[str] = newcontact['tags']
-    reminder_period_weeks: int | None = newcontact['reminderPeriod']['weeks']
-    reminder_period_months: int | None = newcontact['reminderPeriod']['months']
-    image_object_key: str = newcontact.get('image_object_key', '')
+    reminder_period_weeks: int | None  = newcontact.get('reminderPeriod', {}).get('weeks')
+    reminder_period_months: int | None = newcontact.get('reminderPeriod', {}).get('months')
 
-    coordinate = None
-    if location:
-        coordinate = _location_to_coords(location)
-    
-    embedding_vector = _get_contact_embedding(fullname, 
-                                              location, 
-                                              metthrough, 
-                                              userbio)
+    if linked_user_id:
+        # For linked contacts, location and bio come from the linked user at read time
+        coordinate = None
+        embedding_vector = _get_contact_embedding(fullname, "", metthrough, "")
+    else:
+        coordinate = _location_to_coords(location) if location else None
+        embedding_vector = _get_contact_embedding(fullname, location, metthrough, userbio)
 
-    new_contact_id = db_accessor.add_contact(
-        user_token=user_token,
-        fullname=fullname,
-        location=location,
-        coordinate=coordinate,
-        met_through=metthrough,
-        user_bio=userbio,
-        last_contact=lastcontact,
-        reminder_period_weeks=reminder_period_weeks,
-        reminder_period_months=reminder_period_months,
-        embedding_vector=embedding_vector,
-        socials=socials,
-        tags=tags,
-        image_object_key=image_object_key
-    )
+    try:
+        new_contact_id = db_accessor.add_contact(
+            user_token=user_token,
+            fullname=fullname,
+            location=location,
+            coordinate=coordinate,
+            met_through=metthrough,
+            user_bio=userbio,
+            last_contact=lastcontact,
+            reminder_period_weeks=reminder_period_weeks,
+            reminder_period_months=reminder_period_months,
+            embedding_vector=embedding_vector,
+            socials=socials,
+            tags=tags,
+            image_object_key=image_object_key,
+            linked_user_id=linked_user_id
+        )
+    except ValueError as e:
+        if "DUPLICATE_LINKED_USER" in str(e):
+            return jsonify({"error": "You have already added this user as a contact"}), 409
+        raise
 
     return jsonify(new_contact_id)
 
@@ -192,35 +207,43 @@ def remove_contact():
 @contacts_bp.route("/updateContactForUser", methods=["POST"])
 def update_contact():
     data = request.get_json()
-    logger.info(f"Received update contact request wtih data: {data}")
+    logger.info(f"Received update contact request with data: {data}")
 
     newcontact = data["newContact"]
 
     user_token: str = data['user_token']
-
     contact_id: int = int(newcontact["contact_id"])
-    fullname: str = newcontact['fullname']
-    location: str = newcontact['location']
-    userbio: str = newcontact['userbio']
+    fullname: str   = newcontact['fullname']
+    userbio: str    = newcontact['userbio']
     metthrough: str = newcontact['metthrough']
     socials: list[dict] = newcontact['socials']
+    tags: list[str]     = newcontact['tags']
 
     lastcontact_str = newcontact['lastcontact']
     lastcontact = datetime.strptime(lastcontact_str, "%Y-%m-%d").date()
 
-    tags: list[str] = newcontact['tags']
-    reminder_period_weeks: int | None = newcontact['reminderPeriod']['weeks']
+    reminder_period_weeks: int | None  = newcontact['reminderPeriod']['weeks']
     reminder_period_months: int | None = newcontact['reminderPeriod']['months']
-    image_object_key: str = newcontact.get('image_object_key', '')
 
-    coordinate = None
-    if location:
-        coordinate = _location_to_coords(location)
-    
-    embedding_vector = _get_contact_embedding(fullname, 
-                                              location, 
-                                              metthrough, 
-                                              userbio)
+    # Fetch existing contact to check is_linked
+    existing = db_accessor.get_contact_by_id(user_token, contact_id)
+    if not existing:
+        return jsonify({"error": "Contact not found"}), 404
+
+    is_linked = existing.get("is_linked", False)
+
+    if is_linked:
+        # Locked fields — ignore incoming values, preserve stored ones
+        location = existing.get("location") or ""
+        image_object_key = ""
+        coordinate = None
+        # Embedding uses only the non-locked fields
+        embedding_vector = _get_contact_embedding(fullname, "", metthrough, userbio)
+    else:
+        location: str        = newcontact['location']
+        image_object_key: str = newcontact.get('image_object_key', '')
+        coordinate = _location_to_coords(location) if location else None
+        embedding_vector = _get_contact_embedding(fullname, location, metthrough, userbio)
 
     new_contact_id = db_accessor.update_contact(
         user_token=user_token,
@@ -260,7 +283,7 @@ def search_contacts():
 
     lower_bound_date = datetime.strptime(lower_bound_date_str, "%Y-%m-%d").date()
     upper_bound_date = datetime.strptime(upper_bound_date_str, "%Y-%m-%d").date()
-    
+
     user_lat = search_params['user_lat'] if 'user_lat' in search_params else None
     user_lon = search_params['user_lon'] if 'user_lon' in search_params else None
 
@@ -284,9 +307,11 @@ def search_contacts():
         user_longitude=user_lon
     )
 
-    # Add profile picture URLs to all contacts
     for contact in contacts:
         if contact.get("profile_pic_object_name"):
             contact["profile_pic_url"] = _generate_contact_profile_pic_url(contact["profile_pic_object_name"])
+        contact["is_linked"] = contact.get("linked_user_id") is not None
+        linked_pic_key = contact.pop("linked_user_profile_pic_object_name", None)
+        contact["linked_user_profile_pic_url"] = _generate_contact_profile_pic_url(linked_pic_key or "")
 
     return jsonify(contacts)

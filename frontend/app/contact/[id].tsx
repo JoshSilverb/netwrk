@@ -101,7 +101,7 @@ export default function ContactPage() {
   };
 
   const editContact = () => {
-    router.push({ pathname: '/(tabs)/add', params: { id } });
+    router.push({ pathname: '/(tabs)/add', params: { id, isLinked: contact.is_linked ? '1' : '0' } });
   };
 
   if (isError) {
@@ -129,33 +129,56 @@ export default function ContactPage() {
           <Loader loading={isLoading}>
             {/* Hero header */}
             <View style={styles.heroBackground} />
-            <YStack alignItems="center" paddingTop={SPACING.xl} paddingBottom={SPACING.lg} gap={SPACING.sm}>
-              <Avatar circular size="$12">
-                {contact.profile_pic_url ? (
-                  <Avatar.Image accessibilityLabel={contact.fullname} src={contact.profile_pic_url} />
-                ) : (
-                  <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">
-                    <UserIcon size={28} color="$gray9" />
-                  </Avatar.Fallback>
-                )}
-              </Avatar>
+            {(() => {
+              const isLinked = contact.is_linked;
+              const displayName = isLinked ? (contact.linked_user_fullname ?? contact.fullname) : contact.fullname;
+              const displayLocation = isLinked ? (contact.linked_user_location ?? contact.location) : contact.location;
+              const displayPicUrl = isLinked
+                ? (contact.linked_user_profile_pic_url || contact.profile_pic_url)
+                : contact.profile_pic_url;
 
-              <Text
-                fontSize={TYPOGRAPHY.sizes.title}
-                fontWeight="700"
-                textAlign="center"
-                paddingHorizontal={SPACING.lg}
-              >
-                {contact.fullname}
-              </Text>
+              return (
+                <YStack alignItems="center" paddingTop={SPACING.xl} paddingBottom={SPACING.lg} gap={SPACING.sm}>
+                  <Avatar circular size="$12">
+                    {displayPicUrl ? (
+                      <Avatar.Image accessibilityLabel={displayName} src={displayPicUrl} />
+                    ) : (
+                      <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">
+                        <UserIcon size={28} color="$gray9" />
+                      </Avatar.Fallback>
+                    )}
+                  </Avatar>
 
-              {contact.location ? (
-                <XStack alignItems="center" gap={4}>
-                  <MapPin size={13} color={TEAL} />
-                  <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray10">{contact.location}</Text>
-                </XStack>
-              ) : null}
-            </YStack>
+                  <Text
+                    fontSize={TYPOGRAPHY.sizes.title}
+                    fontWeight="700"
+                    textAlign="center"
+                    paddingHorizontal={SPACING.lg}
+                  >
+                    {displayName}
+                  </Text>
+
+                  {isLinked && contact.linked_user_username ? (
+                    <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray9">
+                      @{contact.linked_user_username}
+                    </Text>
+                  ) : null}
+
+                  {isLinked ? (
+                    <View style={styles.netwrkBadge}>
+                      <Text style={styles.netwrkBadgeText}>Netwrk profile</Text>
+                    </View>
+                  ) : null}
+
+                  {displayLocation ? (
+                    <XStack alignItems="center" gap={4}>
+                      <MapPin size={13} color={TEAL} />
+                      <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray10">{displayLocation}</Text>
+                    </XStack>
+                  ) : null}
+                </YStack>
+              );
+            })()}
 
             {/* How you met */}
             <SectionCard label="How you met">
@@ -164,6 +187,15 @@ export default function ContactPage() {
                 {contact.metthrough || 'No information provided'}
               </Text>
             </SectionCard>
+
+            {/* Profile bio (linked contacts only) */}
+            {contact.is_linked && contact.linked_user_bio ? (
+              <SectionCard label="Profile bio">
+                <Text fontSize={TYPOGRAPHY.sizes.sm} color="$color">
+                  {contact.linked_user_bio}
+                </Text>
+              </SectionCard>
+            ) : null}
 
             {/* Notes */}
             <SectionCard label="Notes">
@@ -309,5 +341,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: TEAL,
     fontWeight: '500',
+  },
+  netwrkBadge: {
+    backgroundColor: 'rgba(20, 184, 166, 0.12)',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: 'rgba(20, 184, 166, 0.3)',
+  },
+  netwrkBadgeText: {
+    fontSize: 11,
+    color: TEAL,
+    fontWeight: '600',
   },
 });

@@ -21,7 +21,7 @@ def validate_user_credentials():
         user_token = db_accessor.validate_user_credentials_and_regenerate_token(username=username, password=password)
     except NameError as e:
         return jsonify({"error": "Invalid username or password"}), 401
-    
+
     return jsonify({"user_token": user_token}), 200
 
 
@@ -35,7 +35,7 @@ def generate_upload_url():
 
     if not db_accessor.validate_token(user_token):
         return jsonify({"message": "Invalid user token"}), 401
-    
+
     s3_object_key = uuid.uuid4().hex.strip()
 
     presigned_url = awsutils.getSignedS3ObjectURL(s3_object_key, awsutils.S3ObjectMethods.UPLOAD, filetype)

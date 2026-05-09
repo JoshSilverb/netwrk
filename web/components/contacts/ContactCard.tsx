@@ -16,17 +16,18 @@ export function ContactCard({ contact, onClick }: ContactCardProps) {
     >
       {/* Avatar */}
       <div className="flex-shrink-0">
-        {contact.profile_pic_url ? (
-          <img
-            src={contact.profile_pic_url}
-            alt={contact.fullname}
-            className="h-12 w-12 rounded-full object-cover bg-slate-200"
-          />
-        ) : (
-          <div className="h-12 w-12 rounded-full bg-slate-200 flex items-center justify-center">
-            <User className="h-5 w-5 text-slate-400" />
-          </div>
-        )}
+        {(() => {
+          const pic = contact.is_linked
+            ? (contact.linked_user_profile_pic_url || contact.profile_pic_url)
+            : contact.profile_pic_url;
+          return pic ? (
+            <img src={pic} alt={contact.fullname} className="h-12 w-12 rounded-full object-cover bg-slate-200" />
+          ) : (
+            <div className="h-12 w-12 rounded-full bg-slate-200 flex items-center justify-center">
+              <User className="h-5 w-5 text-slate-400" />
+            </div>
+          );
+        })()}
       </div>
 
       {/* Name + bio */}

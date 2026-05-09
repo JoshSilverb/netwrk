@@ -36,10 +36,10 @@ const ProfileCard = ({
                     backgroundColor={pressed ? '$gray2' : '$background'}
                 >
                     <Avatar circular size="$4">
-                        {contact.profile_pic_url ? (
+                        {(contact.is_linked ? (contact.linked_user_profile_pic_url || contact.profile_pic_url) : contact.profile_pic_url) ? (
                             <Avatar.Image
                                 accessibilityLabel={contact.fullname}
-                                src={contact.profile_pic_url}
+                                src={(contact.is_linked ? (contact.linked_user_profile_pic_url || contact.profile_pic_url) : contact.profile_pic_url)!}
                             />
                         ) : (
                             <Avatar.Fallback backgroundColor="$color3" alignItems="center" justifyContent="center">

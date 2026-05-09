@@ -32,9 +32,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { X, Check, User, Plus } from 'lucide-react';
+import { X, Check, User, Plus, Lock } from 'lucide-react';
 import { LocationAutocomplete } from '@/components/ui/location-autocomplete';
 import { TagAutocomplete } from '@/components/ui/tag-autocomplete';
+import { cn } from '@/lib/utils';
 
 const PLATFORM_OPTIONS = ['email', 'phone', 'instagram', 'linkedin', 'twitter', 'other'];
 
@@ -77,6 +78,14 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
   // Fetch full contact details so tags/socials are always complete
   const { data: fullContact } = useContact(open ? (contact?.contact_id ?? null) : null);
   const resolved = fullContact ?? contact;
+
+  const isLinked = resolved?.is_linked ?? false;
+  // For linked contacts, use the linked user's data for display
+  const displayName     = isLinked ? (resolved?.linked_user_fullname ?? resolved?.fullname) : resolved?.fullname;
+  const displayLocation = isLinked ? (resolved?.linked_user_location ?? resolved?.location) : resolved?.location;
+  const displayPicUrl   = isLinked
+    ? (resolved?.linked_user_profile_pic_url || resolved?.profile_pic_url)
+    : resolved?.profile_pic_url;
 
   function buildForm(c: Contact): EditForm {
     return {
@@ -157,18 +166,32 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
           <div className="flex flex-col h-full overflow-y-auto p-6 space-y-4">
             <h2 className="text-base font-semibold text-slate-800 mb-2">Edit contact</h2>
 
+            {isLinked && (
+              <div className="rounded-md bg-teal-50 border border-teal-200 px-3 py-2 text-xs text-teal-800">
+                Some fields are managed by this user&apos;s Netwrk profile and cannot be edited.
+              </div>
+            )}
+
             <EditField label="Name">
-              <Input
-                value={form.fullname}
-                onChange={(e) => setForm((f) => f && { ...f, fullname: e.target.value })}
-              />
+              {isLinked ? (
+                <LockedInput value={form.fullname} />
+              ) : (
+                <Input
+                  value={form.fullname}
+                  onChange={(e) => setForm((f) => f && { ...f, fullname: e.target.value })}
+                />
+              )}
             </EditField>
 
             <EditField label="Location">
-              <LocationAutocomplete
-                value={form.location}
-                onChange={(v) => setForm((f) => f && { ...f, location: v })}
-              />
+              {isLinked ? (
+                <LockedInput value={displayLocation ?? ''} />
+              ) : (
+                <LocationAutocomplete
+                  value={form.location}
+                  onChange={(v) => setForm((f) => f && { ...f, location: v })}
+                />
+              )}
             </EditField>
 
             <EditField label="How you met">
@@ -278,10 +301,10 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
           <>
             {/* Avatar + name */}
             <div className="flex flex-col items-center pt-10 pb-6 px-6">
-              {resolved.profile_pic_url ? (
+              {displayPicUrl ? (
                 <img
-                  src={resolved.profile_pic_url}
-                  alt={resolved.fullname}
+                  src={displayPicUrl}
+                  alt={displayName ?? ''}
                   className="h-32 w-32 rounded-full object-cover bg-slate-200 border-2 border-slate-300"
                 />
               ) : (
@@ -289,13 +312,24 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
                   <User className="h-12 w-12 text-slate-400" />
                 </div>
               )}
-              <h2 className="mt-4 text-2xl font-bold text-slate-900 text-center">{resolved.fullname}</h2>
+              <h2 className="mt-4 text-2xl font-bold text-slate-900 text-center">{displayName}</h2>
+              {isLinked && (
+                <div className="mt-1 flex flex-col items-center gap-1">
+                  <span className="text-sm text-slate-500">@{resolved.linked_user_username}</span>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                    Netwrk profile
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Info rows */}
             <div className="flex-1 overflow-y-auto px-6 space-y-5">
-              <InfoRow label="Location" value={resolved.location} />
+              <InfoRow label="Location" value={displayLocation} />
               <InfoRow label="How you met" value={resolved.metthrough} />
+              {isLinked && resolved.linked_user_bio && (
+                <InfoRow label="Profile bio" value={resolved.linked_user_bio} />
+              )}
               <InfoRow label="Notes" value={resolved.userbio} />
 
               <div>
@@ -355,9 +389,9 @@ export function ContactSheet({ contact, open, onOpenChange }: ContactSheetProps)
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Delete {resolved.fullname}?</AlertDialogTitle>
+                    <AlertDialogTitle>Delete {displayName}?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This will permanently remove {resolved.fullname} from your contacts. This cannot be undone.
+                      This will permanently remove {displayName} from your contacts. This cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -390,6 +424,15 @@ function EditField({ label, children }: { label: string; children: React.ReactNo
     <div className="space-y-1">
       <Label className="text-xs text-slate-500 uppercase tracking-wide">{label}</Label>
       {children}
+    </div>
+  );
+}
+
+function LockedInput({ value }: { value: string }) {
+  return (
+    <div className="flex items-center gap-2 opacity-60">
+      <Input value={value} disabled className="cursor-not-allowed bg-slate-100" />
+      <Lock className="h-4 w-4 text-slate-400 flex-shrink-0" />
     </div>
   );
 }
