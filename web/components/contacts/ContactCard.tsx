@@ -33,14 +33,23 @@ export function ContactCard({ contact, onClick }: ContactCardProps) {
       {/* Name + bio */}
       <div className="flex-1 min-w-0">
         <p className="font-semibold text-slate-900 text-base leading-snug">{contact.fullname}</p>
-        {contact.userbio && (
-          <p className="text-sm text-slate-500 mt-0.5 line-clamp-1">{contact.userbio}</p>
-        )}
+        {(() => {
+          const displayBio = contact.userbio || (contact.is_linked ? contact.linked_user_bio : null);
+          const isProfileBio = contact.is_linked && !contact.userbio && !!contact.linked_user_bio;
+          return displayBio ? (
+            <p className="text-sm text-slate-500 mt-0.5 line-clamp-1 flex items-center gap-1.5">
+              {isProfileBio && <span className="inline-block w-1.5 h-1.5 rounded-full bg-teal-400 flex-shrink-0" />}
+              {displayBio}
+            </p>
+          ) : null;
+        })()}
       </div>
 
       {/* Location */}
-      {contact.location && (
-        <p className="flex-shrink-0 text-sm text-slate-500 ml-4">{contact.location}</p>
+      {(contact.is_linked ? (contact.linked_user_location || contact.location) : contact.location) && (
+        <p className="flex-shrink-0 text-sm text-slate-500 ml-4">
+          {contact.is_linked ? (contact.linked_user_location || contact.location) : contact.location}
+        </p>
       )}
     </div>
   );

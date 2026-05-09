@@ -2,7 +2,7 @@ import React from 'react';
 import { Contact } from '@/constants/Definitions';
 import { useRouter } from 'expo-router';
 import { User as UserIcon } from '@tamagui/lucide-icons';
-import { Avatar, XStack, YStack, SizableText } from 'tamagui';
+import { Avatar, XStack, YStack, SizableText, View } from 'tamagui';
 import { Pressable } from 'react-native';
 import { SPACING, TYPOGRAPHY } from '@/constants/Styles';
 
@@ -17,8 +17,10 @@ const ProfileCard = ({
         router.push(`/contact/${contact.contact_id}`);
     };
 
-    const subtitle = contact.userbio
-        ? contact.userbio
+    const displayBio = contact.userbio || (contact.is_linked ? contact.linked_user_bio : null);
+    const isProfileBio = contact.is_linked && !contact.userbio && !!contact.linked_user_bio;
+    const subtitle = displayBio
+        ? displayBio
         : contact.lastcontact
         ? `Last: ${contact.lastcontact}`
         : '';
@@ -58,17 +60,29 @@ const ProfileCard = ({
                         </SizableText>
 
                         {subtitle ? (
-                            <SizableText
-                                fontSize={TYPOGRAPHY.sizes.sm}
-                                color="$gray10"
-                                numberOfLines={1}
-                            >
-                                {subtitle}
-                            </SizableText>
+                            <XStack alignItems="center" gap={5}>
+                                {isProfileBio && (
+                                    <View
+                                        width={6}
+                                        height={6}
+                                        borderRadius={3}
+                                        backgroundColor="#14B8A6"
+                                        flexShrink={0}
+                                    />
+                                )}
+                                <SizableText
+                                    fontSize={TYPOGRAPHY.sizes.sm}
+                                    color="$gray10"
+                                    numberOfLines={1}
+                                    flex={1}
+                                >
+                                    {subtitle}
+                                </SizableText>
+                            </XStack>
                         ) : null}
                     </YStack>
 
-                    {contact.location ? (
+                    {(contact.is_linked ? (contact.linked_user_location || contact.location) : contact.location) ? (
                         <SizableText
                             fontSize={TYPOGRAPHY.sizes.xs}
                             color="$gray9"
@@ -76,7 +90,7 @@ const ProfileCard = ({
                             maxWidth={100}
                             textAlign="right"
                         >
-                            {contact.location}
+                            {contact.is_linked ? (contact.linked_user_location || contact.location) : contact.location}
                         </SizableText>
                     ) : null}
                 </XStack>

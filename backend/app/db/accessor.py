@@ -654,6 +654,8 @@ def _build_base_query_no_search(user_token, lower_bound_date, upper_bound_date, 
             Contact.profile_pic_object_name,
             Contact.linked_user_id,
             LinkedUser.profile_pic_object_name.label("linked_user_profile_pic_object_name"),
+            LinkedUser.location.label("linked_user_location"),
+            LinkedUser.bio.label("linked_user_bio"),
         )
         .join(User, Contact.user_id == User.user_id)
         .outerjoin(LinkedUser, Contact.linked_user_id == LinkedUser.user_id)
@@ -682,6 +684,8 @@ def _build_relevance_query(user_token, embedding_string, lower_bound_date, upper
             Contact.profile_pic_object_name,
             Contact.linked_user_id,
             LinkedUser.profile_pic_object_name.label("linked_user_profile_pic_object_name"),
+            LinkedUser.location.label("linked_user_location"),
+            LinkedUser.bio.label("linked_user_bio"),
         )
         .join(User, Contact.user_id == User.user_id)
         .outerjoin(LinkedUser, Contact.linked_user_id == LinkedUser.user_id)
@@ -760,6 +764,8 @@ def _build_semantic_filtered_query(
             Contact.profile_pic_object_name,
             Contact.linked_user_id,
             LinkedUser.profile_pic_object_name.label("linked_user_profile_pic_object_name"),
+            LinkedUser.location.label("linked_user_location"),
+            LinkedUser.bio.label("linked_user_bio"),
         )
         .join(similar_contacts_cte, Contact.contact_id == similar_contacts_cte.c.contact_id)
         .outerjoin(LinkedUser, Contact.linked_user_id == LinkedUser.user_id)
