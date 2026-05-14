@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
-import { Users, MapPin, Plus, User } from '@tamagui/lucide-icons';
+import { Image, Pressable, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { MapPin, Plus, User } from '@tamagui/lucide-icons';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
@@ -17,6 +17,48 @@ function HeaderAccountButton() {
     </Link>
   );
 }
+
+function LogoCenterTab({ onPress, accessibilityState }: any) {
+  const isActive = accessibilityState?.selected;
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.centerTabWrapper} activeOpacity={0.8}>
+      <View style={[styles.centerCircle, { borderColor: isActive ? '#FFFFFF' : '#475569' }]}>
+        <Image
+          source={require('../../assets/images/netwrk-icon-square.png')}
+          style={styles.logoImage}
+          resizeMode="cover"
+        />
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+const styles = StyleSheet.create({
+  centerTabWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 8,
+  },
+  centerCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 3,
+    overflow: 'hidden',
+    marginBottom: 4,
+    marginTop: -24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
+  },
+});
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -46,7 +88,7 @@ export default function TabLayout() {
         name="contacts"
         options={{
           title: 'Contacts',
-          tabBarIcon: ({ color }) => <Users size={24} color={color} />,
+          tabBarButton: (props) => <LogoCenterTab {...props} />,
           headerRight: () => <HeaderAccountButton />,
         }}
       />
