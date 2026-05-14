@@ -19,8 +19,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex flex-col h-screen overflow-hidden bg-slate-50">
       {/* Top navbar */}
       <header className="flex-shrink-0 bg-slate-900 flex items-center px-6 py-0 h-16">
-        <Link href="/contacts" className="text-xl font-bold tracking-tight text-white flex-1 hover:text-teal-400 transition-colors">
-          Netwrk
+        <Link href="/contacts" className="flex items-center gap-2.5 flex-1 group">
+          <img
+            src="/netwrk-icon-square.png"
+            alt="Netwrk logo"
+            className="h-15 w-15 rounded-full"
+          />
+          <span className="text-xl font-bold tracking-tight text-white group-hover:text-teal-400 transition-colors">
+            Netwrk
+          </span>
         </Link>
 
         <nav className="flex items-center gap-1 mr-3">
