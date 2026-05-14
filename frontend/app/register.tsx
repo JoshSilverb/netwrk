@@ -133,7 +133,7 @@ export default function CreateAccountScreen() {
           </YStack>
           <YStack paddingHorizontal={SPACING.md} paddingBottom={SPACING.md}>
             <Input
-              placeholder="janesmith"
+              placeholder="Username"
               value={username}
               onChangeText={setUsername}
               size="$4"

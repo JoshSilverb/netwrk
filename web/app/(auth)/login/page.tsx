@@ -49,7 +49,7 @@ export default function LoginPage() {
               <Input
                 id="username"
                 type="text"
-                placeholder="janesmith"
+                placeholder="Username"
                 autoCapitalize="none"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
