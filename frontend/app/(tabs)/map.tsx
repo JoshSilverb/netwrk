@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import MapView, { Marker } from 'react-native-maps';
 import { YStack, XStack, View, Avatar, SizableText } from 'tamagui';
-import { StyleSheet, ScrollView, Pressable, Image, Animated, Dimensions, Text } from 'react-native';
+import { StyleSheet, ScrollView, Pressable, Image, Animated, Dimensions, Text, View as RNView, Platform } from 'react-native';
 import { User as UserIcon } from '@tamagui/lucide-icons';
 import { useRouter } from 'expo-router';
 import { searchContactsURL } from '@/constants/Apis';
@@ -18,6 +18,70 @@ const NAVY_SURFACE = '#1E293B';
 const NAVY_BORDER = '#334155';
 const TEAL = '#14B8A6';
 const SLATE_MUTED = '#94A3B8';
+
+function ContactMarker({
+  location,
+  locContacts,
+  isActive,
+  onPress,
+}: {
+  location: string;
+  locContacts: any[];
+  isActive: boolean;
+  onPress: () => void;
+}) {
+  const [tracksViews, setTracksViews] = useState(true);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') {
+      setTracksViews(isActive);
+      return;
+    }
+    setTracksViews(true);
+    const t = setTimeout(() => setTracksViews(false), 500);
+    return () => clearTimeout(t);
+  }, [isActive]);
+
+  const coord = parseCoordinate(locContacts[0].coordinate);
+  if (!coord) return null;
+
+  const profilePicUrl = locContacts.length === 1
+    ? (locContacts[0].is_linked
+        ? (locContacts[0].linked_user_profile_pic_url || locContacts[0].profile_pic_url)
+        : locContacts[0].profile_pic_url)
+    : null;
+
+  const freezeOnAndroid = () => { if (Platform.OS === 'android') setTracksViews(false); };
+
+  return (
+    <Marker
+      coordinate={coord}
+      onPress={onPress}
+      anchor={{ x: 0.5, y: 1 }}
+      tracksViewChanges={tracksViews}
+    >
+      <RNView collapsable={false} style={{ alignItems: 'center', width: 40, height: 44, justifyContent: 'flex-start' }}>
+        <RNView collapsable={false} style={[styles.markerCircle, isActive ? styles.markerActive : styles.markerInactive]}>
+          {locContacts.length > 1 ? (
+            <Text style={styles.markerCount}>{locContacts.length}</Text>
+          ) : profilePicUrl ? (
+            <Image
+              source={{ uri: profilePicUrl }}
+              style={isActive ? styles.markerAvatarActive : styles.markerAvatarInactive}
+              onLoad={freezeOnAndroid}
+              onError={freezeOnAndroid}
+            />
+          ) : Platform.OS === 'ios' ? (
+            <UserIcon size={isActive ? 16 : 12} color="#fff" />
+          ) : (
+            <Text style={{ color: '#fff', fontSize: isActive ? 13 : 10, fontWeight: '700' }}>{'●'}</Text>
+          )}
+        </RNView>
+        <RNView style={[styles.pinTail, { borderTopColor: isActive ? TEAL : '#334155' }]} />
+      </RNView>
+    </Marker>
+  );
+}
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const PANEL_EXPANDED_HEIGHT = Math.round(SCREEN_HEIGHT * 0.55);
@@ -123,49 +187,23 @@ export default function MapScreen() {
         onPress={collapsePanel}
       >
         {/* Contact markers — one per unique location */}
-        {Array.from(contactsByLocation.entries()).map(([location, locContacts]) => {
-          const coord = parseCoordinate(locContacts[0].coordinate);
-          if (!coord) return null;
-          const isActive = location === activeLocation;
-
-          return (
-            <Marker
-              key={location}
-              coordinate={coord}
-              onPress={(e) => { e.stopPropagation(); expandPanel(location); }}
-              anchor={{ x: 0.5, y: 1 }}
-              tracksViewChanges={isActive}
-            >
-              <View style={{ alignItems: 'center', width: 40, height: 44, justifyContent: 'flex-start' }}>
-                <View style={[
-                  styles.markerCircle,
-                  isActive ? styles.markerActive : styles.markerInactive,
-                ]}>
-                  {locContacts.length > 1 ? (
-                    <Text style={styles.markerCount}>{locContacts.length}</Text>
-                  ) : (locContacts[0].is_linked ? (locContacts[0].linked_user_profile_pic_url || locContacts[0].profile_pic_url) : locContacts[0].profile_pic_url) ? (
-                    <Image
-                      source={{ uri: (locContacts[0].is_linked ? (locContacts[0].linked_user_profile_pic_url || locContacts[0].profile_pic_url) : locContacts[0].profile_pic_url)! }}
-                      style={isActive ? styles.markerAvatarActive : styles.markerAvatarInactive}
-                    />
-                  ) : (
-                    <UserIcon size={isActive ? 16 : 12} color="#fff" />
-                  )}
-                </View>
-                {/* Pin tail */}
-                <View style={[styles.pinTail, { borderTopColor: isActive ? TEAL : '#334155' }]} />
-              </View>
-            </Marker>
-          );
-        })}
+        {Array.from(contactsByLocation.entries()).map(([location, locContacts]) => (
+          <ContactMarker
+            key={location}
+            location={location}
+            locContacts={locContacts}
+            isActive={location === activeLocation}
+            onPress={() => expandPanel(location)}
+          />
+        ))}
 
         {/* User location dot */}
         {userLocation && (
           <Marker coordinate={userLocation} anchor={{ x: 0.5, y: 0.5 }} flat zIndex={1000} tracksViewChanges={false}>
-            <View style={{ alignItems: 'center', justifyContent: 'center', width: 44, height: 44 }}>
-              <View style={styles.userLocationOuter} />
-              <View style={styles.userLocationInner} />
-            </View>
+            <RNView collapsable={false} style={{ alignItems: 'center', justifyContent: 'center', width: 44, height: 44 }}>
+              <RNView style={styles.userLocationOuter} />
+              <RNView style={styles.userLocationInner} />
+            </RNView>
           </Marker>
         )}
       </MapView>
