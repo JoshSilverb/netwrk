@@ -10,13 +10,6 @@ import { ImportSheet } from '@/components/contacts/ImportSheet';
 import { useContacts, useTags } from '@/hooks/useContacts';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Contact } from '@/types';
 import { Search, Upload, X, ChevronDown } from 'lucide-react';
 import { Popover } from '@base-ui/react/popover';
@@ -58,7 +51,9 @@ function ContactsInner() {
   }, []);
 
   const searchMode: 'Name' | 'Semantic' =
-    searchInput.trim().split(/\s+/).filter(Boolean).length <= 2 ? 'Name' : 'Semantic';
+    sort === 'RELEVANCE' || searchInput.trim().split(/\s+/).filter(Boolean).length > 2
+      ? 'Semantic'
+      : 'Name';
 
   const effectiveSort = searchMode === 'Semantic' ? 'RELEVANCE' : sort;
 
@@ -128,22 +123,22 @@ function ContactsInner() {
         <aside className="w-60 flex-shrink-0 border-r border-slate-200 bg-slate-100 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-6">
             {/* Sort by */}
-            <div className="space-y-2">
-              <p className="text-sm font-semibold text-slate-700">Sort by</p>
-              <Select value={sort} onValueChange={(v) => updateParam('sort', v ?? '')}>
-                <SelectTrigger className="w-full bg-white">
-                  <SelectValue>
-                    {SORT_OPTIONS.find((o) => o.value === sort)?.label}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {SORT_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Sort by</p>
+              {SORT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => updateParam('sort', opt.value)}
+                  className={cn(
+                    'w-full text-left px-2.5 py-1.5 rounded-md text-sm transition-colors',
+                    sort === opt.value
+                      ? 'bg-slate-800 text-white font-medium'
+                      : 'text-slate-600 hover:bg-slate-200'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
 
             {/* Last contacted */}
