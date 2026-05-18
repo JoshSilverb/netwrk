@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import ContactsList from '@/components/ContactsList'
 import { ScrollView, YStack, Input, Button, XStack, Sheet, Text, View } from 'tamagui';
 import { Loader } from '@/components/Loader';
 import { searchContactsURL, getTagsForUserURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
-import { Keyboard, Pressable, RefreshControl } from 'react-native';
+import { Keyboard, Pressable, RefreshControl, ScrollView as RNScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ChevronDown } from '@tamagui/lucide-icons';
 import { getCurrentLocation } from '@/utils/locationutil';
@@ -40,8 +40,21 @@ export default function ContactsScreen() {
     const [filterStateLoaded, setFilterStateLoaded] = useState(false);
 
     const [filterSheetOpen, setFilterSheetOpen] = useState(false);
-    const [sortExpanded, setSortExpanded] = useState(false);
+    const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
     const [tagSearch, setTagSearch] = useState('');
+
+    const [debouncedQuery, setDebouncedQuery] = useState('');
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleSearchChange = useCallback((text: string) => {
+        setSearchQuery(text);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => setDebouncedQuery(text), 350);
+    }, []);
+
+    useEffect(() => {
+        return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    }, []);
 
     // Load saved filter state once on mount
     useEffect(() => {
@@ -51,6 +64,7 @@ export default function ContactsScreen() {
                 if (savedState) {
                     const parsed = JSON.parse(savedState);
                     setSearchQuery(parsed.searchQuery || '');
+                    setDebouncedQuery(parsed.searchQuery || '');
                     setSelectedTags(parsed.selectedTags || []);
                     setSelectedSortOption(parsed.selectedSortOption || sortOptions[0].value);
                     setDateLowerBound(parsed.dateLowerBound ? new Date(parsed.dateLowerBound) : new Date(0));
@@ -84,9 +98,15 @@ export default function ContactsScreen() {
         saveFilterState();
     }, [searchQuery, selectedTags, selectedSortOption, dateLowerBound, dateUpperBound, filterStateLoaded]);
 
+    const searchMode: 'Name' | 'Semantic' =
+        searchQuery.trim().split(/\s+/).filter(Boolean).length <= 2 ? 'Name' : 'Semantic';
+
+    const effectiveSortOption =
+        searchMode === 'Semantic' ? 'RELEVANCE' : selectedSortOption;
+
     const filterParams = {
-        query_string: searchQuery,
-        order_by: selectedSortOption,
+        query_string: searchMode === 'Semantic' ? debouncedQuery : '',
+        order_by: effectiveSortOption,
         tags: selectedTags,
         lower_bound_date: formatDateForAPI(dateLowerBound),
         upper_bound_date: formatDateForAPI(dateUpperBound),
@@ -108,6 +128,13 @@ export default function ContactsScreen() {
         },
         enabled: filterStateLoaded,
     });
+
+    const displayedContacts =
+        searchMode === 'Name' && searchQuery.trim()
+            ? contacts.filter((c: any) =>
+                c.fullname?.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+            : contacts;
 
     const { data: tags = [] } = useQuery({
         queryKey: queryKeys.tags(),
@@ -139,8 +166,7 @@ export default function ContactsScreen() {
     const activeFilterCount =
         (selectedTags.length > 0 ? 1 : 0) +
         (!isDateUnset(dateLowerBound) ? 1 : 0) +
-        (!isDateToday(dateUpperBound) ? 1 : 0) +
-        (selectedSortOption !== sortOptions[0].value ? 1 : 0);
+        (!isDateToday(dateUpperBound) ? 1 : 0);
 
     return (
         <View style={CONTAINER_STYLES.screen} backgroundColor="$background">
@@ -149,44 +175,245 @@ export default function ContactsScreen() {
                 contentInsetAdjustmentBehavior="automatic"
             >
                 <YStack>
-                    {/* Search Bar Row */}
+                    {/* Row 1: Search bar + Filters button */}
                     <XStack
                         alignItems="center"
                         space={SPACING.sm}
-                        width="100%"
-                        padding={SPACING.md}
+                        paddingHorizontal={SPACING.md}
+                        paddingTop={SPACING.md}
+                        paddingBottom={SPACING.xs}
                     >
+                        <XStack
+                            flex={1}
+                            alignItems="center"
+                            borderWidth={1}
+                            borderColor={searchQuery.length > 0 ? '$blue7' : '$borderColor'}
+                            borderRadius={BORDER_RADIUS.md}
+                            backgroundColor="$background"
+                            paddingRight={SPACING.xs}
+                        >
+                            <Input
+                                size="$3"
+                                flex={1}
+                                placeholder="Search or describe a contact…"
+                                value={searchQuery}
+                                onChangeText={handleSearchChange}
+                                onSubmitEditing={() => Keyboard.dismiss()}
+                                returnKeyType="search"
+                                borderWidth={0}
+                                backgroundColor="transparent"
+                            />
+                            {searchQuery.length > 0 && (
+                                <View
+                                    paddingHorizontal={SPACING.sm}
+                                    paddingVertical={2}
+                                    marginRight={SPACING.xs}
+                                    borderRadius={99}
+                                    backgroundColor={searchMode === 'Semantic' ? '$blue3' : '$gray3'}
+                                >
+                                    <Text
+                                        fontSize={TYPOGRAPHY.sizes.xs}
+                                        color={searchMode === 'Semantic' ? '$blue11' : '$gray10'}
+                                        fontWeight={TYPOGRAPHY.weights.medium}
+                                    >
+                                        {searchMode}
+                                    </Text>
+                                </View>
+                            )}
+                        </XStack>
+
                         <Button
                             size="$3"
-                            onPress={() => setFilterSheetOpen(true)}
+                            onPress={() => {
+                                setSortDropdownOpen(false);
+                                setFilterSheetOpen(true);
+                            }}
                             icon={<Ionicons name="options-outline" size={16} />}
                             variant="outlined"
                             fontSize={TYPOGRAPHY.sizes.sm}
                         >
                             {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : 'Filters'}
                         </Button>
-
-                        <XStack
-                            flex={1}
-                            alignItems="center"
-                            borderWidth={1}
-                            borderColor="$borderColor"
-                            borderRadius={BORDER_RADIUS.md}
-                            backgroundColor="$background"
-                        >
-                            <Input
-                                size="$3"
-                                flex={1}
-                                placeholder="Search contacts..."
-                                value={searchQuery}
-                                onChangeText={setSearchQuery}
-                                onSubmitEditing={() => Keyboard.dismiss()}
-                                returnKeyType="search"
-                                borderWidth={0}
-                                backgroundColor="transparent"
-                            />
-                        </XStack>
                     </XStack>
+
+                    {/* Row 2: Sort dropdown */}
+                    <XStack
+                        alignItems="center"
+                        space={SPACING.sm}
+                        paddingHorizontal={SPACING.md}
+                        paddingBottom={SPACING.xs}
+                    >
+                        <Text fontSize={TYPOGRAPHY.sizes.xs} color="$gray9">Sort</Text>
+                        <View style={{ position: 'relative' }}>
+                            <Pressable onPress={() => setSortDropdownOpen(v => !v)}>
+                                <XStack
+                                    alignItems="center"
+                                    space={SPACING.xs}
+                                    paddingHorizontal={SPACING.sm}
+                                    paddingVertical={SPACING.xs}
+                                    borderWidth={1}
+                                    borderColor="$borderColor"
+                                    borderRadius={BORDER_RADIUS.md}
+                                    backgroundColor="$background"
+                                >
+                                    <Text fontSize={TYPOGRAPHY.sizes.sm} color="$color">
+                                        {sortOptions.find(o => o.value === effectiveSortOption)?.label}
+                                        {searchMode === 'Semantic' ? ' (auto)' : ''}
+                                    </Text>
+                                    <ChevronDown size={12} color="$gray8" />
+                                </XStack>
+                            </Pressable>
+
+                            {sortDropdownOpen && (
+                                <View
+                                    style={{
+                                        position: 'absolute',
+                                        top: 36,
+                                        left: 0,
+                                        zIndex: 9999,
+                                        width: 220,
+                                        borderRadius: BORDER_RADIUS.md,
+                                        overflow: 'hidden',
+                                        shadowColor: '#000',
+                                        shadowOffset: { width: 0, height: 4 },
+                                        shadowOpacity: 0.12,
+                                        shadowRadius: 8,
+                                        elevation: 8,
+                                    }}
+                                >
+                                    <YStack
+                                        borderWidth={1}
+                                        borderColor="$borderColor"
+                                        borderRadius={BORDER_RADIUS.md}
+                                        backgroundColor="$background"
+                                        overflow="hidden"
+                                    >
+                                        {sortOptions.map((option, index) => (
+                                            <Pressable
+                                                key={option.value}
+                                                onPress={() => {
+                                                    setSelectedSortOption(option.value);
+                                                    setSortDropdownOpen(false);
+                                                }}
+                                            >
+                                                <XStack
+                                                    paddingHorizontal={SPACING.md}
+                                                    paddingVertical={SPACING.sm}
+                                                    alignItems="center"
+                                                    space={SPACING.sm}
+                                                    backgroundColor={selectedSortOption === option.value ? '$blue2' : 'transparent'}
+                                                    borderBottomWidth={index < sortOptions.length - 1 ? 1 : 0}
+                                                    borderBottomColor="$borderColor"
+                                                >
+                                                    <View
+                                                        width={16} height={16} borderRadius={8} borderWidth={2}
+                                                        borderColor={selectedSortOption === option.value ? '$blue9' : '$gray7'}
+                                                        backgroundColor={selectedSortOption === option.value ? '$blue9' : 'transparent'}
+                                                        alignItems="center" justifyContent="center"
+                                                    >
+                                                        {selectedSortOption === option.value && (
+                                                            <View width={6} height={6} borderRadius={3} backgroundColor="white" />
+                                                        )}
+                                                    </View>
+                                                    <Text
+                                                        fontSize={TYPOGRAPHY.sizes.sm}
+                                                        color={selectedSortOption === option.value ? '$blue11' : '$color'}
+                                                        fontWeight={selectedSortOption === option.value ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}
+                                                    >
+                                                        {option.label}
+                                                    </Text>
+                                                </XStack>
+                                            </Pressable>
+                                        ))}
+                                    </YStack>
+                                </View>
+                            )}
+                        </View>
+                    </XStack>
+
+                    {/* Row 3: Filter chips */}
+                    <RNScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={{
+                            paddingHorizontal: SPACING.md,
+                            paddingBottom: SPACING.sm,
+                            gap: SPACING.xs,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                        }}
+                    >
+                        {/* Overdue chip */}
+                        {(() => {
+                            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+                            const isActive = !isDateToday(dateUpperBound) &&
+                                dateUpperBound.getTime() <= thirtyDaysAgo.getTime() + 1000 * 60 * 60 * 24;
+                            return (
+                                <Pressable onPress={() => isActive
+                                    ? setDateUpperBound(new Date(Date.now()))
+                                    : setDateUpperBound(thirtyDaysAgo)
+                                }>
+                                    <View
+                                        paddingHorizontal={SPACING.sm} paddingVertical={SPACING.xs}
+                                        borderRadius={99} borderWidth={1}
+                                        borderColor={isActive ? '$blue9' : '$borderColor'}
+                                        backgroundColor={isActive ? '$blue2' : '$background'}
+                                    >
+                                        <Text fontSize={TYPOGRAPHY.sizes.xs}
+                                            color={isActive ? '$blue11' : '$gray11'}
+                                            fontWeight={isActive ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}>
+                                            Overdue
+                                        </Text>
+                                    </View>
+                                </Pressable>
+                            );
+                        })()}
+
+                        {/* Near me chip */}
+                        {(() => {
+                            const isActive = selectedSortOption === 'DISTANCE';
+                            return (
+                                <Pressable onPress={() => isActive
+                                    ? setSelectedSortOption(sortOptions[0].value)
+                                    : setSelectedSortOption('DISTANCE')
+                                }>
+                                    <View
+                                        paddingHorizontal={SPACING.sm} paddingVertical={SPACING.xs}
+                                        borderRadius={99} borderWidth={1}
+                                        borderColor={isActive ? '$blue9' : '$borderColor'}
+                                        backgroundColor={isActive ? '$blue2' : '$background'}
+                                    >
+                                        <Text fontSize={TYPOGRAPHY.sizes.xs}
+                                            color={isActive ? '$blue11' : '$gray11'}
+                                            fontWeight={isActive ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}>
+                                            Near me
+                                        </Text>
+                                    </View>
+                                </Pressable>
+                            );
+                        })()}
+
+                        {/* Top-5 tag shortcuts */}
+                        {tags.slice(0, 5).map((tag: string) => {
+                            const isActive = selectedTags.includes(tag);
+                            return (
+                                <Pressable key={tag} onPress={() => toggleTag(tag)}>
+                                    <View
+                                        paddingHorizontal={SPACING.sm} paddingVertical={SPACING.xs}
+                                        borderRadius={99} borderWidth={1}
+                                        borderColor={isActive ? '$blue9' : '$borderColor'}
+                                        backgroundColor={isActive ? '$blue2' : '$background'}
+                                    >
+                                        <Text fontSize={TYPOGRAPHY.sizes.xs}
+                                            color={isActive ? '$blue11' : '$gray11'}
+                                            fontWeight={isActive ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}>
+                                            {tag}
+                                        </Text>
+                                    </View>
+                                </Pressable>
+                            );
+                        })}
+                    </RNScrollView>
 
                     {/* Unified Filter Sheet */}
                     <Sheet
@@ -206,95 +433,6 @@ export default function ContactsScreen() {
                             <Sheet.Handle backgroundColor="$gray8" />
                             <ScrollView>
                                 <YStack space={SPACING.lg} padding={SPACING.lg}>
-
-                                    {/* Sort by — collapsible dropdown */}
-                                    <YStack space={SPACING.sm}>
-                                        <Text
-                                            fontSize={TYPOGRAPHY.sizes.md}
-                                            fontWeight={TYPOGRAPHY.weights.medium}
-                                            color="$gray11"
-                                        >
-                                            Sort by
-                                        </Text>
-
-                                        <Pressable onPress={() => setSortExpanded(v => !v)}>
-                                            <XStack
-                                                alignItems="center"
-                                                justifyContent="space-between"
-                                                padding={SPACING.sm}
-                                                borderWidth={1}
-                                                borderColor="$borderColor"
-                                                borderRadius={BORDER_RADIUS.md}
-                                                backgroundColor="$gray1"
-                                            >
-                                                <Text fontSize={TYPOGRAPHY.sizes.sm} color="$gray11">
-                                                    {sortOptions.find(o => o.value === selectedSortOption)?.label}
-                                                </Text>
-                                                <ChevronDown
-                                                    size={16}
-                                                    color="$gray8"
-                                                    style={{ transform: [{ rotate: sortExpanded ? '180deg' : '0deg' }] }}
-                                                />
-                                            </XStack>
-                                        </Pressable>
-
-                                        {sortExpanded && (
-                                            <YStack
-                                                borderWidth={1}
-                                                borderColor="$borderColor"
-                                                borderRadius={BORDER_RADIUS.md}
-                                                backgroundColor="$gray1"
-                                                overflow="hidden"
-                                            >
-                                                {sortOptions.map((option, index) => (
-                                                    <Pressable
-                                                        key={option.value}
-                                                        onPress={() => {
-                                                            setSelectedSortOption(option.value);
-                                                            setSortExpanded(false);
-                                                        }}
-                                                    >
-                                                        <XStack
-                                                            alignItems="center"
-                                                            space={SPACING.sm}
-                                                            paddingHorizontal={SPACING.md}
-                                                            paddingVertical={SPACING.sm}
-                                                            backgroundColor={selectedSortOption === option.value ? '$blue2' : 'transparent'}
-                                                            borderBottomWidth={index < sortOptions.length - 1 ? 1 : 0}
-                                                            borderBottomColor="$borderColor"
-                                                        >
-                                                            <View
-                                                                width={18}
-                                                                height={18}
-                                                                borderRadius={9}
-                                                                borderWidth={2}
-                                                                borderColor={selectedSortOption === option.value ? '$blue9' : '$gray7'}
-                                                                backgroundColor={selectedSortOption === option.value ? '$blue9' : 'transparent'}
-                                                                alignItems="center"
-                                                                justifyContent="center"
-                                                            >
-                                                                {selectedSortOption === option.value && (
-                                                                    <View
-                                                                        width={7}
-                                                                        height={7}
-                                                                        borderRadius={4}
-                                                                        backgroundColor="white"
-                                                                    />
-                                                                )}
-                                                            </View>
-                                                            <Text
-                                                                fontSize={TYPOGRAPHY.sizes.sm}
-                                                                fontWeight={selectedSortOption === option.value ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}
-                                                                color={selectedSortOption === option.value ? '$blue11' : '$color'}
-                                                            >
-                                                                {option.label}
-                                                            </Text>
-                                                        </XStack>
-                                                    </Pressable>
-                                                ))}
-                                            </YStack>
-                                        )}
-                                    </YStack>
 
                                     {/* Filter by tags — search + capped chip area */}
                                     {tags.length > 0 && (
@@ -470,7 +608,7 @@ export default function ContactsScreen() {
                                     Could not load contacts
                                 </Text>
                             ) : null}
-                            <ContactsList contacts={contacts} prefix="searchlist" />
+                            <ContactsList contacts={displayedContacts} prefix="searchlist" />
                         </Loader>
                     </View>
                 </YStack>

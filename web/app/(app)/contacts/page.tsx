@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import { ContactCard } from '@/components/contacts/ContactCard';
@@ -18,7 +18,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Contact } from '@/types';
-import { Search, Upload } from 'lucide-react';
+import { Search, Upload, X, ChevronDown } from 'lucide-react';
+import { Popover } from '@base-ui/react/popover';
 import { cn } from '@/lib/utils';
 
 const SORT_OPTIONS = [
@@ -43,22 +44,40 @@ function ContactsInner() {
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [importSheetOpen, setImportSheetOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [tagSearch, setTagSearch] = useState('');
   const [afterDate, setAfterDate] = useState('');
   const [beforeDate, setBeforeDate] = useState('');
+  const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
+  const [tagPopoverSearch, setTagPopoverSearch] = useState('');
+
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchParamsRef = useRef(searchParams);
+  useEffect(() => { searchParamsRef.current = searchParams; }, [searchParams]);
+  useEffect(() => {
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, []);
+
+  const searchMode: 'Name' | 'Semantic' =
+    searchInput.trim().split(/\s+/).filter(Boolean).length <= 2 ? 'Name' : 'Semantic';
+
+  const effectiveSort = searchMode === 'Semantic' ? 'RELEVANCE' : sort;
 
   const { data: contacts, isLoading } = useContacts({
-    q: q || undefined,
-    sort,
+    q: searchMode === 'Semantic' ? (q || undefined) : undefined,
+    sort: effectiveSort,
     tags: selectedTags.length > 0 ? selectedTags : undefined,
     afterDate: afterDate || undefined,
     beforeDate: beforeDate || undefined,
   });
 
+  const displayedContacts =
+    searchMode === 'Name' && searchInput.trim()
+      ? (contacts ?? []).filter((c) =>
+          c.fullname.toLowerCase().includes(searchInput.toLowerCase())
+        )
+      : (contacts ?? []);
+
   const { data: allTags } = useTags();
-  const filteredTags = (allTags ?? []).filter((t) =>
-    t.toLowerCase().includes(tagSearch.toLowerCase())
-  );
 
   function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -70,10 +89,26 @@ function ContactsInner() {
     router.replace(`/contacts?${params.toString()}`);
   }
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    updateParam('q', searchInput);
-  }
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchInput(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const params = new URLSearchParams(searchParamsRef.current.toString());
+      if (value) { params.set('q', value); } else { params.delete('q'); }
+      router.replace(`/contacts?${params.toString()}`);
+    }, 350);
+  }, [router]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
 
   function toggleTag(tag: string) {
     setSelectedTags((prev) =>
@@ -111,35 +146,6 @@ function ContactsInner() {
               </Select>
             </div>
 
-            {/* Tags */}
-            <div className="space-y-2">
-              <p className="text-sm font-semibold text-slate-700">Tags</p>
-              <Input
-                placeholder="Search tags…"
-                value={tagSearch}
-                onChange={(e) => setTagSearch(e.target.value)}
-                className="bg-white text-xs h-8"
-              />
-              {filteredTags.length > 0 && (
-                <div className="max-h-48 overflow-y-auto flex flex-wrap gap-1.5 py-1">
-                  {filteredTags.map((tag) => (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={cn(
-                        'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors',
-                        selectedTags.includes(tag)
-                          ? 'bg-teal-600 text-white border-teal-600'
-                          : 'bg-white text-slate-600 border-slate-300 hover:border-teal-400 hover:text-teal-700'
-                      )}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* Last contacted */}
             <div className="space-y-3">
               <p className="text-sm font-semibold text-slate-700">Last contacted</p>
@@ -169,18 +175,35 @@ function ContactsInner() {
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Search + result count + add button */}
           <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-200 bg-white">
-            <form onSubmit={handleSearch} className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
               <Input
+                ref={searchInputRef}
                 placeholder="Search contacts"
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="pl-9 bg-slate-50 border-slate-200"
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className={cn(
+                  'pl-9 bg-slate-50 border-slate-200',
+                  searchInput.length > 0 ? 'pr-20' : 'pr-14'
+                )}
               />
-            </form>
+              {searchInput.length === 0 && (
+                <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-xs text-slate-400 bg-slate-100 border border-slate-200 rounded font-mono pointer-events-none">
+                  ⌘K
+                </kbd>
+              )}
+              {searchInput.length > 0 && (
+                <span className={cn(
+                  'absolute right-3 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded-full text-xs font-medium pointer-events-none',
+                  searchMode === 'Semantic' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'
+                )}>
+                  {searchMode}
+                </span>
+              )}
+            </div>
             {!isLoading && contacts !== undefined && (
               <span className="text-sm text-slate-500 whitespace-nowrap flex-shrink-0">
-                {contacts.length} result{contacts.length !== 1 ? 's' : ''}
+                {displayedContacts.length} result{displayedContacts.length !== 1 ? 's' : ''}
               </span>
             )}
             <Button
@@ -200,6 +223,86 @@ function ContactsInner() {
             </Button>
           </div>
 
+          {/* Active filter chips row */}
+          <div className="flex items-center gap-2 px-6 py-2 border-b border-slate-200 bg-white flex-wrap min-h-[44px]">
+            <Popover.Root open={tagPopoverOpen} onOpenChange={(open) => {
+              setTagPopoverOpen(open);
+              if (!open) setTagPopoverSearch('');
+            }}>
+              <Popover.Trigger className={cn(
+                'inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer',
+                selectedTags.length > 0 || tagPopoverOpen
+                  ? 'bg-teal-50 border-teal-400 text-teal-700'
+                  : 'bg-white border-slate-300 text-slate-500 hover:border-teal-400 hover:text-teal-700'
+              )}>
+                + Tag <ChevronDown className="h-3 w-3" />
+              </Popover.Trigger>
+              <Popover.Portal>
+                <Popover.Positioner side="bottom" align="start" sideOffset={4}>
+                  <Popover.Popup className="z-50 w-60 rounded-lg border border-slate-200 bg-white shadow-lg p-2 space-y-2 outline-none">
+                    <input
+                      autoFocus
+                      placeholder="Search tags…"
+                      value={tagPopoverSearch}
+                      onChange={(e) => setTagPopoverSearch(e.target.value)}
+                      className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-md outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    />
+                    <div className="max-h-48 overflow-y-auto flex flex-wrap gap-1.5 py-1">
+                      {(allTags ?? [])
+                        .filter(t => t.toLowerCase().includes(tagPopoverSearch.toLowerCase()))
+                        .map(tag => (
+                          <button
+                            key={tag}
+                            onClick={() => toggleTag(tag)}
+                            className={cn(
+                              'px-2.5 py-1 rounded-full text-xs font-medium border transition-colors',
+                              selectedTags.includes(tag)
+                                ? 'bg-teal-600 text-white border-teal-600'
+                                : 'bg-white text-slate-600 border-slate-300 hover:border-teal-400 hover:text-teal-700'
+                            )}
+                          >
+                            {tag}
+                          </button>
+                        ))
+                      }
+                      {(allTags ?? []).filter(t =>
+                        t.toLowerCase().includes(tagPopoverSearch.toLowerCase())
+                      ).length === 0 && (
+                        <p className="text-xs text-slate-400 py-1 px-1">No tags match</p>
+                      )}
+                    </div>
+                  </Popover.Popup>
+                </Popover.Positioner>
+              </Popover.Portal>
+            </Popover.Root>
+
+            {selectedTags.map(tag => (
+              <span key={tag} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-teal-50 border border-teal-300 text-teal-700">
+                {tag}
+                <button onClick={() => toggleTag(tag)} className="hover:text-teal-900 transition-colors" aria-label={`Remove ${tag} filter`}>
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+
+            {afterDate && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 border border-slate-200 text-slate-600">
+                After {afterDate}
+                <button onClick={() => setAfterDate('')} className="hover:text-slate-900" aria-label="Clear after date">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+            {beforeDate && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 border border-slate-200 text-slate-600">
+                Before {beforeDate}
+                <button onClick={() => setBeforeDate('')} className="hover:text-slate-900" aria-label="Clear before date">
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            )}
+          </div>
+
           {/* Contact list */}
           <div className="flex-1 overflow-auto bg-slate-50">
             {isLoading ? (
@@ -215,14 +318,14 @@ function ContactsInner() {
                   </div>
                 ))}
               </div>
-            ) : contacts?.length === 0 ? (
+            ) : displayedContacts.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-slate-400">
                 <p className="text-base">No contacts found</p>
                 <p className="text-sm mt-1">Add your first contact to get started.</p>
               </div>
             ) : (
               <div>
-                {contacts?.map((contact) => (
+                {displayedContacts.map((contact) => (
                   <ContactCard key={contact.contact_id} contact={contact} onClick={openContact} />
                 ))}
               </div>
