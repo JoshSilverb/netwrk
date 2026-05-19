@@ -147,11 +147,14 @@ export default function ContactsScreen() {
     });
 
     function isDateUnset(date: Date): boolean {
-        return String(date) === String(new Date(0));
+        return date.getTime() === 0;
     }
 
     function isDateToday(date: Date): boolean {
-        return String(date) === String(new Date(Date.now()));
+        const today = new Date();
+        return date.getFullYear() === today.getFullYear() &&
+            date.getMonth() === today.getMonth() &&
+            date.getDate() === today.getDate();
     }
 
     const toggleTag = (tag: string) => {
