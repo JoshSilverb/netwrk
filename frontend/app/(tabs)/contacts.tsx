@@ -239,7 +239,7 @@ export default function ContactsScreen() {
                         </XStack>
                     </XStack>
 
-                    {/* ── Row 2: Sort + Date ── */}
+                    {/* ── Row 2: Sort (full-width) ── */}
                     <XStack
                         alignItems="center"
                         gap={8}
@@ -255,9 +255,10 @@ export default function ContactsScreen() {
                         }}>
                             Sort
                         </Text>
-                        <View style={{ position: 'relative' }}>
-                            <Pressable onPress={() => setSortDropdownOpen(v => !v)}>
+                        <View style={{ position: 'relative', flex: 1 }}>
+                            <Pressable onPress={() => setSortDropdownOpen(v => !v)} style={{ flex: 1 }}>
                                 <XStack
+                                    flex={1}
                                     alignItems="center"
                                     gap={5}
                                     backgroundColor="$background"
@@ -296,8 +297,8 @@ export default function ContactsScreen() {
                                     position: 'absolute',
                                     top: 34,
                                     left: 0,
+                                    right: 0,
                                     zIndex: 9999,
-                                    width: 222,
                                     backgroundColor: '#ffffff',
                                     borderWidth: 1,
                                     borderColor: '#e2e8f0',
@@ -363,27 +364,6 @@ export default function ContactsScreen() {
                             )}
                         </View>
 
-                        {/* Date chip — right-aligned in sort row */}
-                        <View style={{ flex: 1 }} />
-                        <Pressable onPress={() => setDateSheetOpen(true)}>
-                            <XStack alignItems="center" gap={3} style={{
-                                paddingHorizontal: 10, paddingVertical: 5,
-                                borderRadius: 6, borderWidth: 1,
-                                borderColor: hasActiveDates ? '#14B8A6' : '#e2e8f0',
-                                backgroundColor: hasActiveDates ? 'rgba(20,184,166,0.08)' : 'transparent',
-                            }}>
-                                {hasActiveDates && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#14B8A6' }} />}
-                                <Ionicons
-                                    name="calendar-outline"
-                                    size={11}
-                                    color={hasActiveDates ? '#0d9488' : '#94a3b8'}
-                                />
-                                <Text style={{ fontSize: 13, fontWeight: hasActiveDates ? '500' : '400', color: hasActiveDates ? '#0d9488' : '#64748b' }}>
-                                    {hasActiveDates ? 'Date set' : 'Date'}
-                                </Text>
-                                <ChevronDown size={11} color={hasActiveDates ? '#0d9488' : '#94a3b8'} />
-                            </XStack>
-                        </Pressable>
                     </XStack>
 
                     {/* ── Row 3: Filter chips ── */}
@@ -398,53 +378,22 @@ export default function ContactsScreen() {
                             alignItems: 'center',
                         }}
                     >
-                        {/* Overdue preset chip */}
-                        {(() => {
-                            const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-                            const isActive = !isDateToday(dateUpperBound) &&
-                                dateUpperBound.getTime() <= thirtyDaysAgo.getTime() + 1000 * 60 * 60 * 24;
-                            return (
-                                <Pressable onPress={() => isActive
-                                    ? setDateUpperBound(new Date(Date.now()))
-                                    : setDateUpperBound(thirtyDaysAgo)
-                                }>
-                                    <XStack alignItems="center" gap={4} style={{
-                                        paddingHorizontal: 10, paddingVertical: 5,
-                                        borderRadius: 20, borderWidth: 1,
-                                        borderColor: isActive ? 'rgba(20,184,166,0.4)' : '#e2e8f0',
-                                        backgroundColor: isActive ? 'rgba(20,184,166,0.08)' : 'transparent',
-                                    }}>
-                                        {isActive && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#14B8A6' }} />}
-                                        <Text style={{ fontSize: 12, fontWeight: isActive ? '500' : '400', color: isActive ? '#0d9488' : '#64748b' }}>
-                                            Overdue
-                                        </Text>
-                                    </XStack>
-                                </Pressable>
-                            );
-                        })()}
-
-                        {/* Near me preset chip */}
-                        {(() => {
-                            const isActive = selectedSortOption === 'DISTANCE';
-                            return (
-                                <Pressable onPress={() => isActive
-                                    ? setSelectedSortOption(sortOptions[0].value)
-                                    : setSelectedSortOption('DISTANCE')
-                                }>
-                                    <XStack alignItems="center" gap={4} style={{
-                                        paddingHorizontal: 10, paddingVertical: 5,
-                                        borderRadius: 20, borderWidth: 1,
-                                        borderColor: isActive ? 'rgba(20,184,166,0.4)' : '#e2e8f0',
-                                        backgroundColor: isActive ? 'rgba(20,184,166,0.08)' : 'transparent',
-                                    }}>
-                                        {isActive && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#14B8A6' }} />}
-                                        <Text style={{ fontSize: 12, fontWeight: isActive ? '500' : '400', color: isActive ? '#0d9488' : '#64748b' }}>
-                                            Near me
-                                        </Text>
-                                    </XStack>
-                                </Pressable>
-                            );
-                        })()}
+                        {/* Date chip */}
+                        <Pressable onPress={() => setDateSheetOpen(true)}>
+                            <XStack alignItems="center" gap={3} style={{
+                                paddingHorizontal: 10, paddingVertical: 5,
+                                borderRadius: 20, borderWidth: 1,
+                                borderColor: hasActiveDates ? 'rgba(20,184,166,0.4)' : '#e2e8f0',
+                                backgroundColor: hasActiveDates ? 'rgba(20,184,166,0.08)' : 'transparent',
+                            }}>
+                                {hasActiveDates && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#14B8A6' }} />}
+                                <Ionicons name="calendar-outline" size={11} color={hasActiveDates ? '#0d9488' : '#94a3b8'} />
+                                <Text style={{ fontSize: 12, fontWeight: hasActiveDates ? '500' : '400', color: hasActiveDates ? '#0d9488' : '#64748b' }}>
+                                    {hasActiveDates ? 'Date set' : 'Date'}
+                                </Text>
+                                <ChevronDown size={10} color={hasActiveDates ? '#0d9488' : '#94a3b8'} />
+                            </XStack>
+                        </Pressable>
 
                         {/* + Tag chip — opens tag sheet */}
                         <Pressable onPress={() => { setTagSearch(''); setTagSheetOpen(true); }}>
