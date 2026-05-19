@@ -6,7 +6,7 @@ import { searchContactsURL, getTagsForUserURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
 import { Keyboard, Pressable, RefreshControl, ScrollView as RNScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ChevronDown } from '@tamagui/lucide-icons';
+import { ChevronDown, ArrowUpDown } from '@tamagui/lucide-icons';
 import { getCurrentLocation } from '@/utils/locationutil';
 import { SPACING, TYPOGRAPHY, CONTAINER_STYLES, BORDER_RADIUS } from '@/constants/Styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -41,7 +41,7 @@ export default function ContactsScreen() {
 
     const [dateSheetOpen, setDateSheetOpen] = useState(false);
     const [tagSheetOpen, setTagSheetOpen] = useState(false);
-    const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+    const [sortSheetOpen, setSortSheetOpen] = useState(false);
     const [tagSearch, setTagSearch] = useState('');
 
     const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -239,134 +239,7 @@ export default function ContactsScreen() {
                         </XStack>
                     </XStack>
 
-                    {/* ── Row 2: Sort (full-width) ── */}
-                    <XStack
-                        alignItems="center"
-                        gap={8}
-                        paddingHorizontal={SPACING.md}
-                        paddingBottom={8}
-                    >
-                        <Text style={{
-                            fontSize: 10,
-                            letterSpacing: 1.4,
-                            textTransform: 'uppercase',
-                            fontWeight: '600',
-                            color: '#94a3b8',
-                        }}>
-                            Sort
-                        </Text>
-                        <View style={{ position: 'relative', flex: 1 }}>
-                            <Pressable onPress={() => setSortDropdownOpen(v => !v)} style={{ flex: 1 }}>
-                                <XStack
-                                    flex={1}
-                                    alignItems="center"
-                                    gap={5}
-                                    backgroundColor="$background"
-                                    style={{
-                                        paddingHorizontal: 10,
-                                        paddingVertical: 5,
-                                        borderWidth: 1,
-                                        borderRadius: 6,
-                                        borderColor: sortDropdownOpen ? '#14B8A6' : '#e2e8f0',
-                                    }}
-                                >
-                                    <Text style={{ fontSize: 13, fontWeight: '500', color: '#0F172A' }}>
-                                        {sortOptions.find(o => o.value === effectiveSortOption)?.label}
-                                    </Text>
-                                    {searchMode === 'Semantic' && effectiveSortOption === 'RELEVANCE' && (
-                                        <Text style={{
-                                            fontSize: 8,
-                                            letterSpacing: 0.8,
-                                            textTransform: 'uppercase',
-                                            fontWeight: '600',
-                                            color: '#14B8A6',
-                                        }}>
-                                            auto
-                                        </Text>
-                                    )}
-                                    <ChevronDown
-                                        size={11}
-                                        color={sortDropdownOpen ? '#14B8A6' : '#94a3b8'}
-                                    />
-                                </XStack>
-                            </Pressable>
-
-                            {/* Sort flyout — white panel, app colors */}
-                            {sortDropdownOpen && (
-                                <View style={{
-                                    position: 'absolute',
-                                    top: 34,
-                                    left: 0,
-                                    right: 0,
-                                    zIndex: 9999,
-                                    backgroundColor: '#ffffff',
-                                    borderWidth: 1,
-                                    borderColor: '#e2e8f0',
-                                    borderRadius: 10,
-                                    shadowColor: '#0F172A',
-                                    shadowOffset: { width: 0, height: 4 },
-                                    shadowOpacity: 0.10,
-                                    shadowRadius: 12,
-                                    elevation: 12,
-                                    overflow: 'hidden',
-                                }}>
-                                    {sortOptions.map((option, index) => (
-                                        <Pressable
-                                            key={option.value}
-                                            onPress={() => {
-                                                setSelectedSortOption(option.value);
-                                                setSortDropdownOpen(false);
-                                            }}
-                                        >
-                                            <XStack
-                                                alignItems="center"
-                                                gap={10}
-                                                style={{
-                                                    paddingHorizontal: 14,
-                                                    paddingVertical: 11,
-                                                    backgroundColor: selectedSortOption === option.value
-                                                        ? 'rgba(20,184,166,0.07)'
-                                                        : 'transparent',
-                                                    borderBottomWidth: index < sortOptions.length - 1 ? 1 : 0,
-                                                    borderBottomColor: '#f1f5f9',
-                                                }}
-                                            >
-                                                <View style={{
-                                                    width: 14, height: 14, borderRadius: 7,
-                                                    borderWidth: 1.5,
-                                                    borderColor: selectedSortOption === option.value
-                                                        ? '#14B8A6' : '#cbd5e1',
-                                                    backgroundColor: selectedSortOption === option.value
-                                                        ? '#14B8A6' : 'transparent',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                }}>
-                                                    {selectedSortOption === option.value && (
-                                                        <View style={{
-                                                            width: 5, height: 5,
-                                                            borderRadius: 2.5,
-                                                            backgroundColor: '#ffffff',
-                                                        }} />
-                                                    )}
-                                                </View>
-                                                <Text style={{
-                                                    fontSize: 13,
-                                                    fontWeight: selectedSortOption === option.value ? '500' : '400',
-                                                    color: selectedSortOption === option.value
-                                                        ? '#0F172A' : '#64748b',
-                                                }}>
-                                                    {option.label}
-                                                </Text>
-                                            </XStack>
-                                        </Pressable>
-                                    ))}
-                                </View>
-                            )}
-                        </View>
-
-                    </XStack>
-
-                    {/* ── Row 3: Filter chips ── */}
+                    {/* ── Row 2: Sort + filter chips ── */}
                     <RNScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
@@ -378,6 +251,26 @@ export default function ContactsScreen() {
                             alignItems: 'center',
                         }}
                     >
+                        {/* Sort pill — navy filled, always present */}
+                        <Pressable onPress={() => setSortSheetOpen(true)}>
+                            <XStack alignItems="center" gap={5} style={{
+                                paddingHorizontal: 11, paddingVertical: 5,
+                                borderRadius: 20,
+                                backgroundColor: '#0F172A',
+                            }}>
+                                <ArrowUpDown size={11} color="#ffffff" />
+                                <Text style={{ fontSize: 12, fontWeight: '500', color: '#ffffff' }}>
+                                    {sortOptions.find(o => o.value === effectiveSortOption)?.label}
+                                </Text>
+                                {searchMode === 'Semantic' && effectiveSortOption === 'RELEVANCE' && (
+                                    <Text style={{ fontSize: 8, letterSpacing: 0.8, textTransform: 'uppercase', fontWeight: '700', color: 'rgba(255,255,255,0.6)' }}>
+                                        auto
+                                    </Text>
+                                )}
+                                <ChevronDown size={10} color="rgba(255,255,255,0.7)" />
+                            </XStack>
+                        </Pressable>
+
                         {/* Date chip */}
                         <Pressable onPress={() => setDateSheetOpen(true)}>
                             <XStack alignItems="center" gap={3} style={{
@@ -553,6 +446,57 @@ export default function ContactsScreen() {
                                         </View>
                                     </Pressable>
                                 </XStack>
+                            </YStack>
+                        </Sheet.Frame>
+                    </Sheet>
+
+                    {/* ── Sort Sheet ── */}
+                    <Sheet
+                        modal
+                        open={sortSheetOpen}
+                        onOpenChange={setSortSheetOpen}
+                        dismissOnOverlayPress
+                        snapPoints={[45]}
+                        zIndex={100000}
+                    >
+                        <Sheet.Overlay animation="lazy" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} />
+                        <Sheet.Frame backgroundColor="$background" padding="$2" flex={1}>
+                            <Sheet.Handle backgroundColor="$gray6" />
+                            <YStack gap={12} padding={SPACING.lg}>
+                                <Text style={{ fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: '600', color: '#94a3b8' }}>
+                                    Sort by
+                                </Text>
+                                {sortOptions.map((option) => (
+                                    <Pressable key={option.value} onPress={() => {
+                                        setSelectedSortOption(option.value);
+                                        setSortSheetOpen(false);
+                                    }}>
+                                        <XStack alignItems="center" gap={12} style={{
+                                            paddingVertical: 10,
+                                            borderBottomWidth: 1,
+                                            borderBottomColor: '#f1f5f9',
+                                        }}>
+                                            <View style={{
+                                                width: 16, height: 16, borderRadius: 8,
+                                                borderWidth: 1.5,
+                                                borderColor: selectedSortOption === option.value ? '#14B8A6' : '#cbd5e1',
+                                                backgroundColor: selectedSortOption === option.value ? '#14B8A6' : 'transparent',
+                                                alignItems: 'center', justifyContent: 'center',
+                                            }}>
+                                                {selectedSortOption === option.value && (
+                                                    <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#ffffff' }} />
+                                                )}
+                                            </View>
+                                            <Text style={{
+                                                fontSize: 14,
+                                                fontWeight: selectedSortOption === option.value ? '500' : '400',
+                                                color: selectedSortOption === option.value ? '#0F172A' : '#64748b',
+                                            }}>
+                                                {option.label}
+                                            </Text>
+                                        </XStack>
+                                    </Pressable>
+                                ))}
                             </YStack>
                         </Sheet.Frame>
                     </Sheet>
