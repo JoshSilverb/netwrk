@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import ContactsList from '@/components/ContactsList'
-import { ScrollView, YStack, Input, Button, XStack, Sheet, Text, View } from 'tamagui';
+import { ScrollView, YStack, Input, XStack, Sheet, Text, View } from 'tamagui';
 import { Loader } from '@/components/Loader';
 import { searchContactsURL, getTagsForUserURL } from '@/constants/Apis';
 import { useAuth } from '@/components/AuthContext';
@@ -39,7 +39,8 @@ export default function ContactsScreen() {
     const [dateUpperBound, setDateUpperBound] = useState(new Date(Date.now()));
     const [filterStateLoaded, setFilterStateLoaded] = useState(false);
 
-    const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+    const [dateSheetOpen, setDateSheetOpen] = useState(false);
+    const [tagSheetOpen, setTagSheetOpen] = useState(false);
     const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
     const [tagSearch, setTagSearch] = useState('');
 
@@ -163,10 +164,7 @@ export default function ContactsScreen() {
         t.toLowerCase().includes(tagSearch.toLowerCase())
     );
 
-    const activeFilterCount =
-        (selectedTags.length > 0 ? 1 : 0) +
-        (!isDateUnset(dateLowerBound) ? 1 : 0) +
-        (!isDateToday(dateUpperBound) ? 1 : 0);
+    const hasActiveDates = !isDateUnset(dateLowerBound) || !isDateToday(dateUpperBound);
 
     return (
         <View style={CONTAINER_STYLES.screen} backgroundColor="$background">
@@ -175,26 +173,36 @@ export default function ContactsScreen() {
                 contentInsetAdjustmentBehavior="automatic"
             >
                 <YStack>
-                    {/* Row 1: Search bar + Filters button */}
+                    {/* ── Row 1: Full-width search bar ── */}
                     <XStack
-                        alignItems="center"
-                        space={SPACING.sm}
                         paddingHorizontal={SPACING.md}
-                        paddingTop={SPACING.md}
-                        paddingBottom={SPACING.xs}
+                        paddingTop={14}
+                        paddingBottom={6}
                     >
                         <XStack
                             flex={1}
                             alignItems="center"
-                            borderWidth={1}
-                            borderColor={searchQuery.length > 0 ? '$blue7' : '$borderColor'}
-                            borderRadius={BORDER_RADIUS.md}
                             backgroundColor="$background"
-                            paddingRight={SPACING.xs}
+                            style={{
+                                borderWidth: 1,
+                                borderColor: searchQuery.length > 0 ? '#14B8A6' : '#e2e8f0',
+                                borderRadius: 10,
+                                shadowColor: '#14B8A6',
+                                shadowOffset: { width: 0, height: 0 },
+                                shadowOpacity: searchQuery.length > 0 ? 0.15 : 0,
+                                shadowRadius: 6,
+                            }}
                         >
+                            <View style={{ paddingLeft: 10 }}>
+                                <Ionicons
+                                    name="search-outline"
+                                    size={15}
+                                    color={searchQuery.length > 0 ? '#14B8A6' : '#94a3b8'}
+                                />
+                            </View>
                             <Input
-                                size="$3"
                                 flex={1}
+                                size="$3"
                                 placeholder="Search or describe a contact…"
                                 value={searchQuery}
                                 onChangeText={handleSearchChange}
@@ -204,146 +212,193 @@ export default function ContactsScreen() {
                                 backgroundColor="transparent"
                             />
                             {searchQuery.length > 0 && (
-                                <View
-                                    paddingHorizontal={SPACING.sm}
-                                    paddingVertical={2}
-                                    marginRight={SPACING.xs}
-                                    borderRadius={99}
-                                    backgroundColor={searchMode === 'Semantic' ? '$blue3' : '$gray3'}
-                                >
-                                    <Text
-                                        fontSize={TYPOGRAPHY.sizes.xs}
-                                        color={searchMode === 'Semantic' ? '$blue11' : '$gray10'}
-                                        fontWeight={TYPOGRAPHY.weights.medium}
-                                    >
+                                <View style={{
+                                    marginRight: 8,
+                                    paddingHorizontal: 7,
+                                    paddingVertical: 3,
+                                    borderRadius: 4,
+                                    borderWidth: 1,
+                                    backgroundColor: searchMode === 'Semantic'
+                                        ? 'rgba(20,184,166,0.08)'
+                                        : 'rgba(15,23,42,0.06)',
+                                    borderColor: searchMode === 'Semantic'
+                                        ? 'rgba(20,184,166,0.3)'
+                                        : 'rgba(15,23,42,0.15)',
+                                }}>
+                                    <Text style={{
+                                        fontSize: 9,
+                                        letterSpacing: 1.2,
+                                        textTransform: 'uppercase',
+                                        fontWeight: '600',
+                                        color: searchMode === 'Semantic' ? '#14B8A6' : '#0F172A',
+                                    }}>
                                         {searchMode}
                                     </Text>
                                 </View>
                             )}
                         </XStack>
-
-                        <Button
-                            size="$3"
-                            onPress={() => {
-                                setSortDropdownOpen(false);
-                                setFilterSheetOpen(true);
-                            }}
-                            icon={<Ionicons name="options-outline" size={16} />}
-                            variant="outlined"
-                            fontSize={TYPOGRAPHY.sizes.sm}
-                        >
-                            {activeFilterCount > 0 ? `Filters (${activeFilterCount})` : 'Filters'}
-                        </Button>
                     </XStack>
 
-                    {/* Row 2: Sort dropdown */}
+                    {/* ── Row 2: Sort + Date ── */}
                     <XStack
                         alignItems="center"
-                        space={SPACING.sm}
+                        gap={8}
                         paddingHorizontal={SPACING.md}
-                        paddingBottom={SPACING.xs}
+                        paddingBottom={8}
                     >
-                        <Text fontSize={TYPOGRAPHY.sizes.xs} color="$gray9">Sort</Text>
+                        <Text style={{
+                            fontSize: 10,
+                            letterSpacing: 1.4,
+                            textTransform: 'uppercase',
+                            fontWeight: '600',
+                            color: '#94a3b8',
+                        }}>
+                            Sort
+                        </Text>
                         <View style={{ position: 'relative' }}>
                             <Pressable onPress={() => setSortDropdownOpen(v => !v)}>
                                 <XStack
                                     alignItems="center"
-                                    space={SPACING.xs}
-                                    paddingHorizontal={SPACING.sm}
-                                    paddingVertical={SPACING.xs}
-                                    borderWidth={1}
-                                    borderColor="$borderColor"
-                                    borderRadius={BORDER_RADIUS.md}
+                                    gap={5}
                                     backgroundColor="$background"
+                                    style={{
+                                        paddingHorizontal: 10,
+                                        paddingVertical: 5,
+                                        borderWidth: 1,
+                                        borderRadius: 6,
+                                        borderColor: sortDropdownOpen ? '#14B8A6' : '#e2e8f0',
+                                    }}
                                 >
-                                    <Text fontSize={TYPOGRAPHY.sizes.sm} color="$color">
+                                    <Text style={{ fontSize: 13, fontWeight: '500', color: '#0F172A' }}>
                                         {sortOptions.find(o => o.value === effectiveSortOption)?.label}
-                                        {searchMode === 'Semantic' ? ' (auto)' : ''}
                                     </Text>
-                                    <ChevronDown size={12} color="$gray8" />
+                                    {searchMode === 'Semantic' && effectiveSortOption === 'RELEVANCE' && (
+                                        <Text style={{
+                                            fontSize: 8,
+                                            letterSpacing: 0.8,
+                                            textTransform: 'uppercase',
+                                            fontWeight: '600',
+                                            color: '#14B8A6',
+                                        }}>
+                                            auto
+                                        </Text>
+                                    )}
+                                    <ChevronDown
+                                        size={11}
+                                        color={sortDropdownOpen ? '#14B8A6' : '#94a3b8'}
+                                    />
                                 </XStack>
                             </Pressable>
 
+                            {/* Sort flyout — white panel, app colors */}
                             {sortDropdownOpen && (
-                                <View
-                                    style={{
-                                        position: 'absolute',
-                                        top: 36,
-                                        left: 0,
-                                        zIndex: 9999,
-                                        width: 220,
-                                        borderRadius: BORDER_RADIUS.md,
-                                        overflow: 'hidden',
-                                        shadowColor: '#000',
-                                        shadowOffset: { width: 0, height: 4 },
-                                        shadowOpacity: 0.12,
-                                        shadowRadius: 8,
-                                        elevation: 8,
-                                    }}
-                                >
-                                    <YStack
-                                        borderWidth={1}
-                                        borderColor="$borderColor"
-                                        borderRadius={BORDER_RADIUS.md}
-                                        backgroundColor="$background"
-                                        overflow="hidden"
-                                    >
-                                        {sortOptions.map((option, index) => (
-                                            <Pressable
-                                                key={option.value}
-                                                onPress={() => {
-                                                    setSelectedSortOption(option.value);
-                                                    setSortDropdownOpen(false);
+                                <View style={{
+                                    position: 'absolute',
+                                    top: 34,
+                                    left: 0,
+                                    zIndex: 9999,
+                                    width: 222,
+                                    backgroundColor: '#ffffff',
+                                    borderWidth: 1,
+                                    borderColor: '#e2e8f0',
+                                    borderRadius: 10,
+                                    shadowColor: '#0F172A',
+                                    shadowOffset: { width: 0, height: 4 },
+                                    shadowOpacity: 0.10,
+                                    shadowRadius: 12,
+                                    elevation: 12,
+                                    overflow: 'hidden',
+                                }}>
+                                    {sortOptions.map((option, index) => (
+                                        <Pressable
+                                            key={option.value}
+                                            onPress={() => {
+                                                setSelectedSortOption(option.value);
+                                                setSortDropdownOpen(false);
+                                            }}
+                                        >
+                                            <XStack
+                                                alignItems="center"
+                                                gap={10}
+                                                style={{
+                                                    paddingHorizontal: 14,
+                                                    paddingVertical: 11,
+                                                    backgroundColor: selectedSortOption === option.value
+                                                        ? 'rgba(20,184,166,0.07)'
+                                                        : 'transparent',
+                                                    borderBottomWidth: index < sortOptions.length - 1 ? 1 : 0,
+                                                    borderBottomColor: '#f1f5f9',
                                                 }}
                                             >
-                                                <XStack
-                                                    paddingHorizontal={SPACING.md}
-                                                    paddingVertical={SPACING.sm}
-                                                    alignItems="center"
-                                                    space={SPACING.sm}
-                                                    backgroundColor={selectedSortOption === option.value ? '$blue2' : 'transparent'}
-                                                    borderBottomWidth={index < sortOptions.length - 1 ? 1 : 0}
-                                                    borderBottomColor="$borderColor"
-                                                >
-                                                    <View
-                                                        width={16} height={16} borderRadius={8} borderWidth={2}
-                                                        borderColor={selectedSortOption === option.value ? '$blue9' : '$gray7'}
-                                                        backgroundColor={selectedSortOption === option.value ? '$blue9' : 'transparent'}
-                                                        alignItems="center" justifyContent="center"
-                                                    >
-                                                        {selectedSortOption === option.value && (
-                                                            <View width={6} height={6} borderRadius={3} backgroundColor="white" />
-                                                        )}
-                                                    </View>
-                                                    <Text
-                                                        fontSize={TYPOGRAPHY.sizes.sm}
-                                                        color={selectedSortOption === option.value ? '$blue11' : '$color'}
-                                                        fontWeight={selectedSortOption === option.value ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}
-                                                    >
-                                                        {option.label}
-                                                    </Text>
-                                                </XStack>
-                                            </Pressable>
-                                        ))}
-                                    </YStack>
+                                                <View style={{
+                                                    width: 14, height: 14, borderRadius: 7,
+                                                    borderWidth: 1.5,
+                                                    borderColor: selectedSortOption === option.value
+                                                        ? '#14B8A6' : '#cbd5e1',
+                                                    backgroundColor: selectedSortOption === option.value
+                                                        ? '#14B8A6' : 'transparent',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                }}>
+                                                    {selectedSortOption === option.value && (
+                                                        <View style={{
+                                                            width: 5, height: 5,
+                                                            borderRadius: 2.5,
+                                                            backgroundColor: '#ffffff',
+                                                        }} />
+                                                    )}
+                                                </View>
+                                                <Text style={{
+                                                    fontSize: 13,
+                                                    fontWeight: selectedSortOption === option.value ? '500' : '400',
+                                                    color: selectedSortOption === option.value
+                                                        ? '#0F172A' : '#64748b',
+                                                }}>
+                                                    {option.label}
+                                                </Text>
+                                            </XStack>
+                                        </Pressable>
+                                    ))}
                                 </View>
                             )}
                         </View>
+
+                        {/* Date chip — right-aligned in sort row */}
+                        <View style={{ flex: 1 }} />
+                        <Pressable onPress={() => setDateSheetOpen(true)}>
+                            <XStack alignItems="center" gap={3} style={{
+                                paddingHorizontal: 10, paddingVertical: 5,
+                                borderRadius: 6, borderWidth: 1,
+                                borderColor: hasActiveDates ? '#14B8A6' : '#e2e8f0',
+                                backgroundColor: hasActiveDates ? 'rgba(20,184,166,0.08)' : 'transparent',
+                            }}>
+                                {hasActiveDates && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#14B8A6' }} />}
+                                <Ionicons
+                                    name="calendar-outline"
+                                    size={11}
+                                    color={hasActiveDates ? '#0d9488' : '#94a3b8'}
+                                />
+                                <Text style={{ fontSize: 13, fontWeight: hasActiveDates ? '500' : '400', color: hasActiveDates ? '#0d9488' : '#64748b' }}>
+                                    {hasActiveDates ? 'Date set' : 'Date'}
+                                </Text>
+                                <ChevronDown size={11} color={hasActiveDates ? '#0d9488' : '#94a3b8'} />
+                            </XStack>
+                        </Pressable>
                     </XStack>
 
-                    {/* Row 3: Filter chips */}
+                    {/* ── Row 3: Filter chips ── */}
                     <RNScrollView
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={{
                             paddingHorizontal: SPACING.md,
-                            paddingBottom: SPACING.sm,
-                            gap: SPACING.xs,
+                            paddingBottom: 10,
+                            gap: 6,
                             flexDirection: 'row',
                             alignItems: 'center',
                         }}
                     >
-                        {/* Overdue chip */}
+                        {/* Overdue preset chip */}
                         {(() => {
                             const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
                             const isActive = !isDateToday(dateUpperBound) &&
@@ -353,23 +408,22 @@ export default function ContactsScreen() {
                                     ? setDateUpperBound(new Date(Date.now()))
                                     : setDateUpperBound(thirtyDaysAgo)
                                 }>
-                                    <View
-                                        paddingHorizontal={SPACING.sm} paddingVertical={SPACING.xs}
-                                        borderRadius={99} borderWidth={1}
-                                        borderColor={isActive ? '$blue9' : '$borderColor'}
-                                        backgroundColor={isActive ? '$blue2' : '$background'}
-                                    >
-                                        <Text fontSize={TYPOGRAPHY.sizes.xs}
-                                            color={isActive ? '$blue11' : '$gray11'}
-                                            fontWeight={isActive ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}>
+                                    <XStack alignItems="center" gap={4} style={{
+                                        paddingHorizontal: 10, paddingVertical: 5,
+                                        borderRadius: 20, borderWidth: 1,
+                                        borderColor: isActive ? 'rgba(20,184,166,0.4)' : '#e2e8f0',
+                                        backgroundColor: isActive ? 'rgba(20,184,166,0.08)' : 'transparent',
+                                    }}>
+                                        {isActive && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#14B8A6' }} />}
+                                        <Text style={{ fontSize: 12, fontWeight: isActive ? '500' : '400', color: isActive ? '#0d9488' : '#64748b' }}>
                                             Overdue
                                         </Text>
-                                    </View>
+                                    </XStack>
                                 </Pressable>
                             );
                         })()}
 
-                        {/* Near me chip */}
+                        {/* Near me preset chip */}
                         {(() => {
                             const isActive = selectedSortOption === 'DISTANCE';
                             return (
@@ -377,227 +431,180 @@ export default function ContactsScreen() {
                                     ? setSelectedSortOption(sortOptions[0].value)
                                     : setSelectedSortOption('DISTANCE')
                                 }>
-                                    <View
-                                        paddingHorizontal={SPACING.sm} paddingVertical={SPACING.xs}
-                                        borderRadius={99} borderWidth={1}
-                                        borderColor={isActive ? '$blue9' : '$borderColor'}
-                                        backgroundColor={isActive ? '$blue2' : '$background'}
-                                    >
-                                        <Text fontSize={TYPOGRAPHY.sizes.xs}
-                                            color={isActive ? '$blue11' : '$gray11'}
-                                            fontWeight={isActive ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}>
+                                    <XStack alignItems="center" gap={4} style={{
+                                        paddingHorizontal: 10, paddingVertical: 5,
+                                        borderRadius: 20, borderWidth: 1,
+                                        borderColor: isActive ? 'rgba(20,184,166,0.4)' : '#e2e8f0',
+                                        backgroundColor: isActive ? 'rgba(20,184,166,0.08)' : 'transparent',
+                                    }}>
+                                        {isActive && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#14B8A6' }} />}
+                                        <Text style={{ fontSize: 12, fontWeight: isActive ? '500' : '400', color: isActive ? '#0d9488' : '#64748b' }}>
                                             Near me
                                         </Text>
-                                    </View>
+                                    </XStack>
                                 </Pressable>
                             );
                         })()}
 
-                        {/* Top-5 tag shortcuts */}
-                        {tags.slice(0, 5).map((tag: string) => {
-                            const isActive = selectedTags.includes(tag);
-                            return (
-                                <Pressable key={tag} onPress={() => toggleTag(tag)}>
-                                    <View
-                                        paddingHorizontal={SPACING.sm} paddingVertical={SPACING.xs}
-                                        borderRadius={99} borderWidth={1}
-                                        borderColor={isActive ? '$blue9' : '$borderColor'}
-                                        backgroundColor={isActive ? '$blue2' : '$background'}
-                                    >
-                                        <Text fontSize={TYPOGRAPHY.sizes.xs}
-                                            color={isActive ? '$blue11' : '$gray11'}
-                                            fontWeight={isActive ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}>
-                                            {tag}
-                                        </Text>
-                                    </View>
-                                </Pressable>
-                            );
-                        })}
+                        {/* + Tag chip — opens tag sheet */}
+                        <Pressable onPress={() => { setTagSearch(''); setTagSheetOpen(true); }}>
+                            <XStack alignItems="center" gap={3} style={{
+                                paddingHorizontal: 10, paddingVertical: 5,
+                                borderRadius: 20, borderWidth: 1,
+                                borderColor: selectedTags.length > 0 ? 'rgba(20,184,166,0.4)' : '#e2e8f0',
+                                backgroundColor: selectedTags.length > 0 ? 'rgba(20,184,166,0.08)' : 'transparent',
+                            }}>
+                                {selectedTags.length > 0 && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#14B8A6' }} />}
+                                <Text style={{ fontSize: 12, fontWeight: selectedTags.length > 0 ? '500' : '400', color: selectedTags.length > 0 ? '#0d9488' : '#64748b' }}>
+                                    {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : '+ Tag'}
+                                </Text>
+                                <ChevronDown size={10} color={selectedTags.length > 0 ? '#0d9488' : '#94a3b8'} />
+                            </XStack>
+                        </Pressable>
+
+                        {/* Active tag dismissal chips */}
+                        {selectedTags.map((tag: string) => (
+                            <Pressable key={tag} onPress={() => toggleTag(tag)}>
+                                <XStack alignItems="center" gap={4} style={{
+                                    paddingHorizontal: 10, paddingVertical: 5,
+                                    borderRadius: 20, borderWidth: 1,
+                                    borderColor: 'rgba(20,184,166,0.4)',
+                                    backgroundColor: 'rgba(20,184,166,0.08)',
+                                }}>
+                                    <Text style={{ fontSize: 12, fontWeight: '500', color: '#0d9488' }}>{tag}</Text>
+                                    <Ionicons name="close" size={11} color="#0d9488" />
+                                </XStack>
+                            </Pressable>
+                        ))}
                     </RNScrollView>
 
-                    {/* Unified Filter Sheet */}
+                    {/* ── Tag Sheet ── */}
                     <Sheet
                         modal
-                        open={filterSheetOpen}
-                        onOpenChange={setFilterSheetOpen}
+                        open={tagSheetOpen}
+                        onOpenChange={setTagSheetOpen}
                         dismissOnOverlayPress
-                        snapPoints={[75]}
+                        snapPoints={[55]}
                         zIndex={100000}
                     >
-                        <Sheet.Overlay
-                            animation="lazy"
-                            enterStyle={{ opacity: 0 }}
-                            exitStyle={{ opacity: 0 }}
-                        />
+                        <Sheet.Overlay animation="lazy" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} />
                         <Sheet.Frame backgroundColor="$background" padding="$2" flex={1}>
-                            <Sheet.Handle backgroundColor="$gray8" />
-                            <ScrollView>
-                                <YStack space={SPACING.lg} padding={SPACING.lg}>
-
-                                    {/* Filter by tags — search + capped chip area */}
-                                    {tags.length > 0 && (
-                                        <YStack space={SPACING.sm}>
-                                            <XStack justifyContent="space-between" alignItems="center">
-                                                <Text
-                                                    fontSize={TYPOGRAPHY.sizes.md}
-                                                    fontWeight={TYPOGRAPHY.weights.medium}
-                                                    color="$gray11"
-                                                >
-                                                    Filter by tags
-                                                </Text>
-                                                {selectedTags.length > 0 && (
-                                                    <Button
-                                                        size="$2"
-                                                        variant="outlined"
-                                                        onPress={() => setSelectedTags([])}
-                                                        borderRadius={BORDER_RADIUS.md}
-                                                    >
-                                                        Clear
-                                                    </Button>
-                                                )}
-                                            </XStack>
-                                            <YStack
-                                                borderWidth={1}
-                                                borderColor="$borderColor"
-                                                borderRadius={BORDER_RADIUS.md}
-                                                backgroundColor="$gray1"
-                                                overflow="hidden"
-                                            >
-                                                <Input
-                                                    size="$3"
-                                                    placeholder="Search tags..."
-                                                    value={tagSearch}
-                                                    onChangeText={setTagSearch}
-                                                    borderWidth={0}
-                                                    borderBottomWidth={1}
-                                                    borderBottomColor="$borderColor"
-                                                    borderRadius={0}
-                                                    backgroundColor="transparent"
-                                                />
-                                                <ScrollView
-                                                    style={{ maxHeight: 108 }}
-                                                    nestedScrollEnabled
-                                                >
-                                                    <XStack
-                                                        flexWrap="wrap"
-                                                        gap={SPACING.xs}
-                                                        padding={SPACING.sm}
-                                                    >
-                                                        {filteredTags.map((tag: string) => (
-                                                            <Pressable key={tag} onPress={() => toggleTag(tag)}>
-                                                                <View
-                                                                    paddingHorizontal={SPACING.sm}
-                                                                    paddingVertical={SPACING.xs}
-                                                                    borderRadius={99}
-                                                                    borderWidth={1}
-                                                                    borderColor={selectedTags.includes(tag) ? '$blue9' : '$borderColor'}
-                                                                    backgroundColor={selectedTags.includes(tag) ? '$blue9' : '$background'}
-                                                                >
-                                                                    <Text
-                                                                        fontSize={TYPOGRAPHY.sizes.sm}
-                                                                        color={selectedTags.includes(tag) ? 'white' : '$gray11'}
-                                                                        fontWeight={selectedTags.includes(tag) ? TYPOGRAPHY.weights.medium : TYPOGRAPHY.weights.normal}
-                                                                    >
-                                                                        {tag}
-                                                                    </Text>
-                                                                </View>
-                                                            </Pressable>
-                                                        ))}
-                                                    </XStack>
-                                                </ScrollView>
-                                            </YStack>
-                                        </YStack>
+                            <Sheet.Handle backgroundColor="$gray6" />
+                            <YStack gap={12} padding={SPACING.lg}>
+                                <XStack justifyContent="space-between" alignItems="center">
+                                    <Text style={{ fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: '600', color: '#94a3b8' }}>
+                                        Tags
+                                    </Text>
+                                    {selectedTags.length > 0 && (
+                                        <Pressable onPress={() => setSelectedTags([])}>
+                                            <Text style={{ fontSize: 12, color: '#14B8A6', fontWeight: '500' }}>Clear all</Text>
+                                        </Pressable>
                                     )}
-
-                                    {/* Date range section */}
-                                    <YStack space={SPACING.sm}>
-                                        <Text
-                                            fontSize={TYPOGRAPHY.sizes.md}
-                                            fontWeight={TYPOGRAPHY.weights.medium}
-                                            color="$gray11"
-                                        >
-                                            Last contact date range
-                                        </Text>
-                                        <XStack space={SPACING.md}>
-                                            <YStack space={SPACING.xs} flex={1}>
-                                                <Text
-                                                    fontSize={TYPOGRAPHY.sizes.sm}
-                                                    fontWeight={TYPOGRAPHY.weights.medium}
-                                                    color="$gray10"
-                                                >
-                                                    After
-                                                </Text>
-                                                <DatePickerModal
-                                                    value={isDateUnset(dateLowerBound) ? null : dateLowerBound}
-                                                    onChange={setDateLowerBound}
-                                                    placeholder="No lower bound"
-                                                    textColor={isDateUnset(dateLowerBound) ? '$gray9' : '$color'}
-                                                />
-                                                <Button
-                                                    size="$2"
-                                                    variant="outlined"
-                                                    disabled={isDateUnset(dateLowerBound)}
-                                                    onPress={() => setDateLowerBound(new Date(0))}
-                                                    fontSize={TYPOGRAPHY.sizes.xs}
-                                                >
-                                                    Reset
-                                                </Button>
-                                            </YStack>
-                                            <YStack space={SPACING.xs} flex={1}>
-                                                <Text
-                                                    fontSize={TYPOGRAPHY.sizes.sm}
-                                                    fontWeight={TYPOGRAPHY.weights.medium}
-                                                    color="$gray10"
-                                                >
-                                                    Before
-                                                </Text>
-                                                <DatePickerModal
-                                                    value={dateUpperBound}
-                                                    onChange={setDateUpperBound}
-                                                />
-                                                <Button
-                                                    size="$2"
-                                                    variant="outlined"
-                                                    disabled={isDateToday(dateUpperBound)}
-                                                    onPress={() => setDateUpperBound(new Date(Date.now()))}
-                                                    fontSize={TYPOGRAPHY.sizes.xs}
-                                                >
-                                                    Reset
-                                                </Button>
-                                            </YStack>
+                                </XStack>
+                                <View style={{ borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 10, overflow: 'hidden' }}>
+                                    <Input
+                                        size="$3"
+                                        placeholder="Search tags…"
+                                        value={tagSearch}
+                                        onChangeText={setTagSearch}
+                                        borderWidth={0}
+                                        borderBottomWidth={1}
+                                        borderBottomColor="$borderColor"
+                                        borderRadius={0}
+                                        backgroundColor="transparent"
+                                    />
+                                    <ScrollView style={{ maxHeight: 160 }} nestedScrollEnabled>
+                                        <XStack flexWrap="wrap" gap={6} padding={10}>
+                                            {filteredTags.map((tag: string) => {
+                                                const isActive = selectedTags.includes(tag);
+                                                return (
+                                                    <Pressable key={tag} onPress={() => toggleTag(tag)}>
+                                                        <View style={{
+                                                            paddingHorizontal: 10, paddingVertical: 5,
+                                                            borderRadius: 20, borderWidth: 1,
+                                                            borderColor: isActive ? 'rgba(20,184,166,0.4)' : '#e2e8f0',
+                                                            backgroundColor: isActive ? 'rgba(20,184,166,0.08)' : 'transparent',
+                                                        }}>
+                                                            <Text style={{ fontSize: 12, fontWeight: isActive ? '600' : '400', color: isActive ? '#0d9488' : '#374151' }}>
+                                                                {tag}
+                                                            </Text>
+                                                        </View>
+                                                    </Pressable>
+                                                );
+                                            })}
                                         </XStack>
+                                    </ScrollView>
+                                </View>
+                                <Pressable onPress={() => setTagSheetOpen(false)}>
+                                    <View style={{ paddingVertical: 12, borderRadius: 8, backgroundColor: '#0F172A', alignItems: 'center' }}>
+                                        <Text style={{ fontSize: 14, fontWeight: '600', color: 'white' }}>Done</Text>
+                                    </View>
+                                </Pressable>
+                            </YStack>
+                        </Sheet.Frame>
+                    </Sheet>
+
+                    {/* ── Date Range Sheet ── */}
+                    <Sheet
+                        modal
+                        open={dateSheetOpen}
+                        onOpenChange={setDateSheetOpen}
+                        dismissOnOverlayPress
+                        snapPoints={[45]}
+                        zIndex={100000}
+                    >
+                        <Sheet.Overlay animation="lazy" enterStyle={{ opacity: 0 }} exitStyle={{ opacity: 0 }} />
+                        <Sheet.Frame backgroundColor="$background" padding="$2" flex={1}>
+                            <Sheet.Handle backgroundColor="$gray6" />
+                            <YStack gap={SPACING.md} padding={SPACING.lg}>
+                                <Text style={{ fontSize: 10, letterSpacing: 1.4, textTransform: 'uppercase', fontWeight: '600', color: '#94a3b8' }}>
+                                    Last contact date
+                                </Text>
+                                <XStack gap={SPACING.md}>
+                                    <YStack gap={SPACING.xs} flex={1}>
+                                        <Text style={{ fontSize: 11, fontWeight: '500', letterSpacing: 0.6, textTransform: 'uppercase', color: '#64748b' }}>
+                                            After
+                                        </Text>
+                                        <DatePickerModal
+                                            value={isDateUnset(dateLowerBound) ? null : dateLowerBound}
+                                            onChange={setDateLowerBound}
+                                            placeholder="Any time"
+                                            textColor={isDateUnset(dateLowerBound) ? '$gray9' : '$color'}
+                                        />
+                                        <Pressable disabled={isDateUnset(dateLowerBound)} onPress={() => setDateLowerBound(new Date(0))}>
+                                            <Text style={{ fontSize: 11, fontWeight: '500', color: isDateUnset(dateLowerBound) ? '#cbd5e1' : '#14B8A6' }}>
+                                                Reset
+                                            </Text>
+                                        </Pressable>
                                     </YStack>
-
-                                    {/* Apply / Cancel */}
-                                    <XStack
-                                        space={SPACING.sm}
-                                        paddingTop={SPACING.sm}
-                                        borderTopWidth={1}
-                                        borderTopColor="$borderColor"
-                                    >
-                                        <Button
-                                            size="$3"
-                                            variant="outlined"
-                                            onPress={() => setFilterSheetOpen(false)}
-                                            borderRadius={BORDER_RADIUS.md}
-                                            flex={1}
-                                        >
-                                            Cancel
-                                        </Button>
-                                        <Button
-                                            size="$3"
-                                            onPress={() => setFilterSheetOpen(false)}
-                                            backgroundColor="$blue9"
-                                            color="white"
-                                            borderRadius={BORDER_RADIUS.md}
-                                            flex={1}
-                                        >
-                                            Apply
-                                        </Button>
-                                    </XStack>
-
-                                </YStack>
-                            </ScrollView>
+                                    <YStack gap={SPACING.xs} flex={1}>
+                                        <Text style={{ fontSize: 11, fontWeight: '500', letterSpacing: 0.6, textTransform: 'uppercase', color: '#64748b' }}>
+                                            Before
+                                        </Text>
+                                        <DatePickerModal
+                                            value={dateUpperBound}
+                                            onChange={setDateUpperBound}
+                                        />
+                                        <Pressable disabled={isDateToday(dateUpperBound)} onPress={() => setDateUpperBound(new Date(Date.now()))}>
+                                            <Text style={{ fontSize: 11, fontWeight: '500', color: isDateToday(dateUpperBound) ? '#cbd5e1' : '#14B8A6' }}>
+                                                Reset
+                                            </Text>
+                                        </Pressable>
+                                    </YStack>
+                                </XStack>
+                                <XStack gap={SPACING.sm} style={{ borderTopWidth: 1, borderTopColor: '#f1f5f9', paddingTop: SPACING.sm }}>
+                                    <Pressable style={{ flex: 1 }} onPress={() => { setDateLowerBound(new Date(0)); setDateUpperBound(new Date(Date.now())); }}>
+                                        <View style={{ paddingVertical: 12, borderRadius: 8, borderWidth: 1, borderColor: '#e2e8f0', alignItems: 'center' }}>
+                                            <Text style={{ fontSize: 14, fontWeight: '500', color: '#374151' }}>Clear</Text>
+                                        </View>
+                                    </Pressable>
+                                    <Pressable style={{ flex: 1 }} onPress={() => setDateSheetOpen(false)}>
+                                        <View style={{ paddingVertical: 12, borderRadius: 8, backgroundColor: '#0F172A', alignItems: 'center' }}>
+                                            <Text style={{ fontSize: 14, fontWeight: '600', color: 'white' }}>Done</Text>
+                                        </View>
+                                    </Pressable>
+                                </XStack>
+                            </YStack>
                         </Sheet.Frame>
                     </Sheet>
 
