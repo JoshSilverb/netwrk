@@ -99,8 +99,9 @@ export default function ContactsScreen() {
         saveFilterState();
     }, [searchQuery, selectedTags, selectedSortOption, dateLowerBound, dateUpperBound, filterStateLoaded]);
 
+    const isShortQuery = searchQuery.trim().split(/\s+/).filter(Boolean).length <= 2;
     const searchMode: 'Name' | 'Semantic' =
-        searchQuery.trim().split(/\s+/).filter(Boolean).length <= 2 ? 'Name' : 'Semantic';
+        isShortQuery && selectedSortOption !== 'RELEVANCE' ? 'Name' : 'Semantic';
 
     const effectiveSortOption =
         searchMode === 'Semantic' ? 'RELEVANCE' : selectedSortOption;
@@ -265,11 +266,6 @@ export default function ContactsScreen() {
                                 <Text style={{ fontSize: 12, fontWeight: '500', color: '#ffffff' }}>
                                     {sortOptions.find(o => o.value === effectiveSortOption)?.label}
                                 </Text>
-                                {searchMode === 'Semantic' && effectiveSortOption === 'RELEVANCE' && (
-                                    <Text style={{ fontSize: 8, letterSpacing: 0.8, textTransform: 'uppercase', fontWeight: '700', color: 'rgba(255,255,255,0.6)' }}>
-                                        auto
-                                    </Text>
-                                )}
                                 <ChevronDown size={10} color="rgba(255,255,255,0.7)" />
                             </XStack>
                         </Pressable>
@@ -301,7 +297,7 @@ export default function ContactsScreen() {
                             }}>
                                 {selectedTags.length > 0 && <View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: '#14B8A6' }} />}
                                 <Text style={{ fontSize: 12, fontWeight: selectedTags.length > 0 ? '500' : '400', color: selectedTags.length > 0 ? '#0d9488' : '#64748b' }}>
-                                    {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : '+ Tag'}
+                                    {selectedTags.length > 0 ? `Tags (${selectedTags.length})` : '+ Tags'}
                                 </Text>
                                 <ChevronDown size={10} color={selectedTags.length > 0 ? '#0d9488' : '#94a3b8'} />
                             </XStack>
