@@ -25,13 +25,14 @@ from typing import Optional
 from datetime import datetime
 
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from openai import OpenAI
 
 # Add the parent directory to the path to import app modules
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.models.contact import Contact
+from app.models.tags import Tag
 
 # Configure logging
 logging.basicConfig(
@@ -55,8 +56,8 @@ def populate_missing_embeddings(db_url: str, openai_api_key: str, poll_interval:
 
     # Step 1: Query for contacts without embeddings
     with Session(engine) as session:
-        stmt = select(Contact) #.where(Contact.embedding.is_(None))
-        contacts_without_embeddings = session.execute(stmt).scalars().all()
+        stmt = select(Contact).options(joinedload(Contact.tags).joinedload(Tag.tag_label)) #.where(Contact.embedding.is_(None))
+        contacts_without_embeddings = session.execute(stmt).scalars().unique().all()
 
         total_contacts = len(contacts_without_embeddings)
         logger.info(f"Found {total_contacts} contacts without embeddings")
@@ -74,7 +75,18 @@ def populate_missing_embeddings(db_url: str, openai_api_key: str, poll_interval:
             location = contact.location or ""
             met_through = contact.metthrough or ""
             bio = contact.userbio or ""
-            embedding_text = f"met_through='{met_through}'; location='{location}'; bio='{bio}; name='{name}'"
+            tag_labels = [tag.tag_label.label for tag in contact.tags if tag.tag_label]
+
+            parts = [name]
+            if location:
+                parts.append(f"Based in {location}.")
+            if met_through:
+                parts.append(f"Met through {met_through}.")
+            if bio:
+                parts.append(bio)
+            if tag_labels:
+                parts.append(f"Tags: {', '.join(tag_labels)}.")
+            embedding_text = " ".join(parts)
 
             custom_id = f"contact_{contact.contact_id}"
             contact_id_map[custom_id] = contact.contact_id

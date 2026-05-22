@@ -40,22 +40,25 @@ def _location_to_coords(location: str) -> dict[str, str] | None:
 
     return location_coords
 
+def _build_contact_embedding_text(name: str, location: str, met_through: str, bio: str, tag_labels: list[str]) -> str:
+    parts = [name]
+    if location:
+        parts.append(f"Based in {location}.")
+    if met_through:
+        parts.append(f"Met through {met_through}.")
+    if bio:
+        parts.append(bio)
+    if tag_labels:
+        parts.append(f"Tags: {', '.join(tag_labels)}.")
+    return " ".join(parts)
+
+
 def _get_contact_embedding(name: str,
                            location: str,
-                           met_through:str,
-                           bio: str) -> list[float]:
-    """
-    Get the embedding for a contact with the given attributes.
-    Args:
-        name: the name of the contact
-        location: the location of the contact
-        met_through: how the user met the contact
-        bio: user-specified description of the contact
-    Returns:
-        A 1536-dimensional list representing the embedding of the fields
-    """
-
-    embedding_text = f"met_through='{met_through}'; location='{location}'; bio='{bio}; name='{name}'"
+                           met_through: str,
+                           bio: str,
+                           tag_labels: list[str]) -> list[float]:
+    embedding_text = _build_contact_embedding_text(name, location, met_through, bio, tag_labels)
 
     openai_client = OpenAI(api_key=Config.OPENAI_API_KEY)
     embedding_object = openai_client.embeddings.create(
@@ -67,22 +70,34 @@ def _get_contact_embedding(name: str,
     return embedding_object.data[0].embedding
 
 
-def _get_query_string_embedding(query_string: str,) -> list[float]:
-    """
-    Get the embedding of the given query string.
-    Args:
-        query_string: user-specified query to semantically search contacts
-    Returns:
-        A 1536-dimensional list representing the embedding of the input
-    """
+_HYDE_SYSTEM_PROMPT = """You are helping search a personal contact management app.
+Given a search query, generate a short hypothetical contact description (2-3 sentences) \
+that would match the query. Write it as natural language using these fields where relevant: \
+name, location, where they were met, a short bio, and tags.
+Example format: "Jane Smith. Based in Austin. Met through a startup conference. \
+Product manager at a Series B startup. Tags: founder, tech, investor."
+Only output the description — no explanation."""
 
+
+def _get_query_string_embedding(query_string: str) -> list[float]:
     openai_client = OpenAI(api_key=Config.OPENAI_API_KEY)
+
+    completion = openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": _HYDE_SYSTEM_PROMPT},
+            {"role": "user", "content": query_string}
+        ],
+        max_tokens=150,
+        temperature=0.0
+    )
+    hypothetical_doc = completion.choices[0].message.content.strip()
+
     embedding_object = openai_client.embeddings.create(
         model="text-embedding-3-small",
-        input=query_string,
+        input=hypothetical_doc,
         encoding_format="float"
     )
-
     return embedding_object.data[0].embedding
 
 
@@ -161,10 +176,10 @@ def add_new_contact():
     if linked_user_id:
         # For linked contacts, location and bio come from the linked user at read time
         coordinate = None
-        embedding_vector = _get_contact_embedding(fullname, "", metthrough, "")
+        embedding_vector = _get_contact_embedding(fullname, "", metthrough, "", tags)
     else:
         coordinate = _location_to_coords(location) if location else None
-        embedding_vector = _get_contact_embedding(fullname, location, metthrough, userbio)
+        embedding_vector = _get_contact_embedding(fullname, location, metthrough, userbio, tags)
 
     try:
         new_contact_id = db_accessor.add_contact(
@@ -238,12 +253,12 @@ def update_contact():
         image_object_key = ""
         coordinate = None
         # Embedding uses only the non-locked fields
-        embedding_vector = _get_contact_embedding(fullname, "", metthrough, userbio)
+        embedding_vector = _get_contact_embedding(fullname, "", metthrough, userbio, tags)
     else:
         location: str        = newcontact['location']
         image_object_key: str = newcontact.get('image_object_key', '')
         coordinate = _location_to_coords(location) if location else None
-        embedding_vector = _get_contact_embedding(fullname, location, metthrough, userbio)
+        embedding_vector = _get_contact_embedding(fullname, location, metthrough, userbio, tags)
 
     new_contact_id = db_accessor.update_contact(
         user_token=user_token,
