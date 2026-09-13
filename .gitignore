@@ -65,3 +65,5 @@ __pycache__/
 #=========================================
 
 TODO.md
+.playwright-mcp/
+design/

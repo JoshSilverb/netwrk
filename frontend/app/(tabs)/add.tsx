@@ -216,6 +216,7 @@ export default function AddContactPage() {
         onSuccess: async (newId) => {
             await resetData();
             queryClient.invalidateQueries({ queryKey: ['contacts'] });
+            queryClient.invalidateQueries({ queryKey: queryKeys.tags() });
             router.push(`/contact/${newId}`);
         },
         onError: () => setErrorMessage("Failed to upload new contact details"),
@@ -234,6 +235,7 @@ export default function AddContactPage() {
             await resetData();
             queryClient.invalidateQueries({ queryKey: ['contacts'] });
             queryClient.invalidateQueries({ queryKey: queryKeys.contact(id as string) });
+            queryClient.invalidateQueries({ queryKey: queryKeys.tags() });
             router.dismiss();
         },
         onError: () => setErrorMessage("Failed to update contact details"),

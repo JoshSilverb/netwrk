@@ -302,15 +302,37 @@ def delete_contact(user_token: str, contact_id: int):
     if not contact:
         raise Exception(f"Unable to remove contact - no contact with ID '{contact_id}' for user_token {user_token}")
 
+    # Capture tag label ids before the delete cascades away the contact's Tag rows
+    tag_label_ids = {tag.tag_id for tag in contact.tags}
+
     # Delete the contact
     db.session.delete(contact)
     db.session.flush()  # flush to ensure delete is counted before updating user
+
+    _delete_orphaned_tag_labels(tag_label_ids)
 
     # Update user's num_contacts
     user.num_contacts = user.num_contacts - 1
 
     # Commit the changes
     db.session.commit()
+
+
+def _delete_orphaned_tag_labels(tag_label_ids: set[int]) -> None:
+    """
+    Given a set of TagLabel ids that just lost a Tag row, delete any of them
+    that now have zero remaining Tag rows.
+    """
+    if not tag_label_ids:
+        return
+
+    still_used = {
+        row[0]
+        for row in db.session.query(Tag.tag_id).filter(Tag.tag_id.in_(tag_label_ids)).distinct().all()
+    }
+    orphaned_ids = tag_label_ids - still_used
+    if orphaned_ids:
+        db.session.query(TagLabel).filter(TagLabel.id.in_(orphaned_ids)).delete(synchronize_session=False)
 
 
 def update_contact(
@@ -398,10 +420,15 @@ def update_contact(
 
     # 5. Update tags
     if tags is not None:
-        db.session.query(Tag).filter_by(contact_id=contact_id).delete()
+        old_tag_label_ids = {
+            row[0] for row in db.session.query(Tag.tag_id).filter_by(contact_id=contact_id).all()
+        }
+
+        db.session.query(Tag).filter_by(contact_id=contact_id).delete(synchronize_session=False)
+        _delete_orphaned_tag_labels(old_tag_label_ids)
 
         for tag_name in tags:
-            tag_label = db.session.query(TagLabel).filter_by(label=tag_name).first()
+            tag_label = db.session.query(TagLabel).filter_by(user_id=user.user_id, label=tag_name).first()
             if not tag_label:
                 tag_label = TagLabel(user_id=user.user_id, label=tag_name)
                 db.session.add(tag_label)

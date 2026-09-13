@@ -82,6 +82,7 @@ export default function ContactPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tags() });
       router.replace('/(tabs)/contacts/');
     },
     onError: () => {
