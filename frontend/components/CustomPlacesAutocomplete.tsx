@@ -2,6 +2,7 @@ import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { FlatList, TouchableOpacity } from 'react-native';
 import { View, Input, Text } from 'tamagui';
 import { SPACING, TYPOGRAPHY, BORDER_RADIUS } from '@/constants/Styles';
+import { placesAutocompleteURL } from '@/constants/Apis';
 import axios from 'axios';
 
 interface PlacesPrediction {
@@ -58,7 +59,7 @@ const CustomPlacesAutocomplete = forwardRef<CustomPlacesAutocompleteRef, CustomP
 
       setLoading(true);
       try {
-        const response = await axios.get<PlacesResponse>('https://api.mynetwrk.com/places/autocomplete', {
+        const response = await axios.get<PlacesResponse>(placesAutocompleteURL, {
           params: { input }
         });
 
