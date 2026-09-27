@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from app.models.user import User
 from app.db import accessor as db_accessor
 from app.aws import awsutils
+from app.config import Config
 
 import uuid
 import logging
@@ -36,7 +37,7 @@ def generate_upload_url():
     if not db_accessor.validate_token(user_token):
         return jsonify({"message": "Invalid user token"}), 401
 
-    s3_object_key = uuid.uuid4().hex.strip()
+    s3_object_key = Config.S3_KEY_PREFIX + uuid.uuid4().hex.strip()
 
     presigned_url = awsutils.getSignedS3ObjectURL(s3_object_key, awsutils.S3ObjectMethods.UPLOAD, filetype)
 

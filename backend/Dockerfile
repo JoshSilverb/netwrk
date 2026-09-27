@@ -22,9 +22,6 @@ COPY application.py .
 
 COPY app ./app
 COPY sql ./sql
-# COPY run.py ./run.py
-# COPY run.sh ./run.sh
+COPY scripts ./scripts
 
-# RUN python3 application.py
-
-CMD ["/bin/bash"]
+CMD ["flask", "--app", "application", "run", "--host", "0.0.0.0", "--port", "8000", "--debug"]

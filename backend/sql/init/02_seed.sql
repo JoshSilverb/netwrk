@@ -27,7 +27,7 @@ INSERT INTO public.users (
     ST_GeogFromText('SRID=4326;POINT(-122.4194 37.7749)'),
     'Local development account for Netwrk.',
     12,
-    NULL
+    'dev00000000000000000000000000000'
 ),
 (
     '00000000-0000-0000-0000-000000000002',
@@ -40,7 +40,7 @@ INSERT INTO public.users (
     ST_GeogFromText('SRID=4326;POINT(-74.0060 40.7128)'),
     'Public demo account, used as a search/link target for the dev account.',
     0,
-    NULL
+    'demo0000000000000000000000000000'
 );
 
 -- ---------------------------------------------------------------------------

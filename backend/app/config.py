@@ -14,11 +14,19 @@ S3_BUCKET_NAME_temp = os.getenv("S3_BUCKET_NAME")
 if not S3_BUCKET_NAME_temp:
     raise RuntimeError("S3_BUCKET_NAME environment variable not set.")
 
+if os.getenv("NETWRK_ENV") == "local" and "neon.tech" in DATABASE_URL_temp:
+    raise RuntimeError(
+        "NETWRK_ENV=local but DATABASE_URL points at neon.tech. "
+        "Local dev must never write to the prod database. "
+        "Check docker-compose.yaml / .env."
+    )
+
 class Config:
     SQLALCHEMY_DATABASE_URI = DATABASE_URL_temp
     GOOGLE_API_KEY = GOOGLE_API_KEY_temp
     OPENAI_API_KEY = OPENAI_API_KEY_temp
     S3_BUCKET_NAME = S3_BUCKET_NAME_temp
+    S3_KEY_PREFIX = os.getenv("S3_KEY_PREFIX", "")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_recycle': 270,       # Recycle connections after 4.5min (times out at 5min)

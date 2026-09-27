@@ -9,9 +9,10 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
-      - ./sql/init:/docker-entrypoint-initdb.d
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/init:/docker-entrypoint-initdb.d:ro
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d netwrkdb"]
       interval: 5s
@@ -29,8 +30,21 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/netwrkdb
+      NETWRK_ENV: local
+      S3_KEY_PREFIX: dev/
+      LOG_LEVEL: DEBUG
+    command: flask --app application run --host 0.0.0.0 --port 8000 --debug
+    ports:
+      - "8000:8000"
     volumes:
       - ./app:/app/app
+      - ./application.py:/app/application.py
+      - ./scripts:/app/scripts
       - ./integration_tests:/app/integration_tests
     stdin_open: true
     tty: true
+
+volumes:
+  pgdata:
