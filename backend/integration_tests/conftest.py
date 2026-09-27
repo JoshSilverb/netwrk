@@ -22,7 +22,7 @@ def reset_db():
 
     # Run schema.sql
     schema_sql_path = Path(__file__).resolve().parent.parent / \
-                                        "sql" / "init" / "schema.sql"
+                                        "sql" / "init" / "01_schema.sql"
     with open(schema_sql_path, "r") as f:
         schema_sql = f.read()
         cursor.execute(schema_sql)

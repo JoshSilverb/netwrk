@@ -1,23 +1,7 @@
-FROM postgres:15
+# Neon prod runs Postgres 17.x with postgis 3.5.0 and pgvector 0.8.0.
+# postgis/postgis has no arm64 build for the 17-3.5 tag, so pin amd64
+# (Docker Desktop emulates this fine on Apple Silicon).
+FROM --platform=linux/amd64 postgis/postgis:17-3.5
 
-# Install required packages for building PostGIS and pgvector
-RUN apt-get update && apt-get install -y \
-    postgresql-15-postgis-3 \
-    postgresql-15-postgis-3-scripts \
-    postgresql-server-dev-15 \
-    build-essential \
-    libpq-dev \
-    git \
-    ca-certificates \
- && rm -rf /var/lib/apt/lists/*
-
-# Install pgvector from source
-RUN git clone --branch v0.4.0 https://github.com/pgvector/pgvector.git /pgvector \
- && cd /pgvector \
- && make && make install \
- && rm -rf /pgvector
-
-# Clean up unnecessary packages
-RUN apt-get remove --purge -y build-essential git \
- && apt-get autoremove -y \
+RUN apt-get update && apt-get install -y --no-install-recommends postgresql-17-pgvector \
  && rm -rf /var/lib/apt/lists/*
