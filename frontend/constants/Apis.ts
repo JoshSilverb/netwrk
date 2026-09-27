@@ -13,6 +13,15 @@ function resolveLocalHost(): string {
     return 'localhost';
   }
 
+  // Note: Constants.expoConfig?.hostUri is split on ':' to strip the port,
+  // which does not handle bracketed IPv6 hostUris (e.g. "[::1]:8081"). Not
+  // handling that is intentional (YAGNI) — Metro/Expo hostUris are IPv4 or a
+  // plain hostname in practice.
+  //
+  // Also note: `expo start --tunnel` gives a public *.exp.direct hostUri
+  // that cannot reach the local backend on :8000. In tunnel mode, set
+  // EXPO_PUBLIC_API_URL explicitly (e.g. to an ngrok URL), or use LAN mode
+  // instead.
   const hostUri = Constants.expoConfig?.hostUri;
   if (hostUri) {
     const host = hostUri.split(':')[0];
@@ -30,7 +39,21 @@ function resolveBaseURL(): { url: string; target: string } {
     return { url: explicitURL, target: 'url' };
   }
 
-  const target = process.env.EXPO_PUBLIC_API_TARGET ?? (__DEV__ ? 'local' : 'prod');
+  const devDefault = __DEV__ ? 'local' : 'prod';
+  const rawTarget = process.env.EXPO_PUBLIC_API_TARGET;
+
+  let target: string;
+  if (!rawTarget) {
+    target = devDefault;
+  } else if (rawTarget === 'local' || rawTarget === 'prod') {
+    target = rawTarget;
+  } else {
+    // Unknown value (typo, 'staging', an EAS-dashboard env var on an
+    // unexpected environment, etc.) — never let this silently resolve to
+    // local in a release build. Fall back to the __DEV__ default.
+    console.warn('[api] unknown EXPO_PUBLIC_API_TARGET=%s, falling back to %s', rawTarget, devDefault);
+    target = devDefault;
+  }
 
   if (target === 'prod') {
     return { url: PROD_BASE_URL, target };
