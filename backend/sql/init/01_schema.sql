@@ -4,7 +4,7 @@
 --
 
 -- Dumped from database version 17.11 (8a81ecb)
--- Dumped by pg_dump version 17.5 (Debian 17.5-1.pgdg110+1)
+-- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg12+2)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -365,4 +365,3 @@ ALTER TABLE ONLY public.tags
 --
 -- PostgreSQL database dump complete
 --
-
