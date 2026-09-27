@@ -21,10 +21,25 @@ yarn test --watchAll=false  # Run tests once
 ### Backend (`/backend`)
 ```bash
 cd backend
-pip install -r requirements.txt   # Install dependencies
-flask run                          # Run dev server
-docker-compose up                  # Run via Docker (preferred for local dev)
+pip install -r requirements.txt   # Install dependencies (only needed for local scripts run outside Docker)
+./dev.sh up                        # Build + run Postgres (PostGIS/pgvector) and Flask via Docker
 ```
+
+### Local development (`/backend`)
+Local Postgres has no connection to Neon; see `backend/README-local-dev.md` for full setup. Once `backend/.env` is filled in from `.env.example`:
+
+```bash
+cd backend
+./dev.sh up              # docker compose up --build — backend at http://localhost:8000, db on host port 5433
+./dev.sh reset-db         # wipe local db, rebuild, re-seed, and re-embed contacts
+./dev.sh psql             # open psql against the local netwrkdb
+./dev.sh pull-prod-data   # opt-in: replace local data with a read-only prod snapshot (prompts before running)
+./dev.sh dump-schema      # refresh sql/init/01_schema.sql from prod (read-only)
+```
+
+Dev login: `dev` / `devpassword` (also `demo` / `devpassword`, a public account linked to some seed contacts).
+
+Frontend dev builds hit the local backend by default. Use `yarn start:prod` (or `EXPO_PUBLIC_API_TARGET=prod`) to hit prod instead.
 
 ### Deploying the backend to AWS
 The backend runs on AWS Lambda + API Gateway (SAM). Production URL is `https://mynetwrk.com`.
@@ -73,6 +88,7 @@ Use the `netwrk-deployer` IAM user credentials (`--profile netwrk-deployer`) for
 - **Images:** AWS S3 with presigned URLs — the backend generates upload/download URLs; images are never proxied through the server. S3 credentials come from the Lambda execution role (no hardcoded AWS keys needed).
 - **Config:** Environment variables loaded via `python-dotenv`. Key vars: `DATABASE_URL`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `S3_BUCKET_NAME`. Secrets are stored in AWS Secrets Manager and resolved by CloudFormation at deploy time.
 - **Database:** Hosted on Neon (external, not in AWS VPC). Use the **pooled** connection string (pgbouncer endpoint) for `DATABASE_URL`.
+- **Local dev:** `docker-compose.yaml` runs Postgres (PostGIS + pgvector) and Flask in containers, with `NETWRK_ENV=local` and `S3_KEY_PREFIX=dev/` (so local uploads land under a `dev/` prefix in the real S3 bucket, not next to prod objects). `sql/init/01_schema.sql` is a snapshot of the prod schema (via `pg_dump --schema-only`) — after a prod migration, refresh it with `./dev.sh dump-schema` and reload with `./dev.sh reset-db`. `app/config.py` refuses to start if `NETWRK_ENV=local` and `DATABASE_URL` points at neon.tech.
 
 ### Lambda deployment (`/backend`)
 - **`Dockerfile.lambda`** — Lambda-specific container image. Multi-stage build: stage 1 installs deps using `--platform manylinux2014_x86_64 --only-binary=:all:` to get Lambda-compatible wheels; stage 2 copies into the AWS Lambda Python 3.11 base image.
