@@ -44,7 +44,7 @@ INSERT INTO public.users (
 );
 
 -- ---------------------------------------------------------------------------
--- Tag labels (dev's tags — taglabels.label is globally unique)
+-- Tag labels (dev's tags — unique per (user_id, label))
 -- ---------------------------------------------------------------------------
 
 INSERT INTO public.taglabels (id, label, user_id) VALUES
