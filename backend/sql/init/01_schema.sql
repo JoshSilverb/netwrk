@@ -3,7 +3,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 17.11 (8a81ecb)
+
+-- Dumped from database version 17.11 (fcae950)
 -- Dumped by pg_dump version 17.11 (Debian 17.11-1.pgdg12+2)
 
 SET statement_timeout = 0;
@@ -132,7 +133,7 @@ CREATE TABLE public.socials (
 
 CREATE TABLE public.taglabels (
     id integer NOT NULL,
-    label character varying(16),
+    label character varying(16) NOT NULL,
     user_id uuid NOT NULL
 );
 
@@ -233,19 +234,19 @@ ALTER TABLE ONLY public.sociallabels
 
 
 --
--- Name: taglabels taglabels_label_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.taglabels
-    ADD CONSTRAINT taglabels_label_key UNIQUE (label);
-
-
---
 -- Name: taglabels taglabels_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.taglabels
     ADD CONSTRAINT taglabels_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: taglabels taglabels_user_id_label_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.taglabels
+    ADD CONSTRAINT taglabels_user_id_label_key UNIQUE (user_id, label);
 
 
 --
@@ -365,3 +366,5 @@ ALTER TABLE ONLY public.tags
 --
 -- PostgreSQL database dump complete
 --
+
+
